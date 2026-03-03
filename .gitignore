@@ -1,0 +1,7 @@
+.agent/
+
+# SpecKit generated command/workflow docs
+.cursor/commands/speckit*.md
+.kilocode/workflows/speckit*.md
+.opencode/command/speckit*.md
+
