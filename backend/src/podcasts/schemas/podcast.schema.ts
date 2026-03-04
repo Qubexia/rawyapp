@@ -14,7 +14,7 @@ export class Podcast {
   @Prop({ required: false })
   coverImageUrl?: string;
 
-  @Prop({ required: true, type: Types.ObjectId, ref: 'User', index: true })
+  @Prop({ required: true, type: Types.ObjectId, ref: 'User' })
   creatorId: Types.ObjectId;
 
   @Prop({ required: true, default: 0, min: 0 })

@@ -10,7 +10,7 @@ export class View {
   @ApiProperty({ type: String, description: 'User who viewed' })
   userId: Types.ObjectId;
 
-  @Prop({ type: Types.ObjectId, ref: 'Episode', required: true, index: true })
+  @Prop({ type: Types.ObjectId, ref: 'Episode', required: true })
   @ApiProperty({ type: String, description: 'Viewed episode' })
   episodeId: Types.ObjectId;
 

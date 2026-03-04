@@ -6,11 +6,11 @@ export type FollowDocument = Follow & Document;
 
 @Schema({ timestamps: true })
 export class Follow {
-  @Prop({ type: Types.ObjectId, ref: 'User', required: true, index: true })
+  @Prop({ type: Types.ObjectId, ref: 'User', required: true })
   @ApiProperty({ type: String, description: 'User who follows' })
   followerId: Types.ObjectId;
 
-  @Prop({ type: Types.ObjectId, ref: 'User', required: true, index: true })
+  @Prop({ type: Types.ObjectId, ref: 'User', required: true })
   @ApiProperty({ type: String, description: 'Creator being followed' })
   creatorId: Types.ObjectId;
 

@@ -11,10 +11,8 @@ export class User {
 
   @Prop({
     required: true,
-    unique: true,
     trim: true,
     lowercase: true,
-    index: true,
   })
   email: string;
 
@@ -25,17 +23,16 @@ export class User {
     type: String,
     enum: Role,
     default: Role.USER,
-    index: true,
   })
   role: Role;
 
-  @Prop({ default: true, index: true })
+  @Prop({ default: true })
   isActive: boolean;
 
-  @Prop({ sparse: true, unique: true, index: true })
+  @Prop()
   googleId?: string;
 
-  @Prop({ sparse: true, unique: true, index: true })
+  @Prop()
   facebookId?: string;
 
   @Prop({ type: [String], default: [] })

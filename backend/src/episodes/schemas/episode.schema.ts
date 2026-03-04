@@ -17,10 +17,10 @@ export class Episode {
   @Prop({ required: false, min: 0 })
   duration?: number;
 
-  @Prop({ required: true, type: Types.ObjectId, ref: 'Podcast', index: true })
+  @Prop({ required: true, type: Types.ObjectId, ref: 'Podcast' })
   podcastId: Types.ObjectId;
 
-  @Prop({ required: true, type: Types.ObjectId, ref: 'User', index: true })
+  @Prop({ required: true, type: Types.ObjectId, ref: 'User' })
   creatorId: Types.ObjectId;
 
   @Prop({ required: true, default: 0, min: 0 })

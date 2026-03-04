@@ -38,6 +38,7 @@ export class NotificationsService {
 
     try {
       const messaging = getMessaging();
+      if (!messaging) return;
       const message = {
         notification: {
           title: podcastTitle,

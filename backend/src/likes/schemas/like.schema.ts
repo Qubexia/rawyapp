@@ -10,7 +10,7 @@ export class Like {
   @ApiProperty({ type: String, description: 'User who liked' })
   userId: Types.ObjectId;
 
-  @Prop({ type: Types.ObjectId, ref: 'Episode', required: true, index: true })
+  @Prop({ type: Types.ObjectId, ref: 'Episode', required: true })
   @ApiProperty({ type: String, description: 'Liked episode' })
   episodeId: Types.ObjectId;
 
