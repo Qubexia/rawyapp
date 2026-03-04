@@ -11,6 +11,7 @@ import {
   Animated,
   useWindowDimensions,
   ActivityIndicator,
+  Image,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { StatusBar } from "expo-status-bar";
@@ -78,7 +79,6 @@ export default function RegisterScreen() {
       end={{ x: 1, y: 1 }}
       style={styles.root}
     >
-      <StatusBar style="light" />
 
       <SafeAreaView style={styles.safeArea}>
         <KeyboardAvoidingView
@@ -92,30 +92,7 @@ export default function RegisterScreen() {
           >
             {/* ── Brand Header ── */}
             <View style={styles.header}>
-              {/* Logo badge */}
-              <View style={styles.logoBadge}>
-                <SafeLinearGradient
-                  colors={["#6C63FF", "#9B59B6"]}
-                  style={styles.logoBadgeGradient}
-                >
-                  <Ionicons name="mic" size={34} color="#FFFFFF" />
-                </SafeLinearGradient>
-              </View>
-
               {/* Sound wave bars decoration */}
-              <View style={styles.waveRow}>
-                {[6, 14, 22, 14, 6, 18, 10, 24, 10, 18, 6, 14, 22].map(
-                  (h, i) => (
-                    <View
-                      key={i}
-                      style={[
-                        styles.waveBar,
-                        { height: h, opacity: i % 2 === 0 ? 0.4 : 0.7 },
-                      ]}
-                    />
-                  ),
-                )}
-              </View>
 
               <Text style={styles.appName}>Rawy</Text>
               <Text style={styles.tagline}>Discover · Listen · Create</Text>
