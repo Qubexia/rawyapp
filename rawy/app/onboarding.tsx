@@ -52,8 +52,8 @@ export default function OnboardingScreen() {
         if (currentIndex < slides.length - 1) {
             slidesRef.current?.scrollToIndex({ index: currentIndex + 1 });
         } else {
-            // Navigate to the main app (e.g. tabs or home)
-            router.replace('/(tabs)');
+            // Navigate to the register app screen
+            router.replace('/register' as any);
         }
     };
 

@@ -7,7 +7,7 @@ import 'react-native-reanimated';
 
 import { useColorScheme } from '@/hooks/use-color-scheme';
 
-SplashScreen.preventAutoHideAsync().catch(() => {});
+SplashScreen.preventAutoHideAsync().catch(() => { });
 
 export const unstable_settings = {
   anchor: '(tabs)',
@@ -17,13 +17,14 @@ export default function RootLayout() {
   const colorScheme = useColorScheme();
 
   useEffect(() => {
-    SplashScreen.hideAsync().catch(() => {});
+    SplashScreen.hideAsync().catch(() => { });
   }, []);
 
   return (
     <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
       <Stack>
         <Stack.Screen name="onboarding" options={{ headerShown: false }} />
+        <Stack.Screen name="register" options={{ headerShown: false }} />
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
         <Stack.Screen name="modal" options={{ presentation: 'modal', title: 'Modal' }} />
       </Stack>
