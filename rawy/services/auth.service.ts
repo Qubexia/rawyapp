@@ -1,14 +1,3 @@
-/**
- * Auth service – all calls to /auth/* endpoints.
- *
- * Endpoints used:
- *   POST /auth/register            → { name, email, password }
- *   POST /auth/register-creator    → multipart/form-data
- *   POST /auth/login               → { email, password }
- *   POST /auth/refresh             → { refreshToken }
- *   POST /auth/logout              → Bearer token required
- */
-
 import { apiRequest, authenticatedRequest, TOKEN_KEYS } from './api';
 import { setItem, getItem, deleteItem } from './token-storage';
 

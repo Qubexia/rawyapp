@@ -1,20 +1,7 @@
-/**
- * Base API client for communicating with the Rawy NestJS backend.
- *
- * Backend base: http://localhost:3000/api/v1
- * Android emulator: http://10.0.2.2:3000/api/v1  (localhost → host machine)
- *
- * Every response is wrapped by the TransformInterceptor as:
- *   { statusCode: number; data: T }
- *
- * Errors from NestJS HttpExceptionFilter arrive as:
- *   { statusCode: number; message: string | string[]; error: string }
- */
+// API client for Rawy backend (base: http://localhost:3000/api/v1)
 
 import { Platform } from 'react-native';
 import { getItem } from './token-storage';
-
-// ─── Base URL ───────────────────────────────────────────────────────────────
 
 export const API_BASE_URL = Platform.select({
   android: 'http://10.0.2.2:3000/api/v1',
@@ -22,14 +9,10 @@ export const API_BASE_URL = Platform.select({
   default: 'http://localhost:3000/api/v1',
 }) as string;
 
-// ─── Token storage keys ─────────────────────────────────────────────────────
-
 export const TOKEN_KEYS = {
   ACCESS: 'rawy_access_token',
   REFRESH: 'rawy_refresh_token',
 } as const;
-
-// ─── Shape helpers ───────────────────────────────────────────────────────────
 
 export interface ApiSuccess<T> {
   statusCode: number;
@@ -42,7 +25,7 @@ export interface ApiError {
   error: string;
 }
 
-/** A custom error that carries the backend error payload. */
+// Custom error carrying backend payload
 export class ApiRequestError extends Error {
   public readonly statusCode: number;
   public readonly errors: string[];
@@ -57,8 +40,6 @@ export class ApiRequestError extends Error {
     this.errors = msgs;
   }
 }
-
-// ─── Core fetch wrapper ──────────────────────────────────────────────────────
 
 interface RequestOptions {
   method?: 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
@@ -75,12 +56,9 @@ export async function apiRequest<T>(
 
   const headers: Record<string, string> = {};
 
-  // Attach auth token if provided
   if (token) {
     headers['Authorization'] = `Bearer ${token}`;
   }
-
-  // For JSON bodies set Content-Type; for FormData let the browser/RN set boundary
   if (body && !isMultipart) {
     headers['Content-Type'] = 'application/json';
   }
@@ -112,13 +90,9 @@ export async function apiRequest<T>(
     throw new ApiRequestError(json as ApiError);
   }
 
-  // Unwrap TransformInterceptor envelope
   const envelope = json as ApiSuccess<T>;
   return envelope.data;
 }
-
-// ─── Authenticated helper (reads token from SecureStore) ─────────────────────
-
 export async function authenticatedRequest<T>(
   path: string,
   options: Omit<RequestOptions, 'token'> = {},
