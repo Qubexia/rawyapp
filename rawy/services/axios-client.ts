@@ -1,9 +1,14 @@
 /**
  * Axios client with auth interceptors.
  *
- * - Auto-attaches access token to every request.
- * - On 401 → tries to refresh tokens once, retries original request.
- * - If refresh fails → clears tokens (caller should redirect to login).
+ * Strategy:
+ *  1. PROACTIVE: Before every protected request, decode the JWT and check its
+ *     expiry. If it expires within 60 s (or is already expired), refresh first.
+ *     This eliminates 401s from normal token expiry during a session.
+ *  2. REACTIVE (fallback): If a 401 ever slips through (e.g. clock skew,
+ *     server-side revocation), refresh once and retry.
+ *  3. DEDUPLICATION: All concurrent requests that trigger a refresh share one
+ *     single refresh call via a shared promise.
  */
 
 import axios, {
@@ -26,6 +31,13 @@ export const TOKEN_KEYS = {
   ACCESS: 'rawy_access_token',
   REFRESH: 'rawy_refresh_token',
 } as const;
+
+const PUBLIC_PATHS = [
+  '/auth/login',
+  '/auth/register',
+  '/auth/register-creator',
+  '/auth/refresh',
+];
 
 // ─── Error types ─────────────────────────────────────────────────────────────
 
@@ -50,6 +62,93 @@ export class ApiError extends Error {
   }
 }
 
+// ─── JWT helpers ─────────────────────────────────────────────────────────────
+
+/** Extracts `exp` (Unix seconds) from a JWT without any external library. */
+function jwtExp(token: string): number | null {
+  try {
+    const parts = token.split('.');
+    if (parts.length !== 3) return null;
+    const b64 = parts[1].replace(/-/g, '+').replace(/_/g, '/');
+    
+    // Safe atob check for React Native
+    const safeAtob = typeof globalThis.atob === 'function' ? globalThis.atob : null;
+    if (!safeAtob) {
+       console.debug('[Axios] globalThis.atob is missing, proactive refresh disabled.');
+       return null; 
+    }
+    
+    const json = safeAtob(b64);
+    const { exp } = JSON.parse(json) as { exp?: number };
+    return typeof exp === 'number' ? exp : null;
+  } catch (err) {
+    console.debug('[Axios] Error decoding JWT:', err);
+    return null;
+  }
+}
+
+/**
+ * Returns true when the token is already expired or will expire within
+ * `bufferMs` milliseconds. Defaults to a 60-second buffer so we refresh
+ * proactively before the server rejects the token.
+ */
+function isExpiringSoon(token: string, bufferMs = 60_000): boolean {
+  const exp = jwtExp(token);
+  if (exp === null) return false; // can't decode → rely on reactive 401 fallback
+  return exp * 1000 - Date.now() < bufferMs;
+}
+
+// ─── Shared refresh promise ───────────────────────────────────────────────────
+//
+// All concurrent callers (both proactive from request interceptor and reactive
+// from 401 response interceptor) share a single in-flight refresh call.
+// This prevents N parallel requests from each triggering their own refresh.
+
+let refreshPromise: Promise<string> | null = null;
+
+async function executeRefresh(): Promise<string> {
+  // Return the in-flight promise if a refresh is already running.
+  if (refreshPromise) {
+    console.debug('[Axios] Using existing refresh promise');
+    return refreshPromise;
+  }
+
+  console.debug('[Axios] Executing token refresh...');
+  refreshPromise = (async () => {
+    const storedRefreshToken = await getItem(TOKEN_KEYS.REFRESH);
+    if (!storedRefreshToken) throw new Error('No refresh token stored');
+
+    // Use raw axios (not axiosClient) to avoid going through our interceptors.
+    const { data } = await axios.post(`${API_BASE_URL}/auth/refresh`, {
+      refreshToken: storedRefreshToken,
+    });
+
+    const tokens = data.data ?? data;
+    const newAccessToken: string | undefined = tokens.accessToken;
+    const newRefreshToken: string | undefined = tokens.refreshToken;
+
+    if (!newAccessToken) throw new Error('No access token returned by refresh');
+
+    console.debug('[Axios] Refresh successful');
+    await setItem(TOKEN_KEYS.ACCESS, newAccessToken);
+    if (newRefreshToken) await setItem(TOKEN_KEYS.REFRESH, newRefreshToken);
+
+    return newAccessToken;
+  })()
+    .catch(async (err) => {
+      console.error('[Axios] Refresh failed:', err);
+      // Refresh failed – wipe credentials so the app can redirect to login.
+      await deleteItem(TOKEN_KEYS.ACCESS);
+      await deleteItem(TOKEN_KEYS.REFRESH);
+      throw err;
+    })
+    .finally(() => {
+      refreshPromise = null;
+    });
+
+  return refreshPromise;
+}
+
 // ─── Create Axios instance ──────────────────────────────────────────────────
 
 const axiosClient = axios.create({
@@ -58,49 +157,43 @@ const axiosClient = axios.create({
   headers: { 'Content-Type': 'application/json' },
 });
 
-// ─── Request interceptor: attach auth token ─────────────────────────────────
+// ─── Request interceptor: attach (and proactively refresh) auth token ────────
 
 axiosClient.interceptors.request.use(
   async (config: InternalAxiosRequestConfig) => {
-    // Skip for public/auth endpoints that don't need a token
-    const publicPaths = ['/auth/login', '/auth/register', '/auth/register-creator', '/auth/refresh'];
-    const isPublic = publicPaths.some((p) => config.url?.startsWith(p));
+    const isPublic = PUBLIC_PATHS.some((p) => config.url?.startsWith(p));
+    if (isPublic) return config;
 
-    if (!isPublic) {
-      const token = await getItem(TOKEN_KEYS.ACCESS);
-      if (token && config.headers) {
-        config.headers.Authorization = `Bearer ${token}`;
+    let token = await getItem(TOKEN_KEYS.ACCESS);
+    if (!token) return config;
+
+    // Proactively refresh when the token is about to expire (within 60 s).
+    // This is the main mechanism that prevents 401s during normal usage.
+    if (isExpiringSoon(token)) {
+      try {
+        token = await executeRefresh();
+      } catch {
+        // Refresh failed (e.g. refresh token is also expired). Send the request
+        // without a token; the 401 handler below will deal with it and clear
+        // credentials so the user is redirected to login.
+        return config;
       }
     }
+
+    // Always write Authorization via .set() — works correctly with Axios 1.x
+    // AxiosHeaders, and also correctly overwrites any stale header that may
+    // have survived a mergeConfig on a retry request.
+    config.headers.set('Authorization', `Bearer ${token}`);
     return config;
   },
   (error) => Promise.reject(error),
 );
 
-// ─── Response interceptor: handle 401 + normalize errors ────────────────────
-
-let isRefreshing = false;
-let failedQueue: Array<{
-  resolve: (value: AxiosResponse) => void;
-  reject: (reason: unknown) => void;
-  config: InternalAxiosRequestConfig;
-}> = [];
-
-function processQueue(error: unknown, token: string | null = null) {
-  failedQueue.forEach(({ resolve, reject, config }) => {
-    if (error) {
-      reject(error);
-    } else if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
-      axiosClient(config).then(resolve).catch(reject);
-    }
-  });
-  failedQueue = [];
-}
+// ─── Response interceptor: normalize errors + reactive 401 fallback ──────────
 
 axiosClient.interceptors.response.use(
   (response: AxiosResponse) => {
-    // Unwrap the { statusCode, data } envelope from the backend
+    // Unwrap the { statusCode, data } envelope from the backend.
     if (response.data && typeof response.data === 'object' && 'data' in response.data) {
       response.data = response.data.data;
     }
@@ -111,53 +204,29 @@ axiosClient.interceptors.response.use(
       _retry?: boolean;
     };
 
-    // If 401 and not already retrying and not a refresh request itself
+    // Reactive 401 fallback: handles edge cases like clock skew or server-side
+    // token revocation that the proactive check cannot anticipate.
     if (
       error.response?.status === 401 &&
       !originalRequest._retry &&
       !originalRequest.url?.includes('/auth/refresh') &&
       !originalRequest.url?.includes('/auth/login')
     ) {
-      if (isRefreshing) {
-        // Queue this request until refresh completes
-        return new Promise((resolve, reject) => {
-          failedQueue.push({ resolve, reject, config: originalRequest });
-        });
-      }
-
       originalRequest._retry = true;
-      isRefreshing = true;
 
       try {
-        const refreshToken = await getItem(TOKEN_KEYS.REFRESH);
-        if (!refreshToken) throw new Error('No refresh token');
-
-        const { data } = await axios.post(`${API_BASE_URL}/auth/refresh`, {
-          refreshToken,
-        });
-
-        const newAccessToken = data.data?.accessToken ?? data.accessToken;
-        const newRefreshToken = data.data?.refreshToken ?? data.refreshToken;
-
-        await setItem(TOKEN_KEYS.ACCESS, newAccessToken);
-        await setItem(TOKEN_KEYS.REFRESH, newRefreshToken);
-
-        originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
-        processQueue(null, newAccessToken);
-
+        // Refresh updates the memory cache. Do NOT manually set the Authorization
+        // header here — the request interceptor will read the fresh token from
+        // the cache on the retry, guaranteeing the correct value regardless of
+        // any Axios 1.x AxiosHeaders / mergeConfig normalization behaviour.
+        await executeRefresh();
         return axiosClient(originalRequest);
       } catch (refreshError) {
-        processQueue(refreshError);
-        // Clear tokens — session is dead
-        await deleteItem(TOKEN_KEYS.ACCESS);
-        await deleteItem(TOKEN_KEYS.REFRESH);
         return Promise.reject(refreshError);
-      } finally {
-        isRefreshing = false;
       }
     }
 
-    // Normalize all other errors
+    // Normalize errors.
     if (error.response?.data) {
       return Promise.reject(new ApiError(error.response.data));
     }

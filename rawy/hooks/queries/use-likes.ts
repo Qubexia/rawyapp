@@ -7,6 +7,7 @@ import {
   getLikeStatus,
   likeEpisode,
   unlikeEpisode,
+  LikeResult,
 } from '../../services/likes.service';
 
 export const likeKeys = {
@@ -43,7 +44,15 @@ export function useToggleLike(episodeId: string) {
 
       return { previous };
     },
-    onError: (_err, _vars, context) => {
+    onSuccess: (data) => {
+      // Sync cache with official data from server
+      queryClient.setQueryData(likeKeys.status(episodeId), {
+        isLiked: data.isLiked,
+        likesCount: data.likesCount,
+      });
+    },
+    onError: (err, _vars, context) => {
+      console.error('[Mutation] toggleLike failed:', err);
       // Rollback on error
       if (context?.previous) {
         queryClient.setQueryData(

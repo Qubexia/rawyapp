@@ -8,6 +8,7 @@ import axiosClient from './axios-client';
 
 export interface LikeResult {
   message: string;
+  isLiked: boolean;
   likesCount: number;
 }
 

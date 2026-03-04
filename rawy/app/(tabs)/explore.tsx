@@ -31,7 +31,6 @@ import {
 import { usePodcasts } from '@/hooks/queries/use-podcasts';
 import { useCreators } from '@/hooks/queries/use-creators';
 import { Palette, Spacing, Radius } from '@/constants/theme';
-import { useColorScheme } from '@/hooks/use-color-scheme';
 import type { Podcast } from '@/services/podcasts.service';
 import type { CreatorProfile } from '@/services/creators.service';
 
@@ -49,8 +48,7 @@ const CATEGORIES = [
 
 export default function ExploreScreen() {
   const theme = useTheme();
-  const colorScheme = useColorScheme();
-  const isDark = colorScheme === 'dark';
+  const isDark = false;
   const router = useRouter();
 
   const [searchQuery, setSearchQuery] = useState('');

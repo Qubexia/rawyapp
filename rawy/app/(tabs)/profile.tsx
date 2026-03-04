@@ -30,8 +30,7 @@ import { useColorScheme } from '@/hooks/use-color-scheme';
 
 export default function ProfileScreen() {
   const theme = useTheme();
-  const colorScheme = useColorScheme();
-  const isDark = colorScheme === 'dark';
+  const isDark = false;
   const router = useRouter();
   const { user, isAuthenticated, logout } = useAuthContext();
 

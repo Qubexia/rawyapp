@@ -35,7 +35,11 @@ export class CommentsService {
     });
 
     await this.episodesService.incrementCommentsCount(episodeId);
-    return comment;
+    
+    // Populate user for consistent return
+    const populated = await comment.populate('userId', 'name');
+    const { userId: user, ...rest } = populated.toObject();
+    return { ...rest, user } as any;
   }
 
   /**
@@ -52,7 +56,7 @@ export class CommentsService {
     const skip = (page - 1) * limit;
     const filter = { episodeId };
 
-    const [data, total] = await Promise.all([
+    const [rawData, total] = await Promise.all([
       this.commentModel
         .find(filter)
         .sort({ createdAt: 1 })
@@ -63,6 +67,12 @@ export class CommentsService {
         .exec(),
       this.commentModel.countDocuments(filter).exec(),
     ]);
+
+    // Map userId -> user
+    const data = rawData.map(({ userId: user, ...rest }: any) => ({
+      ...rest,
+      user,
+    }));
 
     const totalPages = Math.ceil(total / limit);
     return new PaginatedResponseDto(data as any, total, page, limit);

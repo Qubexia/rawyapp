@@ -6,6 +6,7 @@ import { useCallback, useState } from 'react';
 import { useRouter } from 'expo-router';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { loginSchema, LoginFormData } from '../validation/auth.schemas';
 import { useAuthContext } from '../context/auth-context';
 import { ApiError } from '../services/axios-client';
@@ -31,6 +32,7 @@ export function useLogin() {
 
         try {
           await login(data);
+          await AsyncStorage.setItem('@has_seen_onboarding', 'true').catch(() => {});
           router.replace('/(tabs)');
         } catch (err) {
           if (err instanceof ApiError) {

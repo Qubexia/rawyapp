@@ -39,8 +39,7 @@ import type { FollowedCreator } from '@/services/follows.service';
 
 export default function LibraryScreen() {
   const theme = useTheme();
-  const colorScheme = useColorScheme();
-  const isDark = colorScheme === 'dark';
+  const isDark = false;
   const router = useRouter();
   const { isAuthenticated } = useAuthContext();
 

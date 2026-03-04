@@ -42,8 +42,7 @@ const PODCAST_CARD_WIDTH = 160;
 
 export default function HomeScreen() {
   const theme = useTheme();
-  const colorScheme = useColorScheme();
-  const isDark = colorScheme === 'dark';
+  const isDark = false;
   const router = useRouter();
   const { user } = useAuthContext();
 
@@ -193,6 +192,7 @@ export default function HomeScreen() {
         styles.container,
         { backgroundColor: theme.colors.background },
       ]}
+      edges={['top']}
     >
       <ScrollView
         showsVerticalScrollIndicator={false}

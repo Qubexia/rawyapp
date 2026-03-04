@@ -17,7 +17,6 @@ import {
   Surface,
   useTheme,
 } from 'react-native-paper';
-import { LinearGradient } from 'expo-linear-gradient';
 import { Stack, router } from 'expo-router';
 import { Mail, Lock, ArrowRight, Headphones } from 'lucide-react-native';
 
@@ -155,7 +154,7 @@ export default function LoginScreen() {
                 {/* Footer */}
                 <View style={styles.footer}>
                   <Text variant="bodyMedium" style={styles.footerText}>
-                    Don't have an account?{' '}
+                    Don&apos;t have an account?{' '}
                   </Text>
                   <Button
                     mode="text"

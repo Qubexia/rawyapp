@@ -63,16 +63,21 @@ export class LikesService {
    * Check if user liked episode and return like count.
    */
   async getLikeStatus(
-    userId: Types.ObjectId,
+    userId: Types.ObjectId | null,
     episodeId: Types.ObjectId,
   ): Promise<{ isLiked: boolean; likesCount: number }> {
     const episode = await this.episodesService.findById(episodeId.toString());
-    const like = await this.likeModel
-      .findOne({ userId, episodeId })
-      .exec();
+    let isLiked = false;
+    
+    if (userId) {
+      const like = await this.likeModel
+        .findOne({ userId, episodeId })
+        .exec();
+      isLiked = !!like;
+    }
 
     return {
-      isLiked: !!like,
+      isLiked,
       likesCount: episode.likesCount,
     };
   }

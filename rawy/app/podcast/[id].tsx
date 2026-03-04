@@ -31,6 +31,7 @@ import {
 import { usePodcast } from '@/hooks/queries/use-podcasts';
 import { useEpisodes } from '@/hooks/queries/use-episodes';
 import { useFollowStatus, useToggleFollow } from '@/hooks/queries/use-follows';
+import { useAuthContext } from '@/context/auth-context';
 import { Palette, Spacing, Radius } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import type { Episode } from '@/services/episodes.service';
@@ -38,9 +39,9 @@ import type { Episode } from '@/services/episodes.service';
 export default function PodcastDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const theme = useTheme();
-  const colorScheme = useColorScheme();
-  const isDark = colorScheme === 'dark';
+  const isDark = false;
   const router = useRouter();
+  const { user } = useAuthContext();
 
   const { data: podcast, isLoading: podcastLoading } = usePodcast(id);
   const { data: episodesData, isLoading: episodesLoading } = useEpisodes(id);
@@ -48,6 +49,13 @@ export default function PodcastDetailScreen() {
     podcast?.creator?._id || '',
   );
   const toggleFollow = useToggleFollow(podcast?.creator?._id || '');
+
+  const isOwnPodcast = React.useMemo(() => {
+    if (!user?._id || !podcast?.creator) return false;
+    // podcast.creator._id is the User ID because it's populated from creatorId ref: 'User'
+    const podcastCreatorId = podcast.creator._id || podcast.creator;
+    return podcastCreatorId.toString() === user._id.toString();
+  }, [podcast, user]);
 
   const episodes = episodesData?.pages.flatMap((p) => p.data) ?? [];
 
@@ -194,29 +202,31 @@ export default function PodcastDetailScreen() {
 
         {/* Actions */}
         <View style={styles.actions}>
-          <Button
-            mode={followStatus?.isFollowing ? 'outlined' : 'contained'}
-            onPress={() =>
-              toggleFollow.mutate(followStatus?.isFollowing || false)
-            }
-            loading={toggleFollow.isPending}
-            icon={() =>
-              followStatus?.isFollowing ? (
-                <UserCheck size={18} color={theme.colors.primary} />
-              ) : (
-                <UserPlus size={18} color="#FFFFFF" />
-              )
-            }
-            style={styles.followButton}
-            contentStyle={styles.followContent}
-          >
-            {followStatus?.isFollowing ? 'Following' : 'Follow'}
-          </Button>
+          {!isOwnPodcast && (
+            <Button
+              mode={followStatus?.isFollowing ? 'outlined' : 'contained'}
+              onPress={() =>
+                toggleFollow.mutate(followStatus?.isFollowing || false)
+              }
+              loading={toggleFollow.isPending}
+              icon={() =>
+                followStatus?.isFollowing ? (
+                  <UserCheck size={18} color={theme.colors.primary} />
+                ) : (
+                  <UserPlus size={18} color="#FFFFFF" />
+                )
+              }
+              style={styles.followButton}
+              contentStyle={styles.followContent}
+            >
+              {followStatus?.isFollowing ? 'Following' : 'Follow'}
+            </Button>
+          )}
           <Text
             variant="labelMedium"
             style={{
               color: theme.colors.onSurfaceVariant,
-              marginLeft: Spacing.md,
+              marginLeft: isOwnPodcast ? 0 : Spacing.md,
             }}
           >
             {podcast?.episodeCount || episodes.length} episodes

@@ -88,6 +88,7 @@ export function FormInput<T extends FieldValues>({
             outlineStyle={styles.outline}
             style={[
               styles.input,
+              { backgroundColor: '#FFFFFF' },
               multiline && { minHeight: (numberOfLines || 3) * 24 },
             ]}
             theme={{

@@ -95,15 +95,25 @@ export class EpisodesService {
       filter.creatorId = new Types.ObjectId(creatorId);
     }
 
-    const [data, total] = await Promise.all([
+    const [rawData, total] = await Promise.all([
       this.episodeModel
         .find(filter)
         .sort({ createdAt: -1 })
         .skip(skip)
         .limit(limit)
+        .populate('podcastId', 'title coverImageUrl')
+        .populate('creatorId', 'name avatarUrl')
+        .lean()
         .exec(),
       this.episodeModel.countDocuments(filter).exec(),
     ]);
+
+    // Rename podcastId → podcast, creatorId → creator to match frontend expectations
+    const data = rawData.map(({ podcastId, creatorId, ...rest }: any) => ({
+      ...rest,
+      podcast: podcastId,
+      creator: creatorId,
+    })) as any;
 
     const totalPages = Math.ceil(total / limit);
 
@@ -119,12 +129,18 @@ export class EpisodesService {
   /**
    * Find an episode by ID
    */
-  async findById(id: string): Promise<Episode> {
-    const episode = await this.episodeModel.findById(id).exec();
-    if (!episode) {
+  async findById(id: string): Promise<any> {
+    const raw = await this.episodeModel
+      .findById(id)
+      .populate('podcastId', 'title coverImageUrl')
+      .populate('creatorId', 'name avatarUrl')
+      .lean()
+      .exec();
+    if (!raw) {
       throw new NotFoundException(`Episode with ID ${id} not found`);
     }
-    return episode;
+    const { podcastId, creatorId, ...rest } = raw as any;
+    return { ...rest, podcast: podcastId, creator: creatorId };
   }
 
   /**

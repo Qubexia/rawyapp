@@ -20,13 +20,14 @@ export const podcastKeys = {
   detail: (id: string) => [...podcastKeys.details(), id] as const,
 };
 
-export function usePodcasts(creatorId?: string) {
+export function usePodcasts(creatorId?: string, options?: { enabled?: boolean }) {
   return useInfiniteQuery({
     queryKey: podcastKeys.list({ creatorId }),
     queryFn: ({ pageParam = 1 }) => getPodcasts(pageParam, 20, creatorId),
     getNextPageParam: (lastPage) =>
       lastPage.page < lastPage.totalPages ? lastPage.page + 1 : undefined,
     initialPageParam: 1,
+    enabled: options?.enabled !== undefined ? options.enabled : true,
   });
 }
 

@@ -12,6 +12,7 @@ import { ArrowLeft, Mic, Headphones, UserPlus, UserCheck, Users } from 'lucide-r
 import { useCreator } from '@/hooks/queries/use-creators';
 import { usePodcasts } from '@/hooks/queries/use-podcasts';
 import { useFollowStatus, useToggleFollow } from '@/hooks/queries/use-follows';
+import { useAuthContext } from '@/context/auth-context';
 import { Palette, Spacing, Radius } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import type { Podcast } from '@/services/podcasts.service';
@@ -21,6 +22,7 @@ export default function CreatorDetailScreen() {
   const theme = useTheme();
   const isDark = useColorScheme() === 'dark';
   const router = useRouter();
+  const { user } = useAuthContext();
 
   const { data: creator, isLoading } = useCreator(id);
   const { data: podcastsData } = usePodcasts(id);
@@ -73,16 +75,18 @@ export default function CreatorDetailScreen() {
           </View>
         </View>
 
-        <Button
-          mode={followStatus?.isFollowing ? 'outlined' : 'contained'}
-          onPress={() => toggleFollow.mutate(followStatus?.isFollowing || false)}
-          loading={toggleFollow.isPending}
-          icon={() => followStatus?.isFollowing ? <UserCheck size={18} color={theme.colors.primary} /> : <UserPlus size={18} color="#FFF" />}
-          style={s.followBtn}
-          contentStyle={{ height: 44 }}
-        >
-          {followStatus?.isFollowing ? 'Following' : 'Follow'}
-        </Button>
+        {creator?.userId?.toString() !== user?._id?.toString() && (
+          <Button
+            mode={followStatus?.isFollowing ? 'outlined' : 'contained'}
+            onPress={() => toggleFollow.mutate(followStatus?.isFollowing || false)}
+            loading={toggleFollow.isPending}
+            icon={() => followStatus?.isFollowing ? <UserCheck size={18} color={theme.colors.primary} /> : <UserPlus size={18} color="#FFF" />}
+            style={s.followBtn}
+            contentStyle={{ height: 44 }}
+          >
+            {followStatus?.isFollowing ? 'Following' : 'Follow'}
+          </Button>
+        )}
       </View>
 
       {podcasts.length > 0 && (

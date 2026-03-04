@@ -3,7 +3,6 @@
  */
 
 import {
-  DarkTheme,
   DefaultTheme,
   ThemeProvider,
 } from '@react-navigation/native';
@@ -15,9 +14,8 @@ import 'react-native-reanimated';
 import { PaperProvider } from 'react-native-paper';
 import { QueryClientProvider } from '@tanstack/react-query';
 
-import { useColorScheme } from '@/hooks/use-color-scheme';
 import { AuthProvider } from '@/context/auth-context';
-import { PaperLightTheme, PaperDarkTheme } from '@/constants/theme';
+import { PaperLightTheme } from '@/constants/theme';
 import { queryClient } from '@/services/query-client';
 
 SplashScreen.preventAutoHideAsync().catch(() => {});
@@ -27,18 +25,15 @@ export const unstable_settings = {
 };
 
 export default function RootLayout() {
-  const colorScheme = useColorScheme();
-  const isDark = colorScheme === 'dark';
-
   useEffect(() => {
     SplashScreen.hideAsync().catch(() => {});
   }, []);
 
   return (
     <QueryClientProvider client={queryClient}>
-      <PaperProvider theme={isDark ? PaperDarkTheme : PaperLightTheme}>
+      <PaperProvider theme={PaperLightTheme}>
         <AuthProvider>
-          <ThemeProvider value={isDark ? DarkTheme : DefaultTheme}>
+          <ThemeProvider value={DefaultTheme}>
             <Stack screenOptions={{ headerShown: false }}>
               <Stack.Screen name="onboarding" />
               <Stack.Screen name="login" />
@@ -69,7 +64,7 @@ export default function RootLayout() {
                 options={{ headerShown: false, animation: 'slide_from_bottom' }}
               />
             </Stack>
-            <StatusBar style={isDark ? 'light' : 'dark'} />
+            <StatusBar style="dark" />
           </ThemeProvider>
         </AuthProvider>
       </PaperProvider>

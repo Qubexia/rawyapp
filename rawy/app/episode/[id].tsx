@@ -61,7 +61,7 @@ export default function EpisodeDetailScreen() {
       </View>
       <View style={s.commentBody}>
         <Text variant="labelMedium" style={{ color: theme.colors.onSurface, fontWeight: '600' }}>{item.user?.name || 'Anon'}</Text>
-        <Text variant="bodySmall" style={{ color: theme.colors.onSurfaceVariant, marginTop: 2 }}>{item.body}</Text>
+        <Text variant="bodySmall" style={{ color: theme.colors.onSurfaceVariant, marginTop: 2 }}>{item.text}</Text>
       </View>
       {user?._id === item.user?._id && (
         <IconButton icon={() => <Trash2 size={16} color={theme.colors.error} />} size={20} onPress={() => deleteComment.mutate(item._id)} />
@@ -89,9 +89,20 @@ export default function EpisodeDetailScreen() {
           {isPlaying ? <Pause size={28} color="#FFF" fill="#FFF" /> : <Play size={28} color="#FFF" fill="#FFF" />}
         </TouchableOpacity>
         <View style={s.actions}>
-          <TouchableOpacity style={s.action} onPress={() => toggleLike.mutate(likeStatus?.isLiked || false)}>
+          <TouchableOpacity 
+            style={s.action} 
+            onPress={() => {
+              if (!user) {
+                router.push('/login' as any);
+                return;
+              }
+              toggleLike.mutate(likeStatus?.isLiked || false);
+            }}
+          >
             <Heart size={22} color={likeStatus?.isLiked ? '#EF4444' : theme.colors.onSurfaceVariant} fill={likeStatus?.isLiked ? '#EF4444' : 'transparent'} />
-            <Text variant="labelSmall" style={{ color: theme.colors.onSurfaceVariant, marginTop: 4 }}>{likeStatus?.likesCount ?? 0}</Text>
+            <Text variant="labelSmall" style={{ color: theme.colors.onSurfaceVariant, marginTop: 4 }}>
+              {likeStatus?.likesCount ?? episode?.likesCount ?? 0}
+            </Text>
           </TouchableOpacity>
           <TouchableOpacity style={s.action}>
             <MessageCircle size={22} color={theme.colors.onSurfaceVariant} />
@@ -129,7 +140,15 @@ export default function EpisodeDetailScreen() {
         {user && (
           <Surface style={[s.inputBar, { backgroundColor: isDark ? Palette.dark.surface : '#FFF', borderTopColor: isDark ? Palette.dark.border : Palette.light.border }]} elevation={2}>
             <TextInput style={[s.input, { color: theme.colors.onSurface }]} placeholder="Write a comment..." placeholderTextColor={theme.colors.onSurfaceVariant} value={commentText} onChangeText={setCommentText} multiline />
-            <IconButton icon={() => <Send size={20} color={commentText.trim() ? theme.colors.primary : theme.colors.onSurfaceVariant} />} onPress={handleSend} disabled={!commentText.trim() || createComment.isPending} />
+            <IconButton
+              icon={() =>
+                createComment.isPending
+                  ? <ActivityIndicator size={20} color={theme.colors.primary} />
+                  : <Send size={20} color={commentText.trim() ? theme.colors.primary : theme.colors.onSurfaceVariant} />
+              }
+              onPress={handleSend}
+              disabled={!commentText.trim() || createComment.isPending}
+            />
           </Surface>
         )}
       </KeyboardAvoidingView>

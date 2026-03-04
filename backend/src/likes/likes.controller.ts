@@ -16,6 +16,7 @@ import {
 } from '@nestjs/swagger';
 import { LikesService } from './likes.service';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
+import { Public } from '../common/decorators/public.decorator';
 import { ApiCommonErrorResponses } from '../common/decorators/api-error-responses.decorator';
 
 @ApiTags('Likes')
@@ -45,7 +46,11 @@ export class LikesController {
     );
     return {
       statusCode: 201,
-      data: { message: 'Episode liked', likesCount: result.likesCount },
+      data: { 
+        message: 'Episode liked', 
+        isLiked: true,
+        likesCount: result.likesCount 
+      },
     };
   }
 
@@ -69,26 +74,31 @@ export class LikesController {
     );
     return {
       statusCode: 200,
-      data: { message: 'Episode unliked', likesCount: result.likesCount },
+      data: { 
+        message: 'Episode unliked', 
+        isLiked: false,
+        likesCount: result.likesCount 
+      },
     };
   }
 
   @Get('episodes/:episodeId/status')
+  @Public()
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Check if current user liked an episode and get like count' })
   @ApiParam({ name: 'episodeId', description: 'Episode ID' })
   @ApiResponse({ status: 200, description: 'Status', schema: { properties: { isLiked: { type: 'boolean' }, likesCount: { type: 'number' } } } })
-  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @ApiResponse({ status: 200, description: 'Status for anonymous' })
   @ApiResponse({ status: 404, description: 'Episode not found' })
   async getStatus(
-    @CurrentUser('id') userId: string,
+    @CurrentUser('id') userId: string | undefined,
     @Param('episodeId') episodeId: string,
   ) {
     if (!Types.ObjectId.isValid(episodeId)) {
       throw new BadRequestException('Invalid episode ID');
     }
     const result = await this.likesService.getLikeStatus(
-      new Types.ObjectId(userId),
+      userId ? new Types.ObjectId(userId) : null,
       new Types.ObjectId(episodeId),
     );
     return { statusCode: 200, data: result };

@@ -23,7 +23,10 @@ export default function CreatorDashboard() {
   const { user } = useAuthContext();
 
   const { data: profile, isLoading: profileLoading } = useMyCreatorProfile();
-  const { data: podcastsData, isLoading: podcastsLoading } = usePodcasts(undefined);
+  const { data: podcastsData, isLoading: podcastsLoading } = usePodcasts(
+    profile?._id,
+    { enabled: !!profile?._id },
+  );
   const podcasts = podcastsData?.pages.flatMap((p) => p.data) ?? [];
 
   if (profileLoading) {

@@ -19,9 +19,9 @@ import {
   LoginPayload,
   loginUser,
   logoutUser,
-  refreshAccessToken,
   getStoredTokens,
 } from '../services/auth.service';
+import { getMe } from '../services/users.service';
 import { ApiError } from '../services/axios-client';
 
 // ─── Context shape ───────────────────────────────────────────────────────────
@@ -55,14 +55,23 @@ export function AuthProvider({ children }: PropsWithChildren) {
 
     (async () => {
       try {
-        const { refreshToken } = await getStoredTokens();
-        if (refreshToken) {
-          const freshTokens = await refreshAccessToken();
-          if (active) setUser(freshTokens.user);
+        const { accessToken, refreshToken } = await getStoredTokens();
+        console.debug('[AuthContext] Restoration - tokens check:', { hasAccess: !!accessToken, hasRefresh: !!refreshToken });
+        
+        if (accessToken || refreshToken) {
+          // getMe() will automatically use existing tokens. 
+          // If expired, the axios interceptors will handle the refresh.
+          const userProfile = await getMe();
+          console.debug('[AuthContext] Restoration - success for user:', userProfile.name);
+          if (active) setUser(userProfile);
+        } else {
+          console.debug('[AuthContext] Restoration - no tokens found');
         }
-      } catch {
-        // Refresh failed → user must log in again
-        setUser(null);
+      } catch (err) {
+        console.error('[AuthContext] Restoration - failed:', err);
+        // If it's a 401, the interceptors might have already cleared tokens.
+        // We set user to null to show login.
+        if (active) setUser(null);
       } finally {
         if (active) setIsLoading(false);
       }

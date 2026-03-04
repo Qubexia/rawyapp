@@ -9,7 +9,7 @@ import type { PaginatedResponse } from './podcasts.service';
 
 export interface Comment {
   _id: string;
-  body: string;
+  text: string;
   user: {
     _id: string;
     name: string;
@@ -35,11 +35,11 @@ export async function getComments(
 
 export async function createComment(
   episodeId: string,
-  body: string,
+  text: string,
 ): Promise<Comment> {
   const { data } = await axiosClient.post<Comment>(
     `/comments/episodes/${episodeId}`,
-    { body },
+    { text },
   );
   return data;
 }

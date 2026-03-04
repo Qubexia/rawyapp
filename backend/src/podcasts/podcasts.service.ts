@@ -57,15 +57,23 @@ export class PodcastsService {
       filter.creatorId = new Types.ObjectId(creatorId);
     }
 
-    const [data, total] = await Promise.all([
+    const [rawData, total] = await Promise.all([
       this.podcastModel
         .find(filter)
         .sort({ createdAt: -1 })
         .skip(skip)
         .limit(limit)
+        .populate('creatorId', 'name avatarUrl')
+        .lean()
         .exec(),
       this.podcastModel.countDocuments(filter).exec(),
     ]);
+
+    // Rename creatorId → creator to match frontend expectations
+    const data = rawData.map(({ creatorId, ...rest }: any) => ({
+      ...rest,
+      creator: creatorId,
+    })) as any;
 
     const totalPages = Math.ceil(total / limit);
 
@@ -81,12 +89,17 @@ export class PodcastsService {
   /**
    * Find a podcast by ID
    */
-  async findById(id: string): Promise<Podcast> {
-    const podcast = await this.podcastModel.findById(id).exec();
-    if (!podcast) {
+  async findById(id: string): Promise<any> {
+    const raw = await this.podcastModel
+      .findById(id)
+      .populate('creatorId', 'name avatarUrl')
+      .lean()
+      .exec();
+    if (!raw) {
       throw new NotFoundException(`Podcast with ID ${id} not found`);
     }
-    return podcast;
+    const { creatorId, ...rest } = raw as any;
+    return { ...rest, creator: creatorId };
   }
 
   /**
