@@ -1,380 +1,674 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useRef, useEffect, useState } from "react";
 import {
-    View,
-    Text,
-    StyleSheet,
-    TextInput,
-    TouchableOpacity,
-    KeyboardAvoidingView,
-    Platform,
-    ScrollView,
-    Animated,
-    useWindowDimensions,
-    ImageBackground,
-    SafeAreaView,
-} from 'react-native';
-import { StatusBar } from 'expo-status-bar';
-import { useRouter } from 'expo-router';
-import { Ionicons } from '@expo/vector-icons';
+  View,
+  Text,
+  StyleSheet,
+  TextInput,
+  TouchableOpacity,
+  KeyboardAvoidingView,
+  Platform,
+  ScrollView,
+  Animated,
+  useWindowDimensions,
+  ActivityIndicator,
+} from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
+import { StatusBar } from "expo-status-bar";
+import { useRouter } from "expo-router";
+import { Ionicons } from "@expo/vector-icons";
+import SafeLinearGradient from "@/components/safe-linear-gradient";
+import { useRegister } from "@/hooks/use-register";
 
 export default function RegisterScreen() {
-    const router = useRouter();
-    const { width } = useWindowDimensions();
+  const router = useRouter();
+  const { width } = useWindowDimensions();
 
-    // Selected tab: 'user' or 'creator'
-    const [activeTab, setActiveTab] = useState<'user' | 'creator'>('user');
+  const {
+    activeTab,
+    setActiveTab,
+    fields,
+    setField,
+    errors,
+    isLoading,
+    serverError,
+    handleSubmit,
+  } = useRegister();
 
-    // Animation values
-    const indicatorPosition = useRef(new Animated.Value(0)).current;
-    const fadeAnim = useRef(new Animated.Value(1)).current;
+  // Animation values
+  const indicatorPosition = useRef(new Animated.Value(0)).current;
+  const fadeAnim = useRef(new Animated.Value(1)).current;
 
-    // Form Fields mapped to backend DTOs (RegisterDto / RegisterCreatorDto)
-    const [name, setName] = useState('');
-    const [email, setEmail] = useState('');
-    const [password, setPassword] = useState('');
-    const [showName, setShowName] = useState(''); // Only for creator
-    const [isPasswordVisible, setIsPasswordVisible] = useState(false);
+  const [isPasswordVisible, setIsPasswordVisible] = useState(false);
 
-    useEffect(() => {
-        // Animate the tab indicator
-        Animated.spring(indicatorPosition, {
-            toValue: activeTab === 'user' ? 0 : 1,
-            useNativeDriver: false,
-            friction: 8,
-            tension: 60,
-        }).start();
+  useEffect(() => {
+    // Animate the tab indicator
+    Animated.spring(indicatorPosition, {
+      toValue: activeTab === "user" ? 0 : 1,
+      useNativeDriver: false,
+      friction: 8,
+      tension: 60,
+    }).start();
 
-        // Fade out and fade in the form
-        Animated.sequence([
-            Animated.timing(fadeAnim, {
-                toValue: 0,
-                duration: 150,
-                useNativeDriver: true,
-            }),
-            Animated.timing(fadeAnim, {
-                toValue: 1,
-                duration: 250,
-                useNativeDriver: true,
-            }),
-        ]).start();
-    }, [activeTab]);
+    // Fade out and fade in the form
+    Animated.sequence([
+      Animated.timing(fadeAnim, {
+        toValue: 0,
+        duration: 150,
+        useNativeDriver: true,
+      }),
+      Animated.timing(fadeAnim, {
+        toValue: 1,
+        duration: 250,
+        useNativeDriver: true,
+      }),
+    ]).start();
+  }, [activeTab]);
 
-    // Tab indicator dynamic styles
-    const tabWidth = width - 96; // 24 outer padding * 2 + 24 card padding * 2
-    const indicatorTranslateX = indicatorPosition.interpolate({
-        inputRange: [0, 1],
-        outputRange: [4, (tabWidth / 2)],
-    });
+  // Tab indicator dynamic styles
+  const tabWidth = width - 96; // 24 outer padding * 2 + 24 card padding * 2
+  const indicatorTranslateX = indicatorPosition.interpolate({
+    inputRange: [0, 1],
+    outputRange: [4, tabWidth / 2],
+  });
 
-    const handleRegister = () => {
-        // In a real app, integrate with the backend here.
-        console.log('Registering', activeTab, { name, email, password, showName });
-        // Assuming registration is successful, go to the main tabs
-        router.replace('/(tabs)');
-    };
+  return (
+    <SafeLinearGradient
+      colors={["#FFFFFF", "#F6F8FC", "#FFFFFF"]}
+      start={{ x: 0, y: 0 }}
+      end={{ x: 1, y: 1 }}
+      style={styles.root}
+    >
+      <StatusBar style="light" />
 
-    return (
-        <ImageBackground
-            source={require('../assets/images/register_bg.png')}
-            style={styles.backgroundImage}
-            resizeMode="cover"
+      <SafeAreaView style={styles.safeArea}>
+        <KeyboardAvoidingView
+          style={styles.flex}
+          behavior={Platform.OS === "ios" ? "padding" : "height"}
         >
-            <View style={styles.overlay} />
-            <SafeAreaView style={styles.safeArea}>
-                <KeyboardAvoidingView
-                    style={styles.keyboardAvoid}
-                    behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          <ScrollView
+            showsVerticalScrollIndicator={false}
+            contentContainerStyle={styles.scrollContent}
+            keyboardShouldPersistTaps="handled"
+          >
+            {/* ── Brand Header ── */}
+            <View style={styles.header}>
+              {/* Logo badge */}
+              <View style={styles.logoBadge}>
+                <SafeLinearGradient
+                  colors={["#6C63FF", "#9B59B6"]}
+                  style={styles.logoBadgeGradient}
                 >
-                    <StatusBar style="light" />
-                    <ScrollView
-                        showsVerticalScrollIndicator={false}
-                        contentContainerStyle={styles.scrollContent}
-                        keyboardShouldPersistTaps="handled"
+                  <Ionicons name="mic" size={34} color="#FFFFFF" />
+                </SafeLinearGradient>
+              </View>
+
+              {/* Sound wave bars decoration */}
+              <View style={styles.waveRow}>
+                {[6, 14, 22, 14, 6, 18, 10, 24, 10, 18, 6, 14, 22].map(
+                  (h, i) => (
+                    <View
+                      key={i}
+                      style={[
+                        styles.waveBar,
+                        { height: h, opacity: i % 2 === 0 ? 0.4 : 0.7 },
+                      ]}
+                    />
+                  ),
+                )}
+              </View>
+
+              <Text style={styles.appName}>Rawy</Text>
+              <Text style={styles.tagline}>Discover · Listen · Create</Text>
+            </View>
+
+            {/* ── Card ── */}
+            <View style={styles.card}>
+              <Text style={styles.cardTitle}>Create your account</Text>
+
+              {/* Tab bar */}
+              <View style={styles.tabContainer}>
+                <Animated.View
+                  style={[
+                    styles.tabIndicator,
+                    {
+                      transform: [{ translateX: indicatorTranslateX }],
+                      width: tabWidth / 2 - 4,
+                    },
+                  ]}
+                />
+                <TouchableOpacity
+                  style={styles.tabButton}
+                  activeOpacity={0.8}
+                  onPress={() => setActiveTab("user")}
+                >
+                  <Ionicons
+                    name="headset-outline"
+                    size={16}
+                    color={activeTab === "user" ? "#ffffff" : "#8A9BB0"}
+                    style={{ marginRight: 6 }}
+                  />
+                  <Text
+                    style={[
+                      styles.tabText,
+                      activeTab === "user" && styles.activeTabText,
+                    ]}
+                  >
+                    Listener
+                  </Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={styles.tabButton}
+                  activeOpacity={0.8}
+                  onPress={() => setActiveTab("creator")}
+                >
+                  <Ionicons
+                    name="mic-outline"
+                    size={16}
+                    color={activeTab === "creator" ? "#6C63FF" : "#8A9BB0"}
+                    style={{ marginRight: 6 }}
+                  />
+                  <Text
+                    style={[
+                      styles.tabText,
+                      activeTab === "creator" && styles.activeTabText,
+                    ]}
+                  >
+                    Creator
+                  </Text>
+                </TouchableOpacity>
+              </View>
+
+              {/* Creator context hint */}
+              {activeTab === "creator" && (
+                <View style={styles.creatorHint}>
+                  <Ionicons
+                    name="information-circle-outline"
+                    size={15}
+                    color="#6C63FF"
+                    style={{ marginRight: 6 }}
+                  />
+                  <Text style={styles.creatorHintText}>
+                    As a creator you can publish podcasts and grow your
+                    audience.
+                  </Text>
+                </View>
+              )}
+
+              {/* Form */}
+              <Animated.View style={{ opacity: fadeAnim }}>
+                {/* Name */}
+                <Text style={styles.label}>Full Name</Text>
+                <View
+                  style={[
+                    styles.inputGroup,
+                    !!errors.name && styles.inputGroupError,
+                  ]}
+                >
+                  <Ionicons
+                    name="person-outline"
+                    size={18}
+                    color={errors.name ? "#EF4444" : "#6C63FF"}
+                    style={styles.inputIcon}
+                  />
+                  <TextInput
+                    style={styles.input}
+                    placeholder="e.g. Ahmed Khalid"
+                    placeholderTextColor="#6B7A90"
+                    value={fields.name}
+                    onChangeText={(v) => setField("name", v)}
+                    autoCapitalize="words"
+                    editable={!isLoading}
+                  />
+                </View>
+                {!!errors.name && (
+                  <Text style={styles.errorText}>{errors.name}</Text>
+                )}
+
+                {/* Email */}
+                <Text style={styles.label}>Email Address</Text>
+                <View
+                  style={[
+                    styles.inputGroup,
+                    !!errors.email && styles.inputGroupError,
+                  ]}
+                >
+                  <Ionicons
+                    name="mail-outline"
+                    size={18}
+                    color={errors.email ? "#EF4444" : "#6C63FF"}
+                    style={styles.inputIcon}
+                  />
+                  <TextInput
+                    style={styles.input}
+                    placeholder="you@example.com"
+                    placeholderTextColor="#6B7A90"
+                    value={fields.email}
+                    onChangeText={(v) => setField("email", v)}
+                    keyboardType="email-address"
+                    autoCapitalize="none"
+                    autoCorrect={false}
+                    editable={!isLoading}
+                  />
+                </View>
+                {!!errors.email && (
+                  <Text style={styles.errorText}>{errors.email}</Text>
+                )}
+
+                {/* Show Name (creator only) */}
+                {activeTab === "creator" && (
+                  <>
+                    <Text style={styles.label}>Podcast / Show Name</Text>
+                    <View
+                      style={[
+                        styles.inputGroup,
+                        !!errors.showName && styles.inputGroupError,
+                      ]}
                     >
-                        {/* Header section without back button */}
-                        <View style={styles.header}>
-                            <View style={styles.titlesContainer}>
-                                <Text style={styles.title}>Welcome to Rawy</Text>
-                                <Text style={styles.subtitle}>Discover, connect, and share your voice.</Text>
-                            </View>
-                        </View>
+                      <Ionicons
+                        name="radio-outline"
+                        size={18}
+                        color={errors.showName ? "#EF4444" : "#6C63FF"}
+                        style={styles.inputIcon}
+                      />
+                      <TextInput
+                        style={styles.input}
+                        placeholder="My Awesome Show"
+                        placeholderTextColor="#6B7A90"
+                        value={fields.showName}
+                        onChangeText={(v) => setField("showName", v)}
+                        autoCapitalize="words"
+                        editable={!isLoading}
+                      />
+                    </View>
+                    {!!errors.showName && (
+                      <Text style={styles.errorText}>{errors.showName}</Text>
+                    )}
+                  </>
+                )}
 
-                        {/* Glassmorphism Card */}
-                        <View style={styles.card}>
-                            {/* Custom Tab Bar */}
-                            <View style={styles.tabContainer}>
-                                <Animated.View
-                                    style={[
-                                        styles.tabIndicator,
-                                        { transform: [{ translateX: indicatorTranslateX }], width: (tabWidth / 2) - 4 },
-                                    ]}
-                                />
-                                <TouchableOpacity
-                                    style={styles.tabButton}
-                                    activeOpacity={0.8}
-                                    onPress={() => setActiveTab('user')}
-                                >
-                                    <Text
-                                        style={[
-                                            styles.tabText,
-                                            activeTab === 'user' && styles.activeTabText,
-                                        ]}
-                                    >
-                                        Listener
-                                    </Text>
-                                </TouchableOpacity>
-                                <TouchableOpacity
-                                    style={styles.tabButton}
-                                    activeOpacity={0.8}
-                                    onPress={() => setActiveTab('creator')}
-                                >
-                                    <Text
-                                        style={[
-                                            styles.tabText,
-                                            activeTab === 'creator' && styles.activeTabText,
-                                        ]}
-                                    >
-                                        Creator
-                                    </Text>
-                                </TouchableOpacity>
-                            </View>
+                {/* Password */}
+                <Text style={styles.label}>Password</Text>
+                <View
+                  style={[
+                    styles.inputGroup,
+                    !!errors.password && styles.inputGroupError,
+                  ]}
+                >
+                  <Ionicons
+                    name="lock-closed-outline"
+                    size={18}
+                    color={errors.password ? "#EF4444" : "#6C63FF"}
+                    style={styles.inputIcon}
+                  />
+                  <TextInput
+                    style={styles.input}
+                    placeholder="At least 8 characters"
+                    placeholderTextColor="#6B7A90"
+                    value={fields.password}
+                    onChangeText={(v) => setField("password", v)}
+                    secureTextEntry={!isPasswordVisible}
+                    editable={!isLoading}
+                  />
+                  <TouchableOpacity
+                    onPress={() => setIsPasswordVisible(!isPasswordVisible)}
+                    style={styles.eyeIcon}
+                  >
+                    <Ionicons
+                      name={
+                        isPasswordVisible ? "eye-outline" : "eye-off-outline"
+                      }
+                      size={18}
+                      color="#6B7A90"
+                    />
+                  </TouchableOpacity>
+                </View>
+                {!!errors.password && (
+                  <Text style={styles.errorText}>{errors.password}</Text>
+                )}
 
-                            {/* Dynamic Form Content */}
-                            <Animated.View style={[styles.formContainer, { opacity: fadeAnim }]}>
-                                <View style={styles.inputGroup}>
-                                    <Ionicons name="person-outline" size={20} color="#8A8A8E" style={styles.inputIcon} />
-                                    <TextInput
-                                        style={styles.input}
-                                        placeholder="Full Name"
-                                        placeholderTextColor="#A1A1AA"
-                                        value={name}
-                                        onChangeText={setName}
-                                        autoCapitalize="words"
-                                    />
-                                </View>
+                {/* Server error */}
+                {!!serverError && (
+                  <View style={styles.serverErrorBanner}>
+                    <Ionicons
+                      name="alert-circle-outline"
+                      size={16}
+                      color="#EF4444"
+                      style={{ marginRight: 8 }}
+                    />
+                    <Text style={styles.serverErrorText}>{serverError}</Text>
+                  </View>
+                )}
 
-                                <View style={styles.inputGroup}>
-                                    <Ionicons name="mail-outline" size={20} color="#8A8A8E" style={styles.inputIcon} />
-                                    <TextInput
-                                        style={styles.input}
-                                        placeholder="Email Address"
-                                        placeholderTextColor="#A1A1AA"
-                                        value={email}
-                                        onChangeText={setEmail}
-                                        keyboardType="email-address"
-                                        autoCapitalize="none"
-                                    />
-                                </View>
+                {/* Submit */}
+                <TouchableOpacity
+                  activeOpacity={0.85}
+                  onPress={handleSubmit}
+                  disabled={isLoading}
+                  style={styles.submitWrapper}
+                >
+                  <SafeLinearGradient
+                    colors={
+                      isLoading
+                        ? ["#4A45B0", "#7B5EA7"]
+                        : ["#6C63FF", "#9B59B6"]
+                    }
+                    start={{ x: 0, y: 0 }}
+                    end={{ x: 1, y: 0 }}
+                    style={styles.submitButton}
+                  >
+                    {isLoading ? (
+                      <ActivityIndicator color="#FFFFFF" size="small" />
+                    ) : (
+                      <>
+                        <Text style={styles.submitText}>Get Started</Text>
+                        <Ionicons
+                          name="arrow-forward"
+                          size={18}
+                          color="#FFFFFF"
+                          style={{ marginLeft: 8 }}
+                        />
+                      </>
+                    )}
+                  </SafeLinearGradient>
+                </TouchableOpacity>
+              </Animated.View>
 
-                                {activeTab === 'creator' && (
-                                    <View style={styles.inputGroup}>
-                                        <Ionicons name="mic-outline" size={20} color="#8A8A8E" style={styles.inputIcon} />
-                                        <TextInput
-                                            style={styles.input}
-                                            placeholder="Show/Podcast Name"
-                                            placeholderTextColor="#A1A1AA"
-                                            value={showName}
-                                            onChangeText={setShowName}
-                                            autoCapitalize="words"
-                                        />
-                                    </View>
-                                )}
+              {/* Divider */}
+              <View style={styles.divider}>
+                <View style={styles.dividerLine} />
+                <Text style={styles.dividerText}>or</Text>
+                <View style={styles.dividerLine} />
+              </View>
 
-                                <View style={[styles.inputGroup, styles.lastInputGroup]}>
-                                    <Ionicons name="lock-closed-outline" size={20} color="#8A8A8E" style={styles.inputIcon} />
-                                    <TextInput
-                                        style={styles.input}
-                                        placeholder="Password"
-                                        placeholderTextColor="#A1A1AA"
-                                        value={password}
-                                        onChangeText={setPassword}
-                                        secureTextEntry={!isPasswordVisible}
-                                    />
-                                    <TouchableOpacity onPress={() => setIsPasswordVisible(!isPasswordVisible)} style={styles.eyeIcon}>
-                                        <Ionicons
-                                            name={isPasswordVisible ? 'eye-outline' : 'eye-off-outline'}
-                                            size={20}
-                                            color="#8A8A8E"
-                                        />
-                                    </TouchableOpacity>
-                                </View>
+              {/* Footer */}
+              <View style={styles.footer}>
+                <Text style={styles.footerText}>Already have an account? </Text>
+                <TouchableOpacity onPress={() => router.back()}>
+                  <Text style={styles.footerLink}>Sign In</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
 
-                                <TouchableOpacity style={styles.registerButton} activeOpacity={0.85} onPress={handleRegister}>
-                                    <Text style={styles.registerButtonText}>Register</Text>
-                                </TouchableOpacity>
-                            </Animated.View>
-
-                            <View style={styles.footer}>
-                                <Text style={styles.footerText}>Already have an account? </Text>
-                                <TouchableOpacity onPress={() => { router.back() }}>
-                                    <Text style={styles.footerLink}>Log In</Text>
-                                </TouchableOpacity>
-                            </View>
-                        </View>
-                    </ScrollView>
-                </KeyboardAvoidingView>
-            </SafeAreaView>
-        </ImageBackground>
-    );
+            {/* Bottom spacer */}
+            <View style={{ height: 32 }} />
+          </ScrollView>
+        </KeyboardAvoidingView>
+      </SafeAreaView>
+    </SafeLinearGradient>
+  );
 }
 
+// ─── Styles ───────────────────────────────────────────────────────────────────
+
 const styles = StyleSheet.create({
-    backgroundImage: {
-        flex: 1,
-        width: '100%',
-        height: '100%',
-    },
-    overlay: {
-        ...StyleSheet.absoluteFillObject,
-        backgroundColor: 'rgba(0, 0, 0, 0.4)', // Dark gradient overlay for contrast
-    },
-    safeArea: {
-        flex: 1,
-    },
-    keyboardAvoid: {
-        flex: 1,
-    },
-    scrollContent: {
-        flexGrow: 1,
-        paddingHorizontal: 24,
-        paddingTop: Platform.OS === 'android' ? 60 : 20,
-        justifyContent: 'center', // Centers the content vertically slightly
-        paddingBottom: 40,
-    },
-    header: {
-        marginBottom: 30,
-        marginTop: 40,
-        alignItems: 'center', // Center align the new text
-    },
-    // backButton styles removed
-    titlesContainer: {
-        alignItems: 'center', // Center align the texts inside
-    },
-    title: {
-        fontSize: 38, // Slightly larger
-        fontWeight: '800',
-        color: '#FFFFFF',
-        marginBottom: 10,
-        letterSpacing: 0.5,
-        textAlign: 'center',
-    },
-    subtitle: {
-        fontSize: 17,
-        color: 'rgba(255,255,255,0.9)', // Lighter for better contrast
-        fontWeight: '500',
-        textAlign: 'center',
-        lineHeight: 24,
-    },
-    card: {
-        backgroundColor: Platform.OS === 'android' ? 'rgba(255, 255, 255, 0.95)' : 'rgba(255, 255, 255, 0.85)', // Adjust for Android rendering
-        borderRadius: 32,
-        padding: 24,
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 10 },
-        shadowOpacity: 0.1,
-        shadowRadius: 20,
-        elevation: 2, // Minimal elevation for Android so the shadow doesn't muddy the card
-        borderWidth: 1,
-        borderColor: 'rgba(255, 255, 255, 0.5)',
-    },
-    tabContainer: {
-        flexDirection: 'row',
-        height: 56,
-        backgroundColor: '#F4F4F5',
-        borderRadius: 28,
-        padding: 4,
-        marginBottom: 30,
-        position: 'relative',
-    },
-    tabIndicator: {
-        position: 'absolute',
-        top: 4,
-        left: 0,
-        height: 48,
-        backgroundColor: '#FFFFFF',
-        borderRadius: 24,
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.1,
-        shadowRadius: 6,
-        elevation: 3,
-    },
-    tabButton: {
-        flex: 1,
-        justifyContent: 'center',
-        alignItems: 'center',
-        zIndex: 1,
-    },
-    tabText: {
-        fontSize: 15,
-        fontWeight: '700',
-        color: '#A1A1AA',
-    },
-    activeTabText: {
-        color: '#18181B', // Darker text for active
-    },
-    formContainer: {
-        flex: 1,
-    },
-    inputGroup: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        backgroundColor: '#F8FAFC',
-        height: 64,
-        borderRadius: 20,
-        paddingHorizontal: 20,
-        marginBottom: 16,
-        borderWidth: 1,
-        borderColor: '#E2E8F0',
-    },
-    lastInputGroup: {
-        marginBottom: 24,
-    },
-    inputIcon: {
-        marginRight: 14,
-    },
-    input: {
-        flex: 1,
-        fontSize: 16,
-        color: '#1E293B',
-        height: '100%',
-        fontWeight: '500',
-    },
-    eyeIcon: {
-        padding: 10,
-        marginRight: -10,
-    },
-    registerButton: {
-        height: 60,
-        backgroundColor: '#6C63FF', // Primary accent wrapper
-        borderRadius: 30,
-        justifyContent: 'center',
-        alignItems: 'center',
-        shadowColor: '#6C63FF',
-        shadowOffset: { width: 0, height: 8 },
-        shadowOpacity: 0.35,
-        shadowRadius: 15,
-        elevation: 8,
-    },
-    registerButtonText: {
-        color: '#FFFFFF',
-        fontSize: 18,
-        fontWeight: '700',
-        letterSpacing: 0.5,
-    },
-    footer: {
-        flexDirection: 'row',
-        justifyContent: 'center',
-        marginTop: 24,
-    },
-    footerText: {
-        color: '#64748B',
-        fontSize: 15,
-        fontWeight: '500',
-    },
-    footerLink: {
-        color: '#6C63FF',
-        fontSize: 15,
-        fontWeight: '700',
-    },
+  root: {
+    flex: 1,
+  },
+  flex: {
+    flex: 1,
+  },
+  safeArea: {
+    flex: 1,
+  },
+
+  // ── Header ────────────────────────────────────────────────────
+  scrollContent: {
+    flexGrow: 1,
+    paddingHorizontal: 24,
+    paddingTop: Platform.OS === "android" ? 32 : 16,
+    paddingBottom: 24,
+  },
+  header: {
+    alignItems: "center",
+    paddingVertical: 32,
+  },
+  logoBadge: {
+    borderRadius: 28,
+    overflow: "hidden",
+    marginBottom: 16,
+    shadowColor: "#6C63FF",
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.5,
+    shadowRadius: 16,
+    elevation: 10,
+  },
+  logoBadgeGradient: {
+    width: 72,
+    height: 72,
+    borderRadius: 28,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  waveRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    marginBottom: 14,
+  },
+  waveBar: {
+    width: 4,
+    borderRadius: 4,
+    backgroundColor: "#6C63FF",
+  },
+  appName: {
+    fontSize: 42,
+    fontWeight: "900",
+    color: "#181818",
+    letterSpacing: 2,
+  },
+  tagline: {
+    fontSize: 13,
+    color: "rgba(56, 56, 56, 0.69)",
+    letterSpacing: 2.5,
+    marginTop: 4,
+    textTransform: "uppercase",
+  },
+
+  // ── Card ──────────────────────────────────────────────────────
+  card: {
+    backgroundColor: "#FFFFFF",
+    borderRadius: 28,
+    padding: 24,
+    borderWidth: 1,
+    borderColor: "rgba(16,24,40,0.06)",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.08,
+    shadowRadius: 12,
+    elevation: 4,
+  },
+  cardTitle: {
+    fontSize: 22,
+    fontWeight: "700",
+    color: "#0F172A",
+    marginBottom: 20,
+    textAlign: "center",
+  },
+
+  // ── Tab bar ───────────────────────────────────────────────────
+  tabContainer: {
+    flexDirection: "row",
+    height: 52,
+    backgroundColor: "rgba(15,23,42,0.04)",
+    borderRadius: 26,
+    padding: 4,
+    marginBottom: 24,
+    position: "relative",
+    borderWidth: 1,
+    borderColor: "rgba(15,23,42,0.06)",
+  },
+  tabIndicator: {
+    position: "absolute",
+    top: 4,
+    left: 0,
+    height: 44,
+    backgroundColor: "#6C63FF",
+    borderRadius: 22,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.06,
+    shadowRadius: 8,
+    elevation: 2,
+  },
+  tabButton: {
+    flex: 1,
+    flexDirection: "row",
+    justifyContent: "center",
+    alignItems: "center",
+    zIndex: 1,
+  },
+  tabText: {
+    fontSize: 14,
+    fontWeight: "700",
+    color: "#8A9BB0",
+  },
+  activeTabText: {
+    color: "#FFFFFF",
+  },
+
+  // ── Creator hint ──────────────────────────────────────────────
+  creatorHint: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    backgroundColor: "rgba(17,24,39,0.03)",
+    borderRadius: 12,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    marginBottom: 20,
+    borderWidth: 1,
+    borderColor: "rgba(15,23,42,0.04)",
+  },
+  creatorHintText: {
+    flex: 1,
+    fontSize: 12,
+    color: "#475569",
+    lineHeight: 17,
+  },
+
+  // ── Form inputs ───────────────────────────────────────────────
+  label: {
+    fontSize: 12,
+    fontWeight: "600",
+    color: "#64748B",
+    marginBottom: 8,
+    marginLeft: 4,
+    letterSpacing: 0.5,
+    textTransform: "uppercase",
+  },
+  inputGroup: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#FFFFFF",
+    height: 58,
+    borderRadius: 16,
+    paddingHorizontal: 16,
+    marginBottom: 16,
+    borderWidth: 1.5,
+    borderColor: "rgba(15,23,42,0.06)",
+  },
+  inputGroupError: {
+    borderColor: "#EF4444",
+    backgroundColor: "rgba(239, 68, 68, 0.03)",
+  },
+  inputIcon: {
+    marginRight: 12,
+  },
+  input: {
+    flex: 1,
+    fontSize: 15,
+    color: "#0F172A",
+    height: "100%",
+    fontWeight: "500",
+  },
+  eyeIcon: {
+    padding: 8,
+    marginRight: -6,
+  },
+  errorText: {
+    color: "#EF4444",
+    fontSize: 11,
+    fontWeight: "500",
+    marginTop: -10,
+    marginBottom: 12,
+    marginLeft: 6,
+  },
+  serverErrorBanner: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "rgba(239, 68, 68, 0.06)",
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: "rgba(239, 68, 68, 0.12)",
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    marginBottom: 16,
+  },
+  serverErrorText: {
+    flex: 1,
+    color: "#B91C1C",
+    fontSize: 13,
+    fontWeight: "500",
+    lineHeight: 18,
+  },
+
+  // ── Submit button ─────────────────────────────────────────────
+  submitWrapper: {
+    marginTop: 8,
+    borderRadius: 30,
+    overflow: "hidden",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.08,
+    shadowRadius: 12,
+    elevation: 4,
+  },
+  submitButton: {
+    height: 58,
+    borderRadius: 30,
+    flexDirection: "row",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  submitText: {
+    color: "#FFFFFF",
+    fontSize: 17,
+    fontWeight: "700",
+    letterSpacing: 0.5,
+  },
+
+  // ── Divider ───────────────────────────────────────────────────
+  divider: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginTop: 24,
+    marginBottom: 20,
+  },
+  dividerLine: {
+    flex: 1,
+    height: 1,
+    backgroundColor: "rgba(255,255,255,0.08)",
+  },
+  dividerText: {
+    color: "#4A5568",
+    fontSize: 13,
+    marginHorizontal: 12,
+    fontWeight: "600",
+  },
+
+  // ── Footer ────────────────────────────────────────────────────
+  footer: {
+    flexDirection: "row",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  footerText: {
+    color: "#6B7A90",
+    fontSize: 14,
+    fontWeight: "500",
+  },
+  footerLink: {
+    color: "#6C63FF",
+    fontSize: 14,
+    fontWeight: "700",
+  },
 });
