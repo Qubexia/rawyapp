@@ -1,14 +1,26 @@
-import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
+/**
+ * Root layout – wraps the app with AuthProvider, PaperProvider, QueryClientProvider.
+ */
+
+import {
+  DarkTheme,
+  DefaultTheme,
+  ThemeProvider,
+} from '@react-navigation/native';
 import { Stack } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect } from 'react';
 import 'react-native-reanimated';
+import { PaperProvider } from 'react-native-paper';
+import { QueryClientProvider } from '@tanstack/react-query';
 
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { AuthProvider } from '@/context/auth-context';
+import { PaperLightTheme, PaperDarkTheme } from '@/constants/theme';
+import { queryClient } from '@/services/query-client';
 
-SplashScreen.preventAutoHideAsync().catch(() => { });
+SplashScreen.preventAutoHideAsync().catch(() => {});
 
 export const unstable_settings = {
   anchor: '(tabs)',
@@ -16,21 +28,51 @@ export const unstable_settings = {
 
 export default function RootLayout() {
   const colorScheme = useColorScheme();
+  const isDark = colorScheme === 'dark';
 
   useEffect(() => {
-    SplashScreen.hideAsync().catch(() => { });
+    SplashScreen.hideAsync().catch(() => {});
   }, []);
 
   return (
-    <AuthProvider>
-      <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-        <Stack>
-          <Stack.Screen name="onboarding" options={{ headerShown: false }} />
-          <Stack.Screen name="register" options={{ headerShown: false }} />
-          <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-        </Stack>
-        <StatusBar style="dark" />
-      </ThemeProvider>
-    </AuthProvider>
+    <QueryClientProvider client={queryClient}>
+      <PaperProvider theme={isDark ? PaperDarkTheme : PaperLightTheme}>
+        <AuthProvider>
+          <ThemeProvider value={isDark ? DarkTheme : DefaultTheme}>
+            <Stack screenOptions={{ headerShown: false }}>
+              <Stack.Screen name="onboarding" />
+              <Stack.Screen name="login" />
+              <Stack.Screen name="register" />
+              <Stack.Screen name="(tabs)" />
+              <Stack.Screen
+                name="podcast/[id]"
+                options={{ headerShown: false, animation: 'slide_from_right' }}
+              />
+              <Stack.Screen
+                name="episode/[id]"
+                options={{ headerShown: false, animation: 'slide_from_right' }}
+              />
+              <Stack.Screen
+                name="creator/[id]"
+                options={{ headerShown: false, animation: 'slide_from_right' }}
+              />
+              <Stack.Screen
+                name="creator-dashboard"
+                options={{ headerShown: false, animation: 'slide_from_right' }}
+              />
+              <Stack.Screen
+                name="create-podcast"
+                options={{ headerShown: false, animation: 'slide_from_bottom' }}
+              />
+              <Stack.Screen
+                name="upload-episode"
+                options={{ headerShown: false, animation: 'slide_from_bottom' }}
+              />
+            </Stack>
+            <StatusBar style={isDark ? 'light' : 'dark'} />
+          </ThemeProvider>
+        </AuthProvider>
+      </PaperProvider>
+    </QueryClientProvider>
   );
 }

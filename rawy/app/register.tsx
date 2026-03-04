@@ -1,40 +1,47 @@
-import React, { useRef, useEffect, useState } from "react";
+/**
+ * Register screen with React Native Paper + Lucide Icons + React Hook Form.
+ * Supports Listener and Creator tabs.
+ */
+
+import React, { useRef, useEffect } from 'react';
 import {
   View,
-  Text,
-  TextInput,
-  TouchableOpacity,
   KeyboardAvoidingView,
   Platform,
   ScrollView,
   Animated,
   useWindowDimensions,
-  ActivityIndicator,
-  Image,
-} from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
-import { StatusBar } from "expo-status-bar";
-import { useRouter } from "expo-router";
-import { Ionicons } from "@expo/vector-icons";
-import SafeLinearGradient from "@/components/safe-linear-gradient";
-import { useRegister } from "@/hooks/use-register";
+  StyleSheet,
+  TouchableOpacity,
+} from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { Text, Surface, Button, useTheme } from 'react-native-paper';
+import { LinearGradient } from 'expo-linear-gradient';
+import { useRouter } from 'expo-router';
 import {
-  InputField,
-  Card,
-  ErrorBanner,
-  SubmitButton,
-} from "@/components/register";
-import styles from "@/sheets/register";
+  User,
+  Mail,
+  Lock,
+  ArrowRight,
+  Headphones,
+  Mic,
+  Radio,
+  Info,
+} from 'lucide-react-native';
+
+import { FormInput } from '@/components/ui/FormInput';
+import { useRegister } from '@/hooks/use-register';
+import { Palette, Spacing, Radius } from '@/constants/theme';
 
 export default function RegisterScreen() {
   const router = useRouter();
+  const theme = useTheme();
   const { width } = useWindowDimensions();
 
   const {
     activeTab,
     setActiveTab,
-    fields,
-    setField,
+    control,
     errors,
     isLoading,
     serverError,
@@ -45,50 +52,42 @@ export default function RegisterScreen() {
   const indicatorPosition = useRef(new Animated.Value(0)).current;
   const fadeAnim = useRef(new Animated.Value(1)).current;
 
-  const [isPasswordVisible, setIsPasswordVisible] = useState(false);
-
   useEffect(() => {
-    // Animate the tab indicator
     Animated.spring(indicatorPosition, {
-      toValue: activeTab === "user" ? 0 : 1,
+      toValue: activeTab === 'user' ? 0 : 1,
       useNativeDriver: false,
       friction: 8,
       tension: 60,
     }).start();
 
-    // Fade out and fade in the form
     Animated.sequence([
       Animated.timing(fadeAnim, {
         toValue: 0,
-        duration: 150,
+        duration: 120,
         useNativeDriver: true,
       }),
       Animated.timing(fadeAnim, {
         toValue: 1,
-        duration: 250,
+        duration: 200,
         useNativeDriver: true,
       }),
     ]).start();
   }, [activeTab]);
 
-  // Tab indicator dynamic styles
-  const tabWidth = width - 96; // 24 outer padding * 2 + 24 card padding * 2
+  const tabWidth = width - 2 * Spacing.lg - 2 * Spacing.lg; // outer + card padding
   const indicatorTranslateX = indicatorPosition.interpolate({
     inputRange: [0, 1],
     outputRange: [4, tabWidth / 2],
   });
 
   return (
-    <SafeLinearGradient
-      colors={["#FFFFFF", "#F6F8FC", "#FFFFFF"]}
-      start={{ x: 0, y: 0 }}
-      end={{ x: 1, y: 1 }}
-      style={styles.root}
+    <View
+      style={[styles.root, { backgroundColor: '#FFFFFF' }]}
     >
       <SafeAreaView style={styles.safeArea}>
         <KeyboardAvoidingView
           style={styles.flex}
-          behavior={Platform.OS === "ios" ? "padding" : "height"}
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         >
           <ScrollView
             showsVerticalScrollIndicator={false}
@@ -97,15 +96,22 @@ export default function RegisterScreen() {
           >
             {/* ── Brand Header ── */}
             <View style={styles.header}>
-              {/* Sound wave bars decoration */}
-
-              <Text style={styles.appName}>Rawy</Text>
-              <Text style={styles.tagline}>Discover · Listen · Create</Text>
+              <View style={[styles.logoContainer, { backgroundColor: theme.colors.primaryContainer }]}>
+                <Headphones size={36} color={theme.colors.primary} strokeWidth={1.5} />
+              </View>
+              <Text variant="headlineLarge" style={[styles.appName, { color: theme.colors.onBackground }]}>
+                Rawy
+              </Text>
+              <Text variant="bodyMedium" style={[styles.tagline, { color: theme.colors.onSurfaceVariant }]}>
+                Discover · Listen · Create
+              </Text>
             </View>
 
             {/* ── Card ── */}
-            <Card style={styles.card}>
-              <Text style={styles.cardTitle}>Create your account</Text>
+            <Surface style={styles.card} elevation={2}>
+              <Text variant="headlineSmall" style={styles.cardTitle}>
+                Create your account
+              </Text>
 
               {/* Tab bar */}
               <View style={styles.tabContainer}>
@@ -121,18 +127,17 @@ export default function RegisterScreen() {
                 <TouchableOpacity
                   style={styles.tabButton}
                   activeOpacity={0.8}
-                  onPress={() => setActiveTab("user")}
+                  onPress={() => setActiveTab('user')}
                 >
-                  <Ionicons
-                    name="headset-outline"
+                  <Headphones
                     size={16}
-                    color={activeTab === "user" ? "#ffffff" : "#8A9BB0"}
+                    color={activeTab === 'user' ? '#FFFFFF' : Palette.text.lightTertiary}
                     style={{ marginRight: 6 }}
                   />
                   <Text
                     style={[
                       styles.tabText,
-                      activeTab === "user" && styles.activeTabText,
+                      activeTab === 'user' && styles.activeTabText,
                     ]}
                   >
                     Listener
@@ -141,18 +146,21 @@ export default function RegisterScreen() {
                 <TouchableOpacity
                   style={styles.tabButton}
                   activeOpacity={0.8}
-                  onPress={() => setActiveTab("creator")}
+                  onPress={() => setActiveTab('creator')}
                 >
-                  <Ionicons
-                    name="mic-outline"
+                  <Mic
                     size={16}
-                    color={activeTab === "creator" ? "#000000" : "#8A9BB0"}
+                    color={
+                      activeTab === 'creator'
+                        ? Palette.primary[700]
+                        : Palette.text.lightTertiary
+                    }
                     style={{ marginRight: 6 }}
                   />
                   <Text
                     style={[
                       styles.tabText,
-                      activeTab === "creator" && styles.activeTabText,
+                      activeTab === 'creator' && styles.activeCreatorTabText,
                     ]}
                   >
                     Creator
@@ -160,163 +168,319 @@ export default function RegisterScreen() {
                 </TouchableOpacity>
               </View>
 
-              {/* Creator context hint */}
-              {activeTab === "creator" && (
+              {/* Creator hint */}
+              {activeTab === 'creator' && (
                 <View style={styles.creatorHint}>
-                  <Ionicons
-                    name="information-circle-outline"
+                  <Info
                     size={15}
-                      color="#000000"
+                    color={Palette.primary[500]}
                     style={{ marginRight: 6 }}
                   />
                   <Text style={styles.creatorHintText}>
-                    As a creator you can publish podcasts and grow your
-                    audience.
+                    As a creator you can publish podcasts and grow your audience.
                   </Text>
                 </View>
               )}
 
               {/* Form */}
-              <Animated.View style={{ opacity: fadeAnim }}>
-                <InputField
+              <Animated.View style={[styles.form, { opacity: fadeAnim }]}>
+                <FormInput
+                  name="name"
+                  control={control}
                   label="Full Name"
-                  leftIcon={
-                    <Ionicons
-                      name="person-outline"
-                        size={18}
-                        color={errors.name ? "#EF4444" : "#000000"}
-                    />
-                  }
                   placeholder="e.g. Ahmed Khalid"
-                  value={fields.name}
-                  onChangeText={(v) => setField("name", v)}
                   autoCapitalize="words"
                   editable={!isLoading}
-                  error={errors.name}
-                />
-
-                <InputField
-                  label="Email Address"
-                  leftIcon={
-                    <Ionicons
-                      name="mail-outline"
-                        size={18}
-                        color={errors.email ? "#EF4444" : "#000000"}
+                  icon={
+                    <User
+                      size={20}
+                      color={
+                        errors.name
+                          ? theme.colors.error
+                          : theme.colors.onSurfaceVariant
+                      }
                     />
                   }
+                />
+
+                <FormInput
+                  name="email"
+                  control={control}
+                  label="Email Address"
                   placeholder="you@example.com"
-                  value={fields.email}
-                  onChangeText={(v) => setField("email", v)}
                   keyboardType="email-address"
                   autoCapitalize="none"
                   autoCorrect={false}
                   editable={!isLoading}
-                  error={errors.email}
+                  icon={
+                    <Mail
+                      size={20}
+                      color={
+                        errors.email
+                          ? theme.colors.error
+                          : theme.colors.onSurfaceVariant
+                      }
+                    />
+                  }
                 />
 
-                {activeTab === "creator" && (
-                  <InputField
+                {activeTab === 'creator' && (
+                  <FormInput
+                    name="showName"
+                    control={control}
                     label="Podcast / Show Name"
-                    leftIcon={
-                      <Ionicons
-                        name="radio-outline"
-                          size={18}
-                          color={errors.showName ? "#EF4444" : "#000000"}
-                      />
-                    }
                     placeholder="My Awesome Show"
-                    value={fields.showName}
-                    onChangeText={(v) => setField("showName", v)}
                     autoCapitalize="words"
                     editable={!isLoading}
-                    error={errors.showName}
+                    icon={
+                      <Radio
+                        size={20}
+                        color={
+                          errors.showName
+                            ? theme.colors.error
+                            : theme.colors.onSurfaceVariant
+                        }
+                      />
+                    }
                   />
                 )}
 
-                {/* Password (kept custom for visibility toggle) */}
-                <Text style={styles.label}>Password</Text>
-                <View
-                  style={[
-                    styles.inputGroup,
-                    !!errors.password && styles.inputGroupError,
-                  ]}
-                >
-                  <Ionicons
-                    name="lock-closed-outline"
-                    size={18}
-                    color={errors.password ? "#EF4444" : "#000000"}
-                    style={styles.inputIcon}
-                  />
-                  <TextInput
-                    style={styles.input}
-                    placeholder="At least 8 characters"
-                    placeholderTextColor="#6B7A90"
-                    value={fields.password}
-                    onChangeText={(v) => setField("password", v)}
-                    secureTextEntry={!isPasswordVisible}
-                    editable={!isLoading}
-                  />
-                  <TouchableOpacity
-                    onPress={() => setIsPasswordVisible(!isPasswordVisible)}
-                    style={styles.eyeIcon}
-                  >
-                    <Ionicons
-                      name={
-                        isPasswordVisible ? "eye-outline" : "eye-off-outline"
+                <FormInput
+                  name="password"
+                  control={control}
+                  label="Password"
+                  placeholder="At least 8 characters"
+                  secureTextEntry
+                  autoCapitalize="none"
+                  editable={!isLoading}
+                  icon={
+                    <Lock
+                      size={20}
+                      color={
+                        errors.password
+                          ? theme.colors.error
+                          : theme.colors.onSurfaceVariant
                       }
-                      size={18}
-                      color="#6B7A90"
                     />
-                  </TouchableOpacity>
-                </View>
-                {!!errors.password && (
-                  <Text style={styles.errorText}>{errors.password}</Text>
-                )}
+                  }
+                />
 
                 {/* Server error */}
-                <ErrorBanner message={serverError} />
+                {!!serverError && (
+                  <Surface style={styles.errorBanner} elevation={0}>
+                    <Text style={styles.errorText}>{serverError}</Text>
+                  </Surface>
+                )}
 
                 {/* Submit */}
-                <View style={styles.submitWrapper}>
-                  <SubmitButton onPress={handleSubmit} loading={isLoading}>
-                    <View
-                      style={{ flexDirection: "row", alignItems: "center" }}
-                    >
-                      <Text style={styles.submitText}>Get Started</Text>
-                      <Ionicons
-                        name="arrow-forward"
-                        size={18}
-                        color="#FFFFFF"
-                        style={{ marginLeft: 8 }}
-                      />
-                    </View>
-                  </SubmitButton>
-                </View>
+                <Button
+                  mode="contained"
+                  onPress={handleSubmit}
+                  loading={isLoading}
+                  disabled={isLoading}
+                  contentStyle={styles.submitContent}
+                  style={styles.submitButton}
+                  labelStyle={styles.submitLabel}
+                  icon={() => <ArrowRight size={18} color="#FFFFFF" />}
+                >
+                  Get Started
+                </Button>
               </Animated.View>
 
               {/* Divider */}
               <View style={styles.divider}>
-                <View style={styles.dividerLine} />
-                <Text style={styles.dividerText}>or</Text>
-                <View style={styles.dividerLine} />
+                <View
+                  style={[
+                    styles.dividerLine,
+                    { backgroundColor: theme.colors.outlineVariant || theme.colors.outline },
+                  ]}
+                />
+                <Text variant="labelMedium" style={styles.dividerText}>
+                  or
+                </Text>
+                <View
+                  style={[
+                    styles.dividerLine,
+                    { backgroundColor: theme.colors.outlineVariant || theme.colors.outline },
+                  ]}
+                />
               </View>
 
               {/* Footer */}
               <View style={styles.footer}>
-                <Text style={styles.footerText}>Already have an account? </Text>
-                <TouchableOpacity onPress={() => router.push('/login')}>
-                  <Text style={styles.footerLink}>Sign In</Text>
-                </TouchableOpacity>
+                <Text variant="bodyMedium" style={styles.footerText}>
+                  Already have an account?{' '}
+                </Text>
+                <Button
+                  mode="text"
+                  compact
+                  onPress={() => router.push('/login')}
+                  labelStyle={styles.footerLink}
+                >
+                  Sign In
+                </Button>
               </View>
-            </Card>
+            </Surface>
 
-            {/* Bottom spacer */}
-            <View style={{ height: 32 }} />
+            <View style={{ height: Spacing.xl }} />
           </ScrollView>
         </KeyboardAvoidingView>
       </SafeAreaView>
-    </SafeLinearGradient>
+    </View>
   );
 }
 
-
+const styles = StyleSheet.create({
+  root: {
+    flex: 1,
+  },
+  safeArea: {
+    flex: 1,
+  },
+  flex: {
+    flex: 1,
+  },
+  scrollContent: {
+    flexGrow: 1,
+    paddingHorizontal: Spacing.lg,
+    paddingTop: Spacing.lg,
+  },
+  header: {
+    alignItems: 'center',
+    marginBottom: Spacing.lg,
+  },
+  logoContainer: {
+    width: 72,
+    height: 72,
+    borderRadius: Radius.xl,
+    backgroundColor: 'rgba(255,255,255,0.15)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: Spacing.md,
+  },
+  appName: {
+    color: '#FFFFFF',
+    fontWeight: '800',
+    fontSize: 36,
+    letterSpacing: 1,
+  },
+  tagline: {
+    color: 'rgba(255,255,255,0.7)',
+    marginTop: Spacing.xs,
+  },
+  card: {
+    borderRadius: Radius.xl,
+    padding: Spacing.lg,
+    backgroundColor: '#FFFFFF',
+  },
+  cardTitle: {
+    fontWeight: '700',
+    color: Palette.text.lightPrimary,
+    textAlign: 'center',
+    marginBottom: Spacing.md,
+  },
+  // ── Tab bar ──
+  tabContainer: {
+    flexDirection: 'row',
+    backgroundColor: Palette.light.surfaceVariant,
+    borderRadius: Radius.md,
+    padding: 4,
+    marginBottom: Spacing.md,
+    position: 'relative',
+  },
+  tabIndicator: {
+    position: 'absolute',
+    top: 4,
+    bottom: 4,
+    borderRadius: Radius.sm,
+    backgroundColor: Palette.primary[500],
+  },
+  tabButton: {
+    flex: 1,
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingVertical: 10,
+    zIndex: 1,
+  },
+  tabText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: Palette.text.lightTertiary,
+  },
+  activeTabText: {
+    color: '#FFFFFF',
+  },
+  activeCreatorTabText: {
+    color: Palette.primary[700],
+  },
+  // ── Creator hint ──
+  creatorHint: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: Palette.primary[50],
+    borderRadius: Radius.sm,
+    paddingHorizontal: Spacing.md,
+    paddingVertical: Spacing.sm,
+    marginBottom: Spacing.md,
+  },
+  creatorHintText: {
+    flex: 1,
+    fontSize: 12,
+    color: Palette.primary[700],
+  },
+  // ── Form ──
+  form: {
+    gap: Spacing.sm,
+  },
+  errorBanner: {
+    backgroundColor: '#FEF2F2',
+    borderRadius: Radius.md,
+    padding: Spacing.md,
+    borderLeftWidth: 3,
+    borderLeftColor: '#EF4444',
+  },
+  errorText: {
+    color: '#DC2626',
+    fontSize: 13,
+  },
+  submitButton: {
+    borderRadius: Radius.md,
+    marginTop: Spacing.sm,
+  },
+  submitContent: {
+    height: 52,
+    flexDirection: 'row-reverse',
+  },
+  submitLabel: {
+    fontSize: 16,
+    fontWeight: '600',
+    letterSpacing: 0.5,
+  },
+  // ── Divider ──
+  divider: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginVertical: Spacing.lg,
+  },
+  dividerLine: {
+    flex: 1,
+    height: 1,
+  },
+  dividerText: {
+    marginHorizontal: Spacing.md,
+    color: Palette.text.lightTertiary,
+  },
+  // ── Footer ──
+  footer: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  footerText: {
+    color: Palette.text.lightSecondary,
+  },
+  footerLink: {
+    fontWeight: '600',
+  },
+});

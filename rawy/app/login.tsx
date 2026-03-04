@@ -1,156 +1,284 @@
-import React, { useState } from "react";
+/**
+ * Login screen with React Native Paper + Lucide Icons + React Hook Form.
+ */
+
+import React from 'react';
 import {
   View,
-  Text,
-  TextInput,
-  TouchableOpacity,
   KeyboardAvoidingView,
   Platform,
   ScrollView,
-} from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
-import { Ionicons } from "@expo/vector-icons";
-import SafeLinearGradient from "@/components/safe-linear-gradient";
+  StyleSheet,
+} from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import {
-  InputField,
-  Card,
-  ErrorBanner,
-  SubmitButton,
-} from "@/components/register";
-import useLogin from "@/hooks/use-login";
-import styles from "@/sheets/register";
-import { router, Stack } from "expo-router";
+  Text,
+  Button,
+  Surface,
+  useTheme,
+} from 'react-native-paper';
+import { LinearGradient } from 'expo-linear-gradient';
+import { Stack, router } from 'expo-router';
+import { Mail, Lock, ArrowRight, Headphones } from 'lucide-react-native';
+
+import { FormInput } from '@/components/ui/FormInput';
+import useLogin from '@/hooks/use-login';
+import { Palette, Spacing, Radius } from '@/constants/theme';
 
 export default function LoginScreen() {
-  const { fields, setField, errors, isLoading, serverError, handleSubmit } =
-    useLogin();
-  const [isPasswordVisible, setIsPasswordVisible] = useState(false);
+  const theme = useTheme();
+  const { control, errors, isLoading, serverError, handleSubmit } = useLogin();
 
   return (
     <>
       <Stack.Screen options={{ headerShown: false }} />
-      <SafeLinearGradient colors={["#FFFFFF", "#F6F8FC"]} style={styles.root}>
+      <View
+        style={[styles.root, { backgroundColor: '#FFFFFF' }]}
+      >
         <SafeAreaView style={styles.safeArea}>
           <KeyboardAvoidingView
             style={styles.flex}
-            behavior={Platform.OS === "ios" ? "padding" : "height"}
+            behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
           >
             <ScrollView
-              contentContainerStyle={[
-                styles.scrollContent,
-                { justifyContent: "center" },
-              ]}
+              contentContainerStyle={styles.scrollContent}
               keyboardShouldPersistTaps="handled"
+              showsVerticalScrollIndicator={false}
             >
+              {/* ── Brand Header ── */}
               <View style={styles.header}>
-                <Text style={styles.appName}>Rawy</Text>
-                <Text style={styles.tagline}>Discover · Listen · Create</Text>
+                <View style={[styles.logoContainer, { backgroundColor: theme.colors.primaryContainer }]}>
+                  <Headphones size={36} color={theme.colors.primary} strokeWidth={1.5} />
+                </View>
+                <Text variant="headlineLarge" style={[styles.appName, { color: theme.colors.onBackground }]}>
+                  Rawy
+                </Text>
+                <Text variant="bodyMedium" style={[styles.tagline, { color: theme.colors.onSurfaceVariant }]}>
+                  Discover · Listen · Create
+                </Text>
               </View>
 
-              <Card style={styles.card}>
-                <Text style={styles.cardTitle}>Welcome back</Text>
+              {/* ── Card ── */}
+              <Surface style={styles.card} elevation={2}>
+                <Text variant="headlineSmall" style={styles.cardTitle}>
+                  Welcome back
+                </Text>
+                <Text variant="bodyMedium" style={styles.cardSubtitle}>
+                  Sign in to continue listening
+                </Text>
 
-                <AnimatedForm>
-                  <InputField
+                <View style={styles.form}>
+                  <FormInput
+                    name="email"
+                    control={control}
                     label="Email Address"
-                    leftIcon={
-                      <Ionicons
-                        name="mail-outline"
-                        size={18}
-                        color={errors.email ? "#EF4444" : "#000000"}
-                      />
-                    }
                     placeholder="you@example.com"
-                    value={fields.email}
-                    onChangeText={(v) => setField("email", v)}
                     keyboardType="email-address"
                     autoCapitalize="none"
                     autoCorrect={false}
                     editable={!isLoading}
-                    error={errors.email}
+                    icon={
+                      <Mail
+                        size={20}
+                        color={
+                          errors.email
+                            ? theme.colors.error
+                            : theme.colors.onSurfaceVariant
+                        }
+                      />
+                    }
                   />
 
-                  <Text style={styles.label}>Password</Text>
-                  <View
-                    style={[
-                      styles.inputGroup,
-                      !!errors.password && styles.inputGroupError,
-                    ]}
-                  >
-                    <Ionicons
-                      name="lock-closed-outline"
-                      size={18}
-                      color={errors.password ? "#EF4444" : "#000000"}
-                      style={styles.inputIcon}
-                    />
-                    <TextInput
-                      style={styles.input}
-                      placeholder="Your password"
-                      placeholderTextColor="#6B7A90"
-                      value={fields.password}
-                      onChangeText={(v) => setField("password", v)}
-                      secureTextEntry={!isPasswordVisible}
-                      editable={!isLoading}
-                    />
-                    <TouchableOpacity
-                      onPress={() => setIsPasswordVisible(!isPasswordVisible)}
-                      style={styles.eyeIcon}
-                    >
-                      <Ionicons
-                        name={
-                          isPasswordVisible ? "eye-outline" : "eye-off-outline"
+                  <FormInput
+                    name="password"
+                    control={control}
+                    label="Password"
+                    placeholder="Your password"
+                    secureTextEntry
+                    autoCapitalize="none"
+                    editable={!isLoading}
+                    icon={
+                      <Lock
+                        size={20}
+                        color={
+                          errors.password
+                            ? theme.colors.error
+                            : theme.colors.onSurfaceVariant
                         }
-                        size={18}
-                        color="#6B7A90"
                       />
-                    </TouchableOpacity>
-                  </View>
-                  {!!errors.password && (
-                    <Text style={styles.errorText}>{errors.password}</Text>
+                    }
+                  />
+
+                  {/* Server error */}
+                  {!!serverError && (
+                    <Surface style={styles.errorBanner} elevation={0}>
+                      <Text style={styles.errorText}>{serverError}</Text>
+                    </Surface>
                   )}
 
-                  <ErrorBanner message={serverError} />
-
-                  <View style={styles.submitWrapper}>
-                    <SubmitButton onPress={handleSubmit} loading={isLoading}>
-                      <>
-                        <Text style={styles.submitText}>Sign In</Text>
-                        <Ionicons
-                          name="arrow-forward"
-                          size={18}
-                          color="#FFFFFF"
-                          style={{ marginLeft: 8 }}
-                        />
-                      </>
-                    </SubmitButton>
-                  </View>
-                </AnimatedForm>
-
-                <View style={styles.divider}>
-                  <View style={styles.dividerLine} />
-                  <Text style={styles.dividerText}>or</Text>
-                  <View style={styles.dividerLine} />
-                </View>
-
-                <View style={styles.footer}>
-                  <Text style={styles.footerText}>Don't have an account? </Text>
-                  <TouchableOpacity
-                    onPress={() => {
-                      router.push("/register");
-                    }}
+                  {/* Submit */}
+                  <Button
+                    mode="contained"
+                    onPress={handleSubmit}
+                    loading={isLoading}
+                    disabled={isLoading}
+                    contentStyle={styles.submitContent}
+                    style={styles.submitButton}
+                    labelStyle={styles.submitLabel}
+                    icon={() => (
+                      <ArrowRight size={18} color="#FFFFFF" />
+                    )}
                   >
-                    <Text style={styles.footerLink}>Sign Up</Text>
-                  </TouchableOpacity>
+                    Sign In
+                  </Button>
                 </View>
-              </Card>
+
+                {/* Divider */}
+                <View style={styles.divider}>
+                  <View
+                    style={[
+                      styles.dividerLine,
+                      { backgroundColor: theme.colors.outlineVariant || theme.colors.outline },
+                    ]}
+                  />
+                  <Text variant="labelMedium" style={styles.dividerText}>
+                    or
+                  </Text>
+                  <View
+                    style={[
+                      styles.dividerLine,
+                      { backgroundColor: theme.colors.outlineVariant || theme.colors.outline },
+                    ]}
+                  />
+                </View>
+
+                {/* Footer */}
+                <View style={styles.footer}>
+                  <Text variant="bodyMedium" style={styles.footerText}>
+                    Don't have an account?{' '}
+                  </Text>
+                  <Button
+                    mode="text"
+                    compact
+                    onPress={() => router.push('/register')}
+                    labelStyle={styles.footerLink}
+                  >
+                    Sign Up
+                  </Button>
+                </View>
+              </Surface>
             </ScrollView>
           </KeyboardAvoidingView>
         </SafeAreaView>
-      </SafeLinearGradient>
+      </View>
     </>
   );
 }
 
-function AnimatedForm({ children }: { children: React.ReactNode }) {
-  return <>{children}</>;
-}
+const styles = StyleSheet.create({
+  root: {
+    flex: 1,
+  },
+  safeArea: {
+    flex: 1,
+  },
+  flex: {
+    flex: 1,
+  },
+  scrollContent: {
+    flexGrow: 1,
+    justifyContent: 'center',
+    paddingHorizontal: Spacing.lg,
+    paddingBottom: Spacing.xl,
+  },
+  header: {
+    alignItems: 'center',
+    marginBottom: Spacing.xl,
+  },
+  logoContainer: {
+    width: 72,
+    height: 72,
+    borderRadius: Radius.xl,
+    backgroundColor: 'rgba(255,255,255,0.15)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: Spacing.md,
+  },
+  appName: {
+    color: '#FFFFFF',
+    fontWeight: '800',
+    fontSize: 36,
+    letterSpacing: 1,
+  },
+  tagline: {
+    color: 'rgba(255,255,255,0.7)',
+    marginTop: Spacing.xs,
+  },
+  card: {
+    borderRadius: Radius.xl,
+    padding: Spacing.lg,
+    backgroundColor: '#FFFFFF',
+  },
+  cardTitle: {
+    fontWeight: '700',
+    color: Palette.text.lightPrimary,
+    textAlign: 'center',
+  },
+  cardSubtitle: {
+    color: Palette.text.lightSecondary,
+    textAlign: 'center',
+    marginTop: Spacing.xs,
+    marginBottom: Spacing.lg,
+  },
+  form: {
+    gap: Spacing.sm,
+  },
+  errorBanner: {
+    backgroundColor: '#FEF2F2',
+    borderRadius: Radius.md,
+    padding: Spacing.md,
+    borderLeftWidth: 3,
+    borderLeftColor: '#EF4444',
+  },
+  errorText: {
+    color: '#DC2626',
+    fontSize: 13,
+  },
+  submitButton: {
+    borderRadius: Radius.md,
+    marginTop: Spacing.sm,
+  },
+  submitContent: {
+    height: 52,
+    flexDirection: 'row-reverse',
+  },
+  submitLabel: {
+    fontSize: 16,
+    fontWeight: '600',
+    letterSpacing: 0.5,
+  },
+  divider: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginVertical: Spacing.lg,
+  },
+  dividerLine: {
+    flex: 1,
+    height: 1,
+  },
+  dividerText: {
+    marginHorizontal: Spacing.md,
+    color: Palette.text.lightTertiary,
+  },
+  footer: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  footerText: {
+    color: Palette.text.lightSecondary,
+  },
+  footerLink: {
+    fontWeight: '600',
+  },
+});

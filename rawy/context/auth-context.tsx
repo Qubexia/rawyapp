@@ -1,9 +1,7 @@
 /**
- * Auth context – manages the current user session across the whole app.
+ * Auth context — manages the current user session.
  *
- * Wraps the app in <AuthProvider> (done inside app/_layout.tsx).
- * Consumers call:
- *   const { user, isAuthenticated, isLoading, login, logout } = useAuthContext();
+ * Uses Axios-based auth service. Wraps app in <AuthProvider>.
  */
 
 import React, {
@@ -24,9 +22,9 @@ import {
   refreshAccessToken,
   getStoredTokens,
 } from '../services/auth.service';
-import { ApiRequestError } from '../services/api';
+import { ApiError } from '../services/axios-client';
 
-// ─── Context shape ────────────────────────────────────────────────────────────
+// ─── Context shape ───────────────────────────────────────────────────────────
 
 export interface AuthContextValue {
   /** The currently authenticated user, or null if not signed in. */
@@ -45,7 +43,7 @@ export interface AuthContextValue {
 
 const AuthContext = createContext<AuthContextValue | null>(null);
 
-// ─── Provider ─────────────────────────────────────────────────────────────────
+// ─── Provider ────────────────────────────────────────────────────────────────
 
 export function AuthProvider({ children }: PropsWithChildren) {
   const [user, setUser] = useState<UserProfile | null>(null);
@@ -85,8 +83,11 @@ export function AuthProvider({ children }: PropsWithChildren) {
   }, []);
 
   const logout = useCallback(async () => {
-    await logoutUser();
-    setUser(null);
+    try {
+      await logoutUser();
+    } finally {
+      setUser(null);
+    }
   }, []);
 
   const value: AuthContextValue = {
@@ -101,14 +102,8 @@ export function AuthProvider({ children }: PropsWithChildren) {
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
 
-// ─── Hook ─────────────────────────────────────────────────────────────────────
+// ─── Hook ────────────────────────────────────────────────────────────────────
 
-/**
- * Access the auth context from any component inside <AuthProvider>.
- *
- * @example
- * const { user, logout } = useAuthContext();
- */
 export function useAuthContext(): AuthContextValue {
   const ctx = useContext(AuthContext);
   if (!ctx) {
@@ -117,4 +112,4 @@ export function useAuthContext(): AuthContextValue {
   return ctx;
 }
 
-export { ApiRequestError };
+export { ApiError };

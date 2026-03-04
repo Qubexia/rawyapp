@@ -1,104 +1,474 @@
-import { Platform, StyleSheet } from 'react-native';
+/**
+ * Explore screen — search podcasts, browse creators.
+ */
 
-import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
-import { IconSymbol } from '@/components/ui/icon-symbol';
-import ParallaxScrollView from '@/components/parallax-scroll-view';
-import { ExternalLink } from '@/components/external-link';
-import { Collapsible } from '@/components/ui/collapsible';
+import React, { useState, useCallback } from 'react';
+import {
+  View,
+  FlatList,
+  ScrollView,
+  StyleSheet,
+  TouchableOpacity,
+  RefreshControl,
+} from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import {
+  Text,
+  Searchbar,
+  Surface,
+  Chip,
+  useTheme,
+  ActivityIndicator,
+} from 'react-native-paper';
+import { useRouter } from 'expo-router';
+import {
+  Search,
+  Headphones,
+  Users,
+  Mic,
+} from 'lucide-react-native';
 
-export default function TabTwoScreen() {
+import { usePodcasts } from '@/hooks/queries/use-podcasts';
+import { useCreators } from '@/hooks/queries/use-creators';
+import { Palette, Spacing, Radius } from '@/constants/theme';
+import { useColorScheme } from '@/hooks/use-color-scheme';
+import type { Podcast } from '@/services/podcasts.service';
+import type { CreatorProfile } from '@/services/creators.service';
+
+const CATEGORIES = [
+  'All',
+  'Technology',
+  'Business',
+  'Comedy',
+  'Education',
+  'Health',
+  'Science',
+  'Culture',
+  'Sports',
+];
+
+export default function ExploreScreen() {
+  const theme = useTheme();
+  const colorScheme = useColorScheme();
+  const isDark = colorScheme === 'dark';
+  const router = useRouter();
+
+  const [searchQuery, setSearchQuery] = useState('');
+  const [activeCategory, setActiveCategory] = useState('All');
+
+  const {
+    data: podcastsData,
+    isLoading: podcastsLoading,
+    refetch: refetchPodcasts,
+  } = usePodcasts();
+
+  const {
+    data: creatorsData,
+    isLoading: creatorsLoading,
+    refetch: refetchCreators,
+  } = useCreators();
+
+  const [refreshing, setRefreshing] = useState(false);
+
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+    await Promise.all([refetchPodcasts(), refetchCreators()]);
+    setRefreshing(false);
+  }, [refetchPodcasts, refetchCreators]);
+
+  const podcasts = podcastsData?.pages.flatMap((p) => p.data) ?? [];
+  const creators = creatorsData?.pages.flatMap((p) => p.data) ?? [];
+
+  // Filter by search query
+  const filteredPodcasts = searchQuery
+    ? podcasts.filter(
+        (p) =>
+          p.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          p.description?.toLowerCase().includes(searchQuery.toLowerCase()),
+      )
+    : podcasts;
+
+  const isLoading = podcastsLoading || creatorsLoading;
+
+  const renderPodcastRow = ({ item }: { item: Podcast }) => (
+    <TouchableOpacity
+      activeOpacity={0.8}
+      onPress={() => router.push(`/podcast/${item._id}` as any)}
+    >
+      <Surface
+        style={[
+          styles.podcastRow,
+          {
+            backgroundColor: isDark
+              ? Palette.dark.surfaceVariant
+              : Palette.light.surface,
+          },
+        ]}
+        elevation={1}
+      >
+        <View
+          style={[
+            styles.podcastIcon,
+            {
+              backgroundColor: isDark
+                ? Palette.dark.elevated
+                : Palette.primary[50],
+            },
+          ]}
+        >
+          <Headphones
+            size={22}
+            color={isDark ? Palette.primary[300] : Palette.primary[500]}
+            strokeWidth={1.5}
+          />
+        </View>
+        <View style={styles.podcastInfo}>
+          <Text
+            variant="titleSmall"
+            numberOfLines={1}
+            style={{ color: theme.colors.onSurface, fontWeight: '600' }}
+          >
+            {item.title}
+          </Text>
+          <Text
+            variant="bodySmall"
+            numberOfLines={1}
+            style={{ color: theme.colors.onSurfaceVariant }}
+          >
+            {item.creator?.name || 'Unknown'} · {item.episodeCount || 0}{' '}
+            episodes
+          </Text>
+        </View>
+      </Surface>
+    </TouchableOpacity>
+  );
+
+  const renderCreatorChip = ({ item }: { item: CreatorProfile }) => (
+    <TouchableOpacity
+      activeOpacity={0.8}
+      onPress={() => router.push(`/creator/${item._id}` as any)}
+    >
+      <Surface
+        style={[
+          styles.creatorChip,
+          {
+            backgroundColor: isDark
+              ? Palette.dark.surfaceVariant
+              : Palette.light.surfaceVariant,
+          },
+        ]}
+        elevation={0}
+      >
+        <View
+          style={[
+            styles.creatorAvatar,
+            {
+              backgroundColor: isDark
+                ? Palette.dark.elevated
+                : Palette.primary[100],
+            },
+          ]}
+        >
+          <Mic
+            size={16}
+            color={isDark ? Palette.primary[300] : Palette.primary[500]}
+          />
+        </View>
+        <Text
+          variant="labelMedium"
+          numberOfLines={1}
+          style={{
+            color: theme.colors.onSurface,
+            fontWeight: '600',
+            maxWidth: 80,
+          }}
+        >
+          {item.name}
+        </Text>
+        <Text
+          variant="labelSmall"
+          style={{ color: theme.colors.onSurfaceVariant }}
+        >
+          {item.followerCount || 0} followers
+        </Text>
+      </Surface>
+    </TouchableOpacity>
+  );
+
   return (
-    <ParallaxScrollView
-      headerBackgroundColor={{ light: '#D0D0D0', dark: '#353636' }}
-      headerImage={
-        <IconSymbol
-          size={310}
-          color="#808080"
-          name="chevron.left.forwardslash.chevron.right"
-        />
-      }>
-      <ThemedView >
-        <ThemedText
-          type="title"
->
-          Explore
-        </ThemedText>
-      </ThemedView>
-      <ThemedText>This app includes example code to help you get started.</ThemedText>
-      <Collapsible title="File-based routing">
-        <ThemedText>
-          This app has two screens:{' '}
-          <ThemedText type="defaultSemiBold">app/(tabs)/index.tsx</ThemedText> and{' '}
-          <ThemedText type="defaultSemiBold">app/(tabs)/explore.tsx</ThemedText>
-        </ThemedText>
-        <ThemedText>
-          The layout file in <ThemedText type="defaultSemiBold">app/(tabs)/_layout.tsx</ThemedText>{' '}
-          sets up the tab navigator.
-        </ThemedText>
-        <ExternalLink href="https://docs.expo.dev/router/introduction">
-          <ThemedText type="link">Learn more</ThemedText>
-        </ExternalLink>
-      </Collapsible>
-      <Collapsible title="Android, iOS, and web support">
-        <ThemedText>
-          You can open this project on Android, iOS, and the web. To open the web version, press{' '}
-          <ThemedText type="defaultSemiBold">w</ThemedText> in the terminal running this project.
-        </ThemedText>
-      </Collapsible>
-      <Collapsible title="Images">
-        <ThemedText>
-          For static images, you can use the <ThemedText type="defaultSemiBold">@2x</ThemedText> and{' '}
-          <ThemedText type="defaultSemiBold">@3x</ThemedText> suffixes to provide files for
-          different screen densities
-        </ThemedText>
-        <ExternalLink href="https://reactnative.dev/docs/images">
-          <ThemedText type="link">Learn more</ThemedText>
-        </ExternalLink>
-      </Collapsible>
-      <Collapsible title="Light and dark mode components">
-        <ThemedText>
-          This template has light and dark mode support. The{' '}
-          <ThemedText type="defaultSemiBold">useColorScheme()</ThemedText> hook lets you inspect
-          what the user&apos;s current color scheme is, and so you can adjust UI colors accordingly.
-        </ThemedText>
-        <ExternalLink href="https://docs.expo.dev/develop/user-interface/color-themes/">
-          <ThemedText type="link">Learn more</ThemedText>
-        </ExternalLink>
-      </Collapsible>
-      <Collapsible title="Animations">
-        <ThemedText>
-          This template includes an example of an animated component. The{' '}
-          <ThemedText type="defaultSemiBold">components/HelloWave.tsx</ThemedText> component uses
-          the powerful{' '}
-          <ThemedText type="defaultSemiBold" >
-            react-native-reanimated
-          </ThemedText>{' '}
-          library to create a waving hand animation.
-        </ThemedText>
-        {Platform.select({
-          ios: (
-            <ThemedText>
-              The <ThemedText type="defaultSemiBold">components/ParallaxScrollView.tsx</ThemedText>{' '}
-              component provides a parallax effect for the header image.
-            </ThemedText>
-          ),
-        })}
-      </Collapsible>
-    </ParallaxScrollView>
+    <SafeAreaView
+      style={[
+        styles.container,
+        { backgroundColor: theme.colors.background },
+      ]}
+    >
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            tintColor={theme.colors.primary}
+          />
+        }
+      >
+        {/* Header */}
+        <View style={styles.header}>
+          <Text
+            variant="headlineSmall"
+            style={[styles.title, { color: theme.colors.onBackground }]}
+          >
+            Explore
+          </Text>
+        </View>
+
+        {/* Search bar */}
+        <View style={styles.searchContainer}>
+          <Searchbar
+            placeholder="Search podcasts, creators..."
+            onChangeText={setSearchQuery}
+            value={searchQuery}
+            style={[
+              styles.searchbar,
+              {
+                backgroundColor: isDark
+                  ? Palette.dark.surfaceVariant
+                  : Palette.light.surfaceVariant,
+              },
+            ]}
+            inputStyle={styles.searchInput}
+            icon={() => (
+              <Search
+                size={20}
+                color={theme.colors.onSurfaceVariant}
+              />
+            )}
+            elevation={0}
+          />
+        </View>
+
+        {/* Categories */}
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.categoriesContainer}
+        >
+          {CATEGORIES.map((cat, idx) => (
+            <Chip
+              key={cat || idx}
+              selected={activeCategory === cat}
+              onPress={() => setActiveCategory(cat)}
+              style={[
+                styles.categoryChip,
+                activeCategory === cat && {
+                  backgroundColor: theme.colors.primary,
+                },
+              ]}
+              textStyle={[
+                styles.categoryText,
+                activeCategory === cat && { color: '#FFFFFF' },
+              ]}
+              mode="flat"
+            >
+              {cat}
+            </Chip>
+          ))}
+        </ScrollView>
+
+        {isLoading ? (
+          <View style={styles.loadingContainer}>
+            <ActivityIndicator size="large" color={theme.colors.primary} />
+          </View>
+        ) : (
+          <>
+            {/* Creators */}
+            {creators.length > 0 && (
+              <View style={styles.section}>
+                <View style={styles.sectionHeader}>
+                  <Users size={20} color={theme.colors.primary} />
+                  <Text
+                    variant="titleMedium"
+                    style={[
+                      styles.sectionTitle,
+                      { color: theme.colors.onBackground },
+                    ]}
+                  >
+                    Popular Creators
+                  </Text>
+                </View>
+                <FlatList
+                  horizontal
+                  data={creators}
+                  keyExtractor={(item, index) => item?._id ? String(item._id) : String(index)}
+                  renderItem={renderCreatorChip}
+                  showsHorizontalScrollIndicator={false}
+                  contentContainerStyle={styles.horizontalList}
+                />
+              </View>
+            )}
+
+            {/* Podcasts */}
+            <View style={styles.section}>
+              <View style={styles.sectionHeader}>
+                <Headphones size={20} color={theme.colors.primary} />
+                <Text
+                  variant="titleMedium"
+                  style={[
+                    styles.sectionTitle,
+                    { color: theme.colors.onBackground },
+                  ]}
+                >
+                  {searchQuery ? 'Search Results' : 'All Podcasts'}
+                </Text>
+              </View>
+              {filteredPodcasts.length > 0 ? (
+                <View style={styles.podcastList}>
+                  {filteredPodcasts.map((podcast, idx) => (
+                    <View key={podcast?._id || idx} style={{ width: '48%', marginBottom: Spacing.md }}>
+                      {renderPodcastRow({ item: podcast })}
+                    </View>
+                  ))}
+                </View>
+              ) : (
+                <Surface
+                  style={[
+                    styles.emptyState,
+                    {
+                      backgroundColor: isDark
+                        ? Palette.dark.surfaceVariant
+                        : Palette.light.surfaceVariant,
+                    },
+                  ]}
+                  elevation={0}
+                >
+                  <Search
+                    size={32}
+                    color={theme.colors.onSurfaceVariant}
+                    strokeWidth={1}
+                  />
+                  <Text
+                    variant="bodyMedium"
+                    style={{
+                      color: theme.colors.onSurfaceVariant,
+                      marginTop: Spacing.sm,
+                    }}
+                  >
+                    {searchQuery
+                      ? 'No results found'
+                      : 'No podcasts available'}
+                  </Text>
+                </Surface>
+              )}
+            </View>
+          </>
+        )}
+
+        <View style={{ height: Spacing.xxl }} />
+      </ScrollView>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+  },
+  header: {
+    paddingHorizontal: Spacing.lg,
+    paddingTop: Spacing.md,
+    paddingBottom: Spacing.sm,
+  },
+  title: {
+    fontWeight: '700',
+  },
+  searchContainer: {
+    paddingHorizontal: Spacing.lg,
+    marginBottom: Spacing.md,
+  },
+  searchbar: {
+    borderRadius: Radius.lg,
+  },
+  searchInput: {
+    fontSize: 15,
+  },
+  categoriesContainer: {
+    paddingHorizontal: Spacing.lg,
+    gap: Spacing.sm,
+    marginBottom: Spacing.lg,
+  },
+  categoryChip: {
+    borderRadius: Radius.full,
+  },
+  categoryText: {
+    fontSize: 13,
+    fontWeight: '600',
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginTop: 100,
+  },
+  section: {
+    marginBottom: Spacing.lg,
+  },
+  sectionHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: Spacing.lg,
+    marginBottom: Spacing.md,
+  },
+  sectionTitle: {
+    fontWeight: '700',
+    marginLeft: Spacing.sm,
+  },
+  horizontalList: {
+    paddingHorizontal: Spacing.lg,
+    gap: Spacing.md,
+  },
+  // ── Creator chip ──
+  creatorChip: {
+    borderRadius: Radius.lg,
+    padding: Spacing.md,
+    alignItems: 'center',
+    width: 110,
+  },
+  creatorAvatar: {
+    width: 48,
+    height: 48,
+    borderRadius: Radius.full,
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 16,
-    padding: 24,
+    marginBottom: Spacing.sm,
   },
-  logo: {
-    width: 120,
-    height: 120,
+  // ── Podcast row ──
+  podcastList: {
+    paddingHorizontal: Spacing.lg,
+    gap: Spacing.sm,
+  },
+  podcastRow: {
+    flexDirection: 'row',
+    borderRadius: Radius.lg,
+    padding: Spacing.md,
+    alignItems: 'center',
+  },
+  podcastIcon: {
+    width: 48,
+    height: 48,
+    borderRadius: Radius.md,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: Spacing.md,
+  },
+  podcastInfo: {
+    flex: 1,
+  },
+  // ── Empty state ──
+  emptyState: {
+    marginHorizontal: Spacing.lg,
+    borderRadius: Radius.lg,
+    padding: Spacing.xl,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
 });

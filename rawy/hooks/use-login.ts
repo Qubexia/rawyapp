@@ -1,78 +1,63 @@
-import { useState, useCallback } from "react";
-import { useRouter } from "expo-router";
-import { ApiRequestError } from "../services/api";
-import { useAuthContext } from "../context/auth-context";
+/**
+ * useLogin — login form hook using React Hook Form + Zod.
+ */
 
-export interface LoginFields {
-  email: string;
-  password: string;
-}
-
-export interface LoginErrors {
-  email?: string;
-  password?: string;
-}
-
-const INITIAL: LoginFields = { email: "", password: "" };
+import { useCallback, useState } from 'react';
+import { useRouter } from 'expo-router';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { loginSchema, LoginFormData } from '../validation/auth.schemas';
+import { useAuthContext } from '../context/auth-context';
+import { ApiError } from '../services/axios-client';
 
 export function useLogin() {
   const router = useRouter();
   const { login } = useAuthContext();
 
-  const [fields, setFields] = useState<LoginFields>(INITIAL);
-  const [errors, setErrors] = useState<LoginErrors>({});
   const [serverError, setServerError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
-  const setField = useCallback(
-    <K extends keyof LoginFields>(k: K, v: LoginFields[K]) => {
-      setFields((p) => ({ ...p, [k]: v }));
-      setErrors((p) => ({ ...p, [k]: undefined }));
-      setServerError(null);
-    },
-    [],
+  const form = useForm<LoginFormData>({
+    resolver: zodResolver(loginSchema),
+    defaultValues: { email: '', password: '' },
+    mode: 'onSubmit',
+  });
+
+  const handleSubmit = form.handleSubmit(
+    useCallback(
+      async (data: LoginFormData) => {
+        setIsLoading(true);
+        setServerError(null);
+
+        try {
+          await login(data);
+          router.replace('/(tabs)');
+        } catch (err) {
+          if (err instanceof ApiError) {
+            if (err.statusCode === 401) {
+              setServerError('Invalid email or password');
+            } else {
+              setServerError(err.message || 'Login failed');
+            }
+          } else {
+            setServerError('Unable to connect to server');
+          }
+        } finally {
+          setIsLoading(false);
+        }
+      },
+      [login, router],
+    ),
   );
 
-  function validate(): LoginErrors {
-    const out: LoginErrors = {};
-    const email = fields.email.trim();
-    if (!email) out.email = "Email is required";
-    else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))
-      out.email = "Enter a valid email";
-
-    if (!fields.password) out.password = "Password is required";
-    return out;
-  }
-
-  const handleSubmit = useCallback(async () => {
-    const v = validate();
-    if (Object.keys(v).length > 0) {
-      setErrors(v);
-      return;
-    }
-
-    setIsLoading(true);
-    setServerError(null);
-
-    try {
-      await login({
-        email: fields.email.trim().toLowerCase(),
-        password: fields.password,
-      });
-      router.replace("/(tabs)");
-    } catch (err) {
-      if (err instanceof ApiRequestError) {
-        if (err.statusCode === 401) setServerError("Invalid email or password");
-        else setServerError(err.message || "Login failed");
-      } else {
-        setServerError("Unable to connect to server");
-      }
-    } finally {
-      setIsLoading(false);
-    }
-  }, [fields, login, router]);
-
-  return { fields, setField, errors, isLoading, serverError, handleSubmit };
+  return {
+    control: form.control,
+    errors: form.formState.errors,
+    isLoading,
+    serverError,
+    handleSubmit,
+    setServerError,
+  };
 }
 
 export default useLogin;

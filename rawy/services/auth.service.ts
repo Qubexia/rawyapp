@@ -1,4 +1,8 @@
-import { apiRequest, authenticatedRequest, TOKEN_KEYS } from './api';
+/**
+ * Auth service — all authentication API calls using Axios.
+ */
+
+import axiosClient, { TOKEN_KEYS } from './axios-client';
 import { setItem, getItem, deleteItem } from './token-storage';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
@@ -7,7 +11,7 @@ export interface UserProfile {
   _id: string;
   name: string;
   email: string;
-  role: 'user' | 'creator' | 'admin';
+  role: 'user' | 'creator' | 'admin' | 'USER' | 'CREATOR' | 'ADMIN';
   isActive: boolean;
   googleId?: string;
   facebookId?: string;
@@ -45,7 +49,7 @@ export interface LoginPayload {
   password: string;
 }
 
-// ─── Persist tokens ──────────────────────────────────────────────────────────
+// ─── Token helpers ───────────────────────────────────────────────────────────
 
 export async function persistTokens(tokens: AuthTokens): Promise<void> {
   await Promise.all([
@@ -72,25 +76,14 @@ export async function getStoredTokens(): Promise<{
   return { accessToken, refreshToken };
 }
 
-// ─── Auth API calls ───────────────────────────────────────────────────────────
+// ─── Auth API calls ─────────────────────────────────────────────────────────
 
-/**
- * Register a regular listener account.
- * Endpoint: POST /auth/register
- */
 export async function registerUser(payload: RegisterPayload): Promise<AuthTokens> {
-  const result = await apiRequest<AuthTokens>('/auth/register', {
-    method: 'POST',
-    body: payload as unknown as Record<string, unknown>,
-  });
-  await persistTokens(result);
-  return result;
+  const { data } = await axiosClient.post<AuthTokens>('/auth/register', payload);
+  await persistTokens(data);
+  return data;
 }
 
-/**
- * Register a creator account (supports optional avatar upload).
- * Endpoint: POST /auth/register-creator (multipart/form-data)
- */
 export async function registerCreator(payload: RegisterCreatorPayload): Promise<AuthTokens> {
   const formData = new FormData();
   formData.append('name', payload.name);
@@ -106,53 +99,38 @@ export async function registerCreator(payload: RegisterCreatorPayload): Promise<
     } as unknown as Blob);
   }
 
-  const result = await apiRequest<AuthTokens>('/auth/register-creator', {
-    method: 'POST',
-    body: formData as unknown as Record<string, unknown>,
-    isMultipart: true,
-  });
-  await persistTokens(result);
-  return result;
+  const { data } = await axiosClient.post<AuthTokens>(
+    '/auth/register-creator',
+    formData,
+    { headers: { 'Content-Type': 'multipart/form-data' } },
+  );
+  await persistTokens(data);
+  return data;
 }
 
-/**
- * Login with email + password.
- * Endpoint: POST /auth/login
- */
 export async function loginUser(payload: LoginPayload): Promise<AuthTokens> {
-  const result = await apiRequest<AuthTokens>('/auth/login', {
-    method: 'POST',
-    body: payload as unknown as Record<string, unknown>,
-  });
-  await persistTokens(result);
-  return result;
+  const { data } = await axiosClient.post<AuthTokens>('/auth/login', payload);
+  await persistTokens(data);
+  return data;
 }
 
-/**
- * Refresh access token using the stored refresh token.
- * Endpoint: POST /auth/refresh
- */
 export async function refreshAccessToken(): Promise<AuthTokens> {
   const { refreshToken } = await getStoredTokens();
   if (!refreshToken) throw new Error('No refresh token stored');
 
-  const result = await apiRequest<AuthTokens>('/auth/refresh', {
-    method: 'POST',
-    body: { refreshToken } as unknown as Record<string, unknown>,
+  const { data } = await axiosClient.post<AuthTokens>('/auth/refresh', {
+    refreshToken,
   });
-  await persistTokens(result);
-  return result;
+  await persistTokens(data);
+  return data;
 }
 
-/**
- * Logout the current user (invalidates refresh token on the server).
- * Endpoint: POST /auth/logout
- */
 export async function logoutUser(): Promise<void> {
   try {
-    await authenticatedRequest<{ message: string }>('/auth/logout', {
-      method: 'POST',
-    });
+    await axiosClient.post('/auth/logout');
+  } catch (error) {
+    // Ignore error if logout fails (e.g., token already invalid on server)
+    console.debug('Server logout failed, clearing local tokens', error);
   } finally {
     await clearTokens();
   }
