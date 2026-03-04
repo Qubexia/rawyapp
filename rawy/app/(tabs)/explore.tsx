@@ -2,6 +2,10 @@ import { Platform, StyleSheet } from 'react-native';
 
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
+import { IconSymbol } from '@/components/ui/icon-symbol';
+import ParallaxScrollView from '@/components/parallax-scroll-view';
+import { ExternalLink } from '@/components/external-link';
+import { Collapsible } from '@/components/ui/collapsible';
 
 export default function TabTwoScreen() {
   return (
@@ -12,15 +16,12 @@ export default function TabTwoScreen() {
           size={310}
           color="#808080"
           name="chevron.left.forwardslash.chevron.right"
-          style={styles.headerImage}
         />
       }>
-      <ThemedView style={styles.titleContainer}>
+      <ThemedView >
         <ThemedText
           type="title"
-          style={{
-            fontFamily: Fonts.rounded,
-          }}>
+>
           Explore
         </ThemedText>
       </ThemedView>
@@ -70,7 +71,7 @@ export default function TabTwoScreen() {
           This template includes an example of an animated component. The{' '}
           <ThemedText type="defaultSemiBold">components/HelloWave.tsx</ThemedText> component uses
           the powerful{' '}
-          <ThemedText type="defaultSemiBold" style={{ fontFamily: Fonts.mono }}>
+          <ThemedText type="defaultSemiBold" >
             react-native-reanimated
           </ThemedText>{' '}
           library to create a waving hand animation.
