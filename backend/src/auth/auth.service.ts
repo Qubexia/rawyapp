@@ -4,10 +4,14 @@ import { ConfigService } from '@nestjs/config';
 import * as bcrypt from 'bcrypt';
 import { UsersService } from '../users/users.service';
 import { UserDocument } from '../users/schemas/user.schema';
+import { CreatorsService } from '../creators/creators.service';
 import { RegisterDto } from './dto/register.dto';
+import { RegisterCreatorDto } from './dto/register-creator.dto';
 import { LoginDto } from './dto/login.dto';
 import { RefreshTokenDto } from './dto/refresh-token.dto';
 import { TokenResponseDto } from './dto/token-response.dto';
+import { Role } from '../common/constants/roles.enum';
+import { Types } from 'mongoose';
 
 interface OAuthUser {
   provider: 'google' | 'facebook';
@@ -22,6 +26,7 @@ export class AuthService {
     private usersService: UsersService,
     private jwtService: JwtService,
     private configService: ConfigService,
+    private creatorsService: CreatorsService,
   ) {}
 
   async register(registerDto: RegisterDto): Promise<TokenResponseDto> {
@@ -42,6 +47,47 @@ export class AuthService {
       email,
       passwordHash,
     });
+
+    // Generate tokens
+    const { accessToken, refreshToken } = await this.generateTokens(user);
+
+    return {
+      accessToken,
+      refreshToken,
+      user: user.toObject(),
+    };
+  }
+
+  async registerCreator(
+    registerCreatorDto: RegisterCreatorDto,
+    avatarPath?: string,
+  ): Promise<TokenResponseDto> {
+    const { name, email, password, showName } = registerCreatorDto;
+
+    // Check if user already exists
+    const existingUser = await this.usersService.findByEmail(email);
+    if (existingUser) {
+      throw new ConflictException('User with this email already exists');
+    }
+
+    // Hash password
+    const passwordHash = await bcrypt.hash(password, 10);
+
+    // Create user with CREATOR role
+    const user = await this.usersService.create({
+      name,
+      email,
+      passwordHash,
+      role: Role.CREATOR,
+    });
+
+    // Create creator profile with showName and avatar if provided
+    await this.creatorsService.becomeCreator(
+      new Types.ObjectId(user._id),
+      name,
+      showName,
+      avatarPath,
+    );
 
     // Generate tokens
     const { accessToken, refreshToken } = await this.generateTokens(user);

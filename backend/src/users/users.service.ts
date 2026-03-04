@@ -12,7 +12,10 @@ export class UsersService {
   ) {}
 
   async findById(id: string): Promise<UserDocument | null> {
-    return this.userModel.findById(id).exec();
+    return this.userModel
+      .findById(id)
+      .select('+refreshToken +refreshTokenExpiresAt')
+      .exec();
   }
 
   async findAllPaginated(
@@ -33,7 +36,10 @@ export class UsersService {
   }
 
   async findByEmail(email: string): Promise<UserDocument | null> {
-    return this.userModel.findOne({ email }).exec();
+    return this.userModel
+      .findOne({ email })
+      .select('+passwordHash')
+      .exec();
   }
 
   async findByGoogleId(googleId: string): Promise<UserDocument | null> {

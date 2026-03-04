@@ -9,10 +9,12 @@ import { LocalStrategy } from './strategies/local.strategy';
 import { GoogleStrategy } from './strategies/google.strategy';
 import { FacebookStrategy } from './strategies/facebook.strategy';
 import { UsersModule } from '../users/users.module';
+import { CreatorsModule } from '../creators/creators.module';
 
 @Module({
   imports: [
     UsersModule,
+    CreatorsModule,
     PassportModule,
     JwtModule.registerAsync({
       imports: [ConfigModule],

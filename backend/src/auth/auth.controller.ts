@@ -1,16 +1,29 @@
-import { Controller, Post, Get, Body, UseGuards, Req, Res, HttpStatus } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
+import {
+  Controller,
+  Post,
+  Get,
+  Body,
+  UseGuards,
+  Req,
+  Res,
+  HttpStatus,
+  UseInterceptors,
+  UploadedFile,
+} from '@nestjs/common';
+import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiConsumes, ApiBody } from '@nestjs/swagger';
 import { ApiCommonErrorResponses } from '../common/decorators/api-error-responses.decorator';
 import type { Request, Response } from 'express';
+import { FileInterceptor } from '@nestjs/platform-express';
 import { AuthService } from './auth.service';
 import { RegisterDto } from './dto/register.dto';
+import { RegisterCreatorDto } from './dto/register-creator.dto';
 import { LoginDto } from './dto/login.dto';
 import { RefreshTokenDto } from './dto/refresh-token.dto';
 import { TokenResponseDto } from './dto/token-response.dto';
 import { Public } from '../common/decorators/public.decorator';
-import { AuthGuard } from '@nestjs/passport';
 import { GoogleAuthGuard } from './guards/google-auth.guard';
 import { FacebookAuthGuard } from './guards/facebook-auth.guard';
+import { getImageMulterConfig } from '../common/utils/file-upload.util';
 
 @ApiTags('auth')
 @ApiCommonErrorResponses()
@@ -29,14 +42,41 @@ export class AuthController {
   }
 
   @Public()
-  @UseGuards(AuthGuard('local'))
+  @Post('register-creator')
+  @UseInterceptors(FileInterceptor('avatar', getImageMulterConfig(5 * 1024 * 1024)))
+  @ApiConsumes('multipart/form-data')
+  @ApiOperation({ summary: 'Register a new creator with show and avatar' })
+  @ApiResponse({ status: HttpStatus.CREATED, description: 'Creator successfully registered', type: TokenResponseDto })
+  @ApiResponse({ status: HttpStatus.CONFLICT, description: 'User with this email already exists' })
+  @ApiResponse({ status: HttpStatus.BAD_REQUEST, description: 'Validation error' })
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        name: { type: 'string', example: 'John Doe' },
+        email: { type: 'string', example: 'john.doe@example.com' },
+        password: { type: 'string', example: 'SecurePass123!' },
+        showName: { type: 'string', example: 'My Awesome Podcast' },
+        avatar: { type: 'string', format: 'binary' },
+      },
+      required: ['name', 'email', 'password', 'showName'],
+    },
+  })
+  async registerCreator(
+    @Body() registerCreatorDto: RegisterCreatorDto,
+    @UploadedFile() avatar?: Express.Multer.File,
+  ): Promise<TokenResponseDto> {
+    const avatarPath = avatar ? avatar.path : undefined;
+    return this.authService.registerCreator(registerCreatorDto, avatarPath);
+  }
+
+  @Public()
   @Post('login')
   @ApiOperation({ summary: 'Login with email and password' })
   @ApiResponse({ status: HttpStatus.OK, description: 'Login successful', type: TokenResponseDto })
   @ApiResponse({ status: HttpStatus.UNAUTHORIZED, description: 'Invalid credentials' })
-  async login(@Req() req: Request): Promise<TokenResponseDto> {
-    const user = req.user as any;
-    return this.authService.login({ email: user.email, password: '' });
+  async login(@Body() loginDto: LoginDto): Promise<TokenResponseDto> {
+    return this.authService.login(loginDto);
   }
 
   @Public()

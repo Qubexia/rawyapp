@@ -21,6 +21,16 @@ export class CreatorProfile {
   @ApiProperty({ type: String, required: false, description: 'Avatar image file path' })
   avatarUrl?: string;
 
+  @Prop({ type: String, maxlength: 100 })
+  @ApiProperty({
+    type: String,
+    required: false,
+    maxLength: 100,
+    description: 'Primary show name for the creator',
+    example: 'My Awesome Podcast',
+  })
+  showName?: string;
+
   @Prop({
     type: {
       website: { type: String },

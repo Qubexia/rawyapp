@@ -1,0 +1,21 @@
+{
+  "status": "commited",
+  "type": "backend",
+  "scope": "codebase",
+  "localEndpoint": "http://localhost:3000",
+  "backendAuthType": "basic token",
+  "backendUsername": "admin@rawy.com",
+  "backendPassword": "AdminPassword123!",
+  "executionArgs": {
+    "projectName": "backend",
+    "projectPath": "d:/rawy/backend",
+    "testIds": [],
+    "additionalInstruction": "",
+    "serverMode": "development",
+    "envs": {
+      "API_KEY": "sk-user-EaH59dY6pZ12rOY59C5u-jsrskpQXae1Q3BTOcQjPlhVUxOiLCIGX7NsM5S7D5-rXvlsxxChTZUkCNxNC6xadTB9y_za5QC77P9ggLqtRBzgJ46_EFGYYz83wRqP82mVkz8"
+    }
+  },
+  "serverPort": 49882,
+  "proxy": "http://58add3c9-bef7-49c3-9ad2-4bb295ea1619:iGSM1NGe0u3AHfpPu4TmgNRW1NJO0kqr@tun.testsprite.com:8080"
+}

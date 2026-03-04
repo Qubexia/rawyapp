@@ -16,7 +16,12 @@ export class CreatorsService {
   /**
    * Become a creator - elevate user role and create creator profile
    */
-  async becomeCreator(userId: Types.ObjectId, userName: string): Promise<CreatorProfile> {
+  async becomeCreator(
+    userId: Types.ObjectId,
+    userName: string,
+    showName?: string,
+    avatarUrl?: string,
+  ): Promise<CreatorProfile> {
     // Check if creator profile already exists
     const existingProfile = await this.creatorProfileModel.findOne({ userId }).exec();
     if (existingProfile) {
@@ -28,6 +33,8 @@ export class CreatorsService {
       userId,
       followerCount: 0,
       podcastCount: 0,
+      showName: showName || userName,
+      avatarUrl,
     });
 
     return creatorProfile.save();
