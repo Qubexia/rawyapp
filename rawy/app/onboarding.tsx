@@ -189,16 +189,16 @@ const styles = StyleSheet.create({
     dot: {
         height: 10,
         borderRadius: 5,
-        backgroundColor: '#6C63FF', // Primary Modern Color
+        backgroundColor: '#000000', // Primary Modern Color
         marginHorizontal: 8,
     },
     button: {
-        backgroundColor: '#6C63FF',
+        backgroundColor: '#000000',
         borderRadius: 30,
         height: 60,
         justifyContent: 'center',
         alignItems: 'center',
-        shadowColor: '#6C63FF',
+        shadowColor: '#000000',
         shadowOffset: {
             width: 0,
             height: 4,
