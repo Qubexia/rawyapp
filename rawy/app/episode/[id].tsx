@@ -5,13 +5,21 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import {
   View, FlatList, StyleSheet, TouchableOpacity,
-  TextInput, KeyboardAvoidingView, Platform, Share, RefreshControl, Image
+  TextInput, KeyboardAvoidingView, Platform, Share, RefreshControl, Image, Alert
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Text, Surface, IconButton, useTheme, ActivityIndicator } from 'react-native-paper';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { ArrowLeft, Heart, MessageCircle, Play, Pause, Clock, Send, Trash2, Share2 } from 'lucide-react-native';
-import { Audio } from 'expo-av';
+
+// Lazy import to avoid crash when expo-audio native module is missing (Expo Go)
+let ExpoAudio: any = null;
+try {
+  ExpoAudio = require('expo-audio');
+} catch (e) {
+  console.log('[EpisodeDetail] Note: Audio playback will require a development build.');
+}
+
 
 import { useEpisode } from '@/hooks/queries/use-episodes';
 import { useLikeStatus, useToggleLike } from '@/hooks/queries/use-likes';
@@ -31,13 +39,12 @@ export default function EpisodeDetailScreen() {
   const [isPlaying, setIsPlaying] = useState(false);
   const [commentText, setCommentText] = useState('');
 
-  const [sound, setSound] = useState<Audio.Sound | null>(null);
   const [position, setPosition] = useState(0);
   const [duration, setDuration] = useState(0);
   const [refreshing, setRefreshing] = useState(false);
 
   const { data: episode, isLoading } = useEpisode(id);
-  const { data: likeStatus } = useLikeStatus(id);
+  const { data: likeStatus } = useLikeStatus(id, { enabled: !!user });
   const toggleLike = useToggleLike(id);
   const { data: commentsData, isLoading: commentsLoading, refetch: refetchComments } = useComments(id);
   const createComment = useCreateComment(id);
@@ -50,71 +57,49 @@ export default function EpisodeDetailScreen() {
     setRefreshing(false);
   }, [refetchComments]);
 
+  // --- Audio Player Logic (expo-audio) ---
+  const player = ExpoAudio?.useAudioPlayer(episode?.audioFileUrl || '');
+  
+  // Use useEffect to handle status updates manually if needed, 
+  // or use shared values for progress.
   useEffect(() => {
-    return sound
-      ? () => {
-          sound.unloadAsync();
-        }
-      : undefined;
-  }, [sound]);
+    if (!player) return;
+    
+    setIsPlaying(player.playing);
+    setDuration(player.duration || 0);
+    
+    // expo-audio uses numbers in seconds, we need to convert to millis for our formatter
+    // or update the formatter. Let's keep it in seconds internally.
+    const interval = setInterval(() => {
+      setPosition(player.currentTime * 1000);
+      setDuration(player.duration * 1000);
+      setIsPlaying(player.playing);
+    }, 500);
 
-  const loadAudio = async () => {
-    if (!episode?.audioFileUrl) return;
-    try {
-      // Configure audio session before creating sound — prevents "Unable to activate keep awake" error
-      await Audio.setAudioModeAsync({
-        allowsRecordingIOS: false,
-        staysActiveInBackground: true,
-        playsInSilentModeIOS: true,
-        shouldDuckAndroid: true,
-        playThroughEarpieceAndroid: false,
-      });
-      const { sound: newSound } = await Audio.Sound.createAsync(
-        { uri: episode.audioFileUrl },
-        { shouldPlay: true },
-        onPlaybackStatusUpdate
-      );
-      setSound(newSound);
-      setIsPlaying(true);
-    } catch (err) {
-      console.error('Failed to load audio', err);
-    }
-  };
-
-  const onPlaybackStatusUpdate = (status: any) => {
-    if (status.isLoaded) {
-      setPosition(status.positionMillis);
-      setDuration(status.durationMillis || 0);
-      setIsPlaying(status.isPlaying);
-      if (status.didJustFinish) {
-        setIsPlaying(false);
-        setPosition(status.durationMillis || 0);
-      }
-    }
-  };
+    return () => clearInterval(interval);
+  }, [player]);
 
   const togglePlayPause = async () => {
-    if (!sound) {
-      await loadAudio();
+    if (!ExpoAudio || !player) {
+      Alert.alert('Audio Unavailable', 'Audio playback requires a development build.');
       return;
     }
-    if (isPlaying) {
-      await sound.pauseAsync();
+
+    if (player.playing) {
+      player.pause();
     } else {
-      if (position >= duration && duration > 0) {
-        await sound.replayAsync();
-      } else {
-        await sound.playAsync();
-      }
+      player.play();
     }
   };
 
   const formatTimeMillis = (millis: number) => {
+    if (isNaN(millis) || millis < 0) return "0:00";
     const totalSeconds = Math.floor(millis / 1000);
     const minutes = Math.floor(totalSeconds / 60);
     const seconds = totalSeconds % 60;
     return `${minutes}:${seconds < 10 ? '0' : ''}${seconds}`;
   };
+
 
   const handleShare = async () => {
     try {

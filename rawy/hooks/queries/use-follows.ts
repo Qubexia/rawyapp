@@ -20,11 +20,12 @@ export const followKeys = {
     [...followKeys.all, 'followers', creatorId] as const,
 };
 
-export function useFollowStatus(creatorId: string) {
+export function useFollowStatus(creatorId: string, options?: { enabled?: boolean }) {
   return useQuery({
     queryKey: followKeys.status(creatorId),
     queryFn: () => getFollowStatus(creatorId),
-    enabled: !!creatorId,
+    enabled: !!creatorId && options?.enabled !== false,
+    ...options,
   });
 }
 
@@ -74,13 +75,14 @@ export function useToggleFollow(creatorId: string) {
   });
 }
 
-export function useFollowing() {
+export function useFollowing(options?: { enabled?: boolean }) {
   return useInfiniteQuery({
     queryKey: followKeys.following(),
     queryFn: ({ pageParam = 1 }) => getFollowing(pageParam, 20),
     getNextPageParam: (lastPage) =>
       lastPage.page < lastPage.totalPages ? lastPage.page + 1 : undefined,
     initialPageParam: 1,
+    ...options,
   });
 }
 

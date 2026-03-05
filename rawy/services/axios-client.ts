@@ -37,6 +37,10 @@ const PUBLIC_PATHS = [
   '/auth/register',
   '/auth/register-creator',
   '/auth/refresh',
+  '/podcasts',
+  '/episodes',
+  '/comments',
+  '/creators',
 ];
 
 // ─── Error types ─────────────────────────────────────────────────────────────
@@ -171,7 +175,7 @@ axiosClient.interceptors.request.use(
     
     if (!token) {
       if (!isPublic) {
-        console.warn(`[Axios] Warning: Request to protected route "${config.url}" is being sent without an access token.`);
+        console.debug(`[Axios] Request to "${config.url}" sent without access token (user not authenticated).`);
       }
       return config;
     }

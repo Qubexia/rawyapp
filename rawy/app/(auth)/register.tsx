@@ -152,17 +152,14 @@ export default function RegisterScreen() {
                 >
                   <Mic
                     size={16}
-                    color={
-                      activeTab === 'creator'
-                        ? Palette.primary[700]
-                        : Palette.text.lightTertiary
-                    }
+                    color={activeTab === 'creator' ? '#FFFFFF' : Palette.text.lightTertiary}
+
                     style={{ marginRight: 6 }}
                   />
                   <Text
                     style={[
                       styles.tabText,
-                      activeTab === 'creator' && styles.activeCreatorTabText,
+                      activeTab === 'creator' && styles.activeTabText,
                     ]}
                   >
                     Creator

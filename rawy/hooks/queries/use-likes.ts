@@ -17,18 +17,20 @@ export const likeKeys = {
   likedEpisodes: (page: number) => [...likeKeys.all, 'liked-episodes', page] as const,
 };
 
-export function useLikedEpisodes(page: number = 1, limit: number = 20) {
+export function useLikedEpisodes(page: number = 1, limit: number = 20, options?: { enabled?: boolean }) {
   return useQuery({
     queryKey: likeKeys.likedEpisodes(page),
     queryFn: () => getLikedEpisodes(page, limit),
+    ...options,
   });
 }
 
-export function useLikeStatus(episodeId: string) {
+export function useLikeStatus(episodeId: string, options?: { enabled?: boolean }) {
   return useQuery({
     queryKey: likeKeys.status(episodeId),
     queryFn: () => getLikeStatus(episodeId),
-    enabled: !!episodeId,
+    enabled: !!episodeId && (options?.enabled !== false),
+    ...options,
   });
 }
 

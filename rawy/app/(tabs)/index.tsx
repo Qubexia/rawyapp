@@ -66,7 +66,7 @@ export default function HomeScreen() {
     data: followingData,
     isLoading: followingLoading,
     refetch: refetchFollowing,
-  } = useFollowing();
+  } = useFollowing({ enabled: !!user });
 
   const [refreshing, setRefreshing] = React.useState(false);
 

@@ -2,16 +2,16 @@
  * Tab layout — 4 tabs with Lucide icons + Creator center FAB (Animated - FIXED).
  */
 
-import { Tabs, useRouter } from 'expo-router';
-import React, { useState } from 'react';
+import { Tabs, useRouter } from "expo-router";
+import React, { useState } from "react";
 import {
   Platform,
   View,
   TouchableOpacity,
   TouchableWithoutFeedback,
   StyleSheet,
-} from 'react-native';
-import { useTheme, Text } from 'react-native-paper';
+} from "react-native";
+import { useTheme, Text } from "react-native-paper";
 import {
   Home,
   Search,
@@ -20,21 +20,21 @@ import {
   Plus,
   Mic,
   Upload,
-} from 'lucide-react-native';
+} from "lucide-react-native";
 
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
   withTiming,
   interpolate,
-} from 'react-native-reanimated';
+} from "react-native-reanimated";
 
-import { HapticTab } from '@/components/layout/haptic-tab';
-import { Palette } from '@/constants/theme';
-import { useAuthContext } from '@/context/auth-context';
-import { isCreator } from '@/utils/roles';
+import { HapticTab } from "@/components/layout/haptic-tab";
+import { Palette } from "@/constants/theme";
+import { useAuthContext } from "@/context/auth-context";
+import { isCreator } from "@/utils/roles";
 
-const TAB_BAR_HEIGHT = Platform.OS === 'ios' ? 88 : 80;
+const TAB_BAR_HEIGHT = Platform.OS === "ios" ? 88 : 80;
 const FAB_SIZE = 56;
 
 export default function TabLayout() {
@@ -61,12 +61,12 @@ export default function TabLayout() {
 
   const handleNewPodcast = () => {
     closeFab();
-    router.push('/(creator)/create-podcast' as any);
+    router.push("/(creator)/create-podcast" as any);
   };
 
   const handleUploadEpisode = () => {
     closeFab();
-    router.push('/(creator)/upload-episode' as any);
+    router.push("/(creator)/upload-episode" as any);
   };
 
   // FAB animation
@@ -107,10 +107,10 @@ export default function TabLayout() {
             ? Palette.text.darkTertiary
             : Palette.text.lightTertiary,
           tabBarStyle: {
-            backgroundColor: '#FFFFFF',
+            backgroundColor: "#FFFFFF",
             borderTopWidth: 0.5,
             height: TAB_BAR_HEIGHT,
-            paddingBottom: Platform.OS === 'ios' ? 28 : 8,
+            paddingBottom: Platform.OS === "ios" ? 28 : 8,
             paddingTop: 8,
           },
         }}
@@ -118,37 +118,29 @@ export default function TabLayout() {
         <Tabs.Screen
           name="index"
           options={{
-            title: 'Home',
-            tabBarIcon: ({ color }) => (
-              <Home size={24} color={color} />
-            ),
+            title: "Home",
+            tabBarIcon: ({ color }) => <Home size={24} color={color} />,
           }}
         />
         <Tabs.Screen
           name="explore"
           options={{
-            title: 'Explore',
-            tabBarIcon: ({ color }) => (
-              <Search size={24} color={color} />
-            ),
+            title: "Explore",
+            tabBarIcon: ({ color }) => <Search size={24} color={color} />,
           }}
         />
         <Tabs.Screen
           name="library"
           options={{
-            title: 'Library',
-            tabBarIcon: ({ color }) => (
-              <Library size={24} color={color} />
-            ),
+            title: "Library",
+            tabBarIcon: ({ color }) => <Library size={24} color={color} />,
           }}
         />
         <Tabs.Screen
           name="profile"
           options={{
-            title: 'Profile',
-            tabBarIcon: ({ color }) => (
-              <User size={24} color={color} />
-            ),
+            title: "Profile",
+            tabBarIcon: ({ color }) => <User size={24} color={color} />,
           }}
         />
       </Tabs>
@@ -158,14 +150,14 @@ export default function TabLayout() {
           {/* Backdrop */}
           <TouchableWithoutFeedback onPress={closeFab}>
             <Animated.View
-              pointerEvents={fabOpen ? 'auto' : 'none'}
+              pointerEvents={fabOpen ? "auto" : "none"}
               style={[styles.backdrop, backdropStyle]}
             />
           </TouchableWithoutFeedback>
 
           {/* Actions */}
           <Animated.View
-            pointerEvents={fabOpen ? 'auto' : 'none'}
+            pointerEvents={fabOpen ? "auto" : "none"}
             style={[
               styles.actionsRow,
               { bottom: TAB_BAR_HEIGHT + 40 },
@@ -230,47 +222,47 @@ export default function TabLayout() {
 
 const styles = StyleSheet.create({
   fabContainer: {
-    position: 'absolute',
-    alignSelf: 'center',
+    position: "absolute",
+    alignSelf: "center",
     zIndex: 30,
   },
   backdrop: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(0,0,0,0.4)',
+    backgroundColor: "rgba(0,0,0,0.4)",
     zIndex: 10,
   },
   actionsRow: {
-    position: 'absolute',
+    position: "absolute",
     left: 0,
     right: 0,
-    flexDirection: 'row',
-    justifyContent: 'center',
+    flexDirection: "row",
+    justifyContent: "center",
     gap: 36,
     zIndex: 20,
   },
   actionItem: {
-    alignItems: 'center',
+    alignItems: "center",
   },
   actionButton: {
     width: 52,
     height: 52,
     borderRadius: 26,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
     elevation: 8,
   },
   actionLabel: {
     marginTop: 6,
     fontSize: 12,
-    fontWeight: '600',
-    color: '#FFFFFF',
+    fontWeight: "600",
+    color: "#FFFFFF",
   },
   fab: {
     width: FAB_SIZE,
     height: FAB_SIZE,
     borderRadius: FAB_SIZE / 2,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
     elevation: 12,
   },
 });

@@ -11,7 +11,7 @@ import React, {
   useState,
   useCallback,
   PropsWithChildren,
-} from 'react';
+} from "react";
 
 import {
   UserProfile,
@@ -21,10 +21,18 @@ import {
   logoutUser,
   getStoredTokens,
   clearTokens,
-} from '../services/auth.service';
-import { getMe, addDeviceToken, removeDeviceToken } from '../services/users.service';
-import { getPushToken, getStoredPushToken, saveStoredPushToken } from '../utils/notifications';
-import { ApiError } from '../services/axios-client';
+} from "../services/auth.service";
+import {
+  getMe,
+  addDeviceToken,
+  removeDeviceToken,
+} from "../services/users.service";
+import {
+  getPushToken,
+  getStoredPushToken,
+  saveStoredPushToken,
+} from "../utils/notifications";
+import { ApiError } from "../services/axios-client";
 
 // ─── Context shape ───────────────────────────────────────────────────────────
 
@@ -62,23 +70,31 @@ export function AuthProvider({ children }: PropsWithChildren) {
     (async () => {
       try {
         const { accessToken, refreshToken } = await getStoredTokens();
-        console.debug('[AuthContext] Restoration - tokens check:', { hasAccess: !!accessToken, hasRefresh: !!refreshToken });
-        
+        console.debug("[AuthContext] Restoration - tokens check:", {
+          hasAccess: !!accessToken,
+          hasRefresh: !!refreshToken,
+        });
+
         if (accessToken || refreshToken) {
           // if expired, the axios interceptors will handle the refresh.
           const userProfile = await getMe();
-          console.debug('[AuthContext] Restoration - success for user:', userProfile.name);
+          console.debug(
+            "[AuthContext] Restoration - success for user:",
+            userProfile.name,
+          );
           if (active) {
             setUser(userProfile);
           }
         } else {
-          console.debug('[AuthContext] Restoration - no tokens found');
+          console.debug("[AuthContext] Restoration - no tokens found");
         }
       } catch (err) {
-        console.error('[AuthContext] Restoration - failed:', err);
+        console.error("[AuthContext] Restoration - failed:", err);
         // 401 means the stored tokens are invalid (e.g. DB re-seeded, user deleted,
         // or refresh token expired). Clear them so we don't loop on every startup.
-        const is401 = (err as any)?.statusCode === 401 || (err as any)?.message === 'Unauthorized';
+        const is401 =
+          (err as any)?.statusCode === 401 ||
+          (err as any)?.message === "Unauthorized";
         if (is401) {
           await clearTokens().catch(() => {});
         }
@@ -96,15 +112,21 @@ export function AuthProvider({ children }: PropsWithChildren) {
   // Safe device token registration side-effect
   useEffect(() => {
     if (user && !isLoading) {
-      console.debug('[AuthContext] Authenticated session detected, queuing device token registration...');
-      registerDeviceToken().catch(err => console.error('[AuthContext] Background token reg failed:', err));
+      console.debug(
+        "[AuthContext] Authenticated session detected, queuing device token registration...",
+      );
+      registerDeviceToken().catch((err) =>
+        console.error("[AuthContext] Background token reg failed:", err),
+      );
     }
   }, [user, isLoading]);
 
   const registerDeviceToken = useCallback(async () => {
     // Crucial: Only register if we are actually authenticated
     if (!user) {
-      console.debug('[AuthContext] Skipping device token registration: not authenticated.');
+      console.debug(
+        "[AuthContext] Skipping device token registration: not authenticated.",
+      );
       return;
     }
 
@@ -113,10 +135,10 @@ export function AuthProvider({ children }: PropsWithChildren) {
       if (token) {
         await addDeviceToken(token);
         await saveStoredPushToken(token);
-        console.debug('[AuthContext] Device token registered successfully');
+        console.debug("[AuthContext] Device token registered successfully");
       }
     } catch (err) {
-      console.error('[AuthContext] Failed to register device token:', err);
+      console.error("[AuthContext] Failed to register device token:", err);
     }
   }, [user]);
 
@@ -126,10 +148,10 @@ export function AuthProvider({ children }: PropsWithChildren) {
       if (token) {
         await removeDeviceToken(token);
         await saveStoredPushToken(null);
-        console.debug('[AuthContext] Device token removed successfully');
+        console.debug("[AuthContext] Device token removed successfully");
       }
     } catch (err) {
-      console.error('[AuthContext] Failed to remove device token:', err);
+      console.error("[AuthContext] Failed to remove device token:", err);
     }
   }, []);
 
@@ -144,7 +166,9 @@ export function AuthProvider({ children }: PropsWithChildren) {
 
   const logout = useCallback(async () => {
     try {
-      await unregisterDeviceToken().catch(err => console.error('[AuthContext] logout token unreg failed:', err));
+      await unregisterDeviceToken().catch((err) =>
+        console.error("[AuthContext] logout token unreg failed:", err),
+      );
       await logoutUser();
     } finally {
       setUser(null);
@@ -154,7 +178,7 @@ export function AuthProvider({ children }: PropsWithChildren) {
   const updateUserRole = useCallback((role: string) => {
     setUser((prev) => {
       if (!prev) return null;
-      return { ...prev, role: role as UserProfile['role'] };
+      return { ...prev, role: role as UserProfile["role"] };
     });
   }, []);
 
@@ -184,7 +208,7 @@ export function AuthProvider({ children }: PropsWithChildren) {
 export function useAuthContext(): AuthContextValue {
   const ctx = useContext(AuthContext);
   if (!ctx) {
-    throw new Error('useAuthContext must be used inside <AuthProvider>');
+    throw new Error("useAuthContext must be used inside <AuthProvider>");
   }
   return ctx;
 }

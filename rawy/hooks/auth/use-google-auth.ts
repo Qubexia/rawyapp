@@ -2,15 +2,40 @@ import { useState, useCallback, useEffect } from 'react';
 import { useRouter } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as WebBrowser from 'expo-web-browser';
-import * as Google from 'expo-auth-session/providers/google';
 
 import { loginWithGoogleMobile } from '@/services/auth.service';
 import { useAuthContext } from '@/context/auth-context';
 import { STORAGE_KEYS } from '@/utils/constants';
 
+// Lazy import to avoid crash when ExpoApplication native module is missing (Expo Go)
+let Google: any = null;
+try {
+  Google = require('expo-auth-session/providers/google');
+} catch (e) {
+  console.log('[useGoogleAuth] Note: Google auth will require a development build.');
+}
+
 WebBrowser.maybeCompleteAuthSession();
 
-export function useGoogleAuth() {
+/**
+ * Fallback hook when Google auth module is not available (Expo Go).
+ */
+function useGoogleAuthFallback() {
+  const [googleError, setGoogleError] = useState<string | null>(null);
+  return {
+    signInWithGoogle: () => {
+      setGoogleError('Google Sign-In is not available in this environment. Use a development build.');
+    },
+    googleLoading: false,
+    googleError,
+    isReady: false,
+  };
+}
+
+/**
+ * Real hook when Google auth module is available (development build).
+ */
+function useGoogleAuthReal() {
   const router = useRouter();
   const { setSession } = useAuthContext();
   const [googleLoading, setGoogleLoading] = useState(false);
@@ -62,4 +87,16 @@ export function useGoogleAuth() {
     googleError,
     isReady: !!request,
   };
+}
+
+/**
+ * Exported hook – picks the right implementation based on module availability.
+ */
+export function useGoogleAuth() {
+  // This is safe because `Google` is a module-level constant that never changes at runtime,
+  // so the same branch always executes (consistent hook call count).
+  if (!Google) {
+    return useGoogleAuthFallback();
+  }
+  return useGoogleAuthReal();
 }

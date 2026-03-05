@@ -19,13 +19,14 @@ export const creatorKeys = {
   me: () => [...creatorKeys.all, 'me'] as const,
 };
 
-export function useCreators() {
+export function useCreators(options?: { enabled?: boolean }) {
   return useInfiniteQuery({
     queryKey: creatorKeys.lists(),
     queryFn: ({ pageParam = 1 }) => getCreators(pageParam, 20),
     getNextPageParam: (lastPage) =>
       lastPage.page < lastPage.totalPages ? lastPage.page + 1 : undefined,
     initialPageParam: 1,
+    ...options,
   });
 }
 
@@ -37,10 +38,11 @@ export function useCreator(id: string) {
   });
 }
 
-export function useMyCreatorProfile() {
+export function useMyCreatorProfile(options?: { enabled?: boolean }) {
   return useQuery({
     queryKey: creatorKeys.me(),
     queryFn: () => getMyCreatorProfile(),
+    ...options,
   });
 }
 

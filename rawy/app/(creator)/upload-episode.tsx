@@ -3,14 +3,21 @@
  */
 
 import React from 'react';
-import { View, ScrollView, StyleSheet, KeyboardAvoidingView, Platform, TouchableOpacity } from 'react-native';
+import { View, ScrollView, StyleSheet, KeyboardAvoidingView, Platform, TouchableOpacity, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Text, Button, IconButton, Surface, useTheme, Menu } from 'react-native-paper';
 import { useRouter } from 'expo-router';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import * as DocumentPicker from 'expo-document-picker';
 import { ArrowLeft, Upload, Music, ChevronDown } from 'lucide-react-native';
+
+// Lazy import to avoid crash when ExpoDocumentPicker native module is missing (Expo Go)
+let DocumentPicker: typeof import('expo-document-picker') | null = null;
+try {
+  DocumentPicker = require('expo-document-picker');
+} catch (e) {
+  console.log('[UploadEpisode] Note: Document picking will require a development build.');
+}
 
 import { FormInput } from '@/components/ui';
 import { createEpisodeSchema, CreateEpisodeFormData } from '@/validation/episode.schemas';
@@ -35,10 +42,10 @@ export default function UploadEpisodeScreen() {
     }
   }, [user, router]);
 
-  const [audioFile, setAudioFile] = React.useState<DocumentPicker.DocumentPickerAsset | null>(null);
+  const [audioFile, setAudioFile] = React.useState<any>(null);
   const [podcastMenuVisible, setPodcastMenuVisible] = React.useState(false);
 
-  const { data: creator } = useMyCreatorProfile();
+  const { data: creator } = useMyCreatorProfile({ enabled: !!user && isCreator(user) });
   const { data: podcastsData } = usePodcasts(creator?._id, { enabled: !!creator?._id });
   const podcasts = podcastsData?.pages.flatMap(p => p.data) || [];
 
@@ -55,6 +62,10 @@ export default function UploadEpisodeScreen() {
   const selectedPodcast = podcasts.find(p => p._id === selectedPodcastId);
 
   const pickAudio = async () => {
+    if (!DocumentPicker) {
+      Alert.alert('Unavailable', 'Document picker requires a development build.');
+      return;
+    }
     try {
       const result = await DocumentPicker.getDocumentAsync({
         type: ['audio/mpeg', 'audio/wav', 'audio/x-m4a', 'audio/mp4', 'audio/aac'],

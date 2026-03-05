@@ -1,5 +1,6 @@
 /**
  * Root layout – wraps the app with AuthProvider, PaperProvider, QueryClientProvider.
+ * Shows a professional animated splash screen before revealing the app.
  */
 
 import {
@@ -9,7 +10,8 @@ import {
 import { Stack } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
-import { useEffect } from 'react';
+import { useEffect, useState, useCallback } from 'react';
+import { View, StyleSheet } from 'react-native';
 import {
   useFonts,
   Inter_400Regular,
@@ -24,7 +26,9 @@ import { QueryClientProvider } from '@tanstack/react-query';
 import { AuthProvider } from '@/context/auth-context';
 import { PaperLightTheme } from '@/constants/theme';
 import { queryClient } from '@/services/query-client';
+import SplashScreenAnimated from '@/components/SplashScreenAnimated';
 
+// Prevent native splash from auto-hiding; we control when it goes away
 SplashScreen.preventAutoHideAsync().catch(() => {});
 
 export const unstable_settings = {
@@ -32,6 +36,7 @@ export const unstable_settings = {
 };
 
 export default function RootLayout() {
+  const [animationDone, setAnimationDone] = useState(false);
   const [fontsLoaded, fontError] = useFonts({
     Inter_400Regular,
     Inter_500Medium,
@@ -39,84 +44,104 @@ export default function RootLayout() {
     Inter_700Bold,
   });
 
-  useEffect(() => {
-    if (fontsLoaded || fontError) {
-      SplashScreen.hideAsync().catch(() => {});
-    }
-  }, [fontsLoaded, fontError]);
+  const fontsReady = fontsLoaded || !!fontError;
 
-  if (!fontsLoaded && !fontError) {
-    return null;
-  }
+  // Hide the native splash screen immediately – our animated splash is on top
+  useEffect(() => {
+    SplashScreen.hideAsync().catch(() => {});
+  }, []);
+
+  const handleSplashFinish = useCallback(() => {
+    setAnimationDone(true);
+  }, []);
+
+  // Keep splash visible until BOTH fonts are ready AND animation finishes
+  const showSplash = !animationDone || !fontsReady;
 
   return (
-    <QueryClientProvider client={queryClient}>
-      <PaperProvider theme={PaperLightTheme}>
-        <AuthProvider>
-          <ThemeProvider value={DefaultTheme}>
-            <Stack screenOptions={{ headerShown: false }}>
-              {/* Auth screens */}
-              <Stack.Screen name="(auth)/onboarding" />
-              <Stack.Screen name="(auth)/login" />
-              <Stack.Screen name="(auth)/register" />
-              {/* Tab navigator */}
-              <Stack.Screen name="(tabs)" />
-              {/* Detail screens */}
-              <Stack.Screen
-                name="podcast/[id]"
-                options={{ headerShown: false, animation: 'slide_from_right' }}
-              />
-              <Stack.Screen
-                name="episode/[id]"
-                options={{ headerShown: false, animation: 'slide_from_right' }}
-              />
-              <Stack.Screen
-                name="creator/[id]"
-                options={{ headerShown: false, animation: 'slide_from_right' }}
-              />
-              {/* Creator management screens */}
-              <Stack.Screen
-                name="(creator)/creator-dashboard"
-                options={{ headerShown: false, animation: 'slide_from_right' }}
-              />
-              <Stack.Screen
-                name="(creator)/create-podcast"
-                options={{ headerShown: false, animation: 'slide_from_bottom' }}
-              />
-              <Stack.Screen
-                name="(creator)/upload-episode"
-                options={{ headerShown: false, animation: 'slide_from_bottom' }}
-              />
-              <Stack.Screen
-                name="(creator)/become-creator"
-                options={{ headerShown: false, animation: 'slide_from_bottom' }}
-              />
-              <Stack.Screen
-                name="(creator)/edit-creator-profile"
-                options={{ headerShown: false, animation: 'slide_from_right' }}
-              />
-              <Stack.Screen
-                name="(creator)/edit-podcast"
-                options={{ headerShown: false, animation: 'slide_from_right' }}
-              />
-              <Stack.Screen
-                name="(creator)/edit-episode"
-                options={{ headerShown: false, animation: 'slide_from_right' }}
-              />
-              {/* Profile screens */}
-              <Stack.Screen
-                name="(profile)/edit-profile"
-                options={{ headerShown: false, animation: 'slide_from_right' }}
-              />
-              <Stack.Screen
-                name="(profile)/settings"
-                options={{ headerShown: false, animation: 'slide_from_right' }}
-              />
-            </Stack>
-            <StatusBar style="dark" />
-          </ThemeProvider>
-        </AuthProvider>
-      </PaperProvider>
-    </QueryClientProvider>
+    <View style={styles.root}>
+      <StatusBar style="dark" />
+
+      {/* App tree – only renders once fonts are ready */}
+      {fontsReady && (
+        <QueryClientProvider client={queryClient}>
+          <PaperProvider theme={PaperLightTheme}>
+            <AuthProvider>
+              <ThemeProvider value={DefaultTheme}>
+                <Stack screenOptions={{ headerShown: false }}>
+                  {/* Auth screens */}
+                  <Stack.Screen name="(auth)/onboarding" />
+                  <Stack.Screen name="(auth)/login" />
+                  <Stack.Screen name="(auth)/register" />
+                  {/* Tab navigator */}
+                  <Stack.Screen name="(tabs)" />
+                  {/* Detail screens */}
+                  <Stack.Screen
+                    name="podcast/[id]"
+                    options={{ headerShown: false, animation: 'slide_from_right' }}
+                  />
+                  <Stack.Screen
+                    name="episode/[id]"
+                    options={{ headerShown: false, animation: 'slide_from_right' }}
+                  />
+                  <Stack.Screen
+                    name="creator/[id]"
+                    options={{ headerShown: false, animation: 'slide_from_right' }}
+                  />
+                  {/* Creator management screens */}
+                  <Stack.Screen
+                    name="(creator)/creator-dashboard"
+                    options={{ headerShown: false, animation: 'slide_from_right' }}
+                  />
+                  <Stack.Screen
+                    name="(creator)/create-podcast"
+                    options={{ headerShown: false, animation: 'slide_from_bottom' }}
+                  />
+                  <Stack.Screen
+                    name="(creator)/upload-episode"
+                    options={{ headerShown: false, animation: 'slide_from_bottom' }}
+                  />
+                  <Stack.Screen
+                    name="(creator)/become-creator"
+                    options={{ headerShown: false, animation: 'slide_from_bottom' }}
+                  />
+                  <Stack.Screen
+                    name="(creator)/edit-creator-profile"
+                    options={{ headerShown: false, animation: 'slide_from_right' }}
+                  />
+                  <Stack.Screen
+                    name="(creator)/edit-podcast"
+                    options={{ headerShown: false, animation: 'slide_from_right' }}
+                  />
+                  <Stack.Screen
+                    name="(creator)/edit-episode"
+                    options={{ headerShown: false, animation: 'slide_from_right' }}
+                  />
+                  {/* Profile screens */}
+                  <Stack.Screen
+                    name="(profile)/edit-profile"
+                    options={{ headerShown: false, animation: 'slide_from_right' }}
+                  />
+                  <Stack.Screen
+                    name="(profile)/settings"
+                    options={{ headerShown: false, animation: 'slide_from_right' }}
+                  />
+                </Stack>
+              </ThemeProvider>
+            </AuthProvider>
+          </PaperProvider>
+        </QueryClientProvider>
+      )}
+
+      {/* Animated splash overlay – single instance, never remounted */}
+      {showSplash && <SplashScreenAnimated onFinish={handleSplashFinish} />}
+    </View>
   );
 }
+
+const styles = StyleSheet.create({
+  root: {
+    flex: 1,
+    backgroundColor: '#FFFFFF',
+  },
+});

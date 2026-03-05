@@ -16,14 +16,15 @@ export const commentKeys = {
     [...commentKeys.lists(), episodeId] as const,
 };
 
-export function useComments(episodeId: string) {
+export function useComments(episodeId: string, options?: { enabled?: boolean }) {
   return useInfiniteQuery({
     queryKey: commentKeys.byEpisode(episodeId),
     queryFn: ({ pageParam = 1 }) => getComments(episodeId, pageParam, 20),
     getNextPageParam: (lastPage) =>
       lastPage.page < lastPage.totalPages ? lastPage.page + 1 : undefined,
     initialPageParam: 1,
-    enabled: !!episodeId,
+    enabled: !!episodeId && options?.enabled !== false,
+    ...options,
   });
 }
 
