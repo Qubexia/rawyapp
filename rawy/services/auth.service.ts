@@ -18,6 +18,7 @@ export interface UserProfile {
   deviceTokens: string[];
   createdAt: string;
   updatedAt: string;
+  avatarUrl?: string;
 }
 
 export interface AuthTokens {

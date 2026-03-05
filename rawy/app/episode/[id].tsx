@@ -30,17 +30,16 @@ import { useColorScheme } from '@/hooks/use-color-scheme';
 import type { Comment } from '@/services/comments.service';
 import { formatRelativeTime } from '@/utils/format';
 
+import { usePlayer } from '@/context/player-context';
+import { SERVER_URL } from '@/services/axios-client';
+
 export default function EpisodeDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const theme = useTheme();
   const isDark = useColorScheme() === 'dark';
   const router = useRouter();
   const { user } = useAuthContext();
-  const [isPlaying, setIsPlaying] = useState(false);
   const [commentText, setCommentText] = useState('');
-
-  const [position, setPosition] = useState(0);
-  const [duration, setDuration] = useState(0);
   const [refreshing, setRefreshing] = useState(false);
 
   const { data: episode, isLoading } = useEpisode(id);
@@ -51,44 +50,21 @@ export default function EpisodeDetailScreen() {
   const deleteComment = useDeleteComment(id);
   const comments = commentsData?.pages.flatMap((p) => p.data) ?? [];
 
+  const { currentEpisode, isPlaying, position, duration, playEpisode, togglePlay } = usePlayer();
+
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
     await refetchComments();
     setRefreshing(false);
   }, [refetchComments]);
 
-  // --- Audio Player Logic (expo-audio) ---
-  const player = ExpoAudio?.useAudioPlayer(episode?.audioFileUrl || '');
-  
-  // Use useEffect to handle status updates manually if needed, 
-  // or use shared values for progress.
-  useEffect(() => {
-    if (!player) return;
-    
-    setIsPlaying(player.playing);
-    setDuration(player.duration || 0);
-    
-    // expo-audio uses numbers in seconds, we need to convert to millis for our formatter
-    // or update the formatter. Let's keep it in seconds internally.
-    const interval = setInterval(() => {
-      setPosition(player.currentTime * 1000);
-      setDuration(player.duration * 1000);
-      setIsPlaying(player.playing);
-    }, 500);
-
-    return () => clearInterval(interval);
-  }, [player]);
+  const isCurrentPlaying = currentEpisode?._id === id;
 
   const togglePlayPause = async () => {
-    if (!ExpoAudio || !player) {
-      Alert.alert('Audio Unavailable', 'Audio playback requires a development build.');
-      return;
-    }
-
-    if (player.playing) {
-      player.pause();
-    } else {
-      player.play();
+    if (isCurrentPlaying) {
+      await togglePlay();
+    } else if (episode) {
+      await playEpisode(episode);
     }
   };
 
@@ -99,7 +75,6 @@ export default function EpisodeDetailScreen() {
     const seconds = totalSeconds % 60;
     return `${minutes}:${seconds < 10 ? '0' : ''}${seconds}`;
   };
-
 
   const handleShare = async () => {
     try {
@@ -128,14 +103,19 @@ export default function EpisodeDetailScreen() {
 
   const renderComment = ({ item }: { item: Comment }) => (
     <View style={s.commentRow}>
-      <View style={[s.commentAvatar, { backgroundColor: isDark ? Palette.dark.elevated : Palette.primary[50] }]}>
+      <TouchableOpacity 
+        onPress={() => item.user?._id && router.push(`/user/${item.user._id}` as any)}
+        style={[s.commentAvatar, { backgroundColor: isDark ? Palette.dark.elevated : Palette.primary[50] }]}
+      >
         <Text style={{ fontSize: 14, fontWeight: '700', color: isDark ? Palette.primary[300] : Palette.primary[500] }}>
           {item.user?.name?.[0]?.toUpperCase() || '?'}
         </Text>
-      </View>
+      </TouchableOpacity>
       <View style={s.commentBody}>
         <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-          <Text variant="labelMedium" style={{ color: theme.colors.onSurface, fontWeight: '600' }}>{item.user?.name || 'Anon'}</Text>
+          <TouchableOpacity onPress={() => item.user?._id && router.push(`/user/${item.user._id}` as any)}>
+            <Text variant="labelMedium" style={{ color: theme.colors.onSurface, fontWeight: '600' }}>{item.user?.name || 'Anon'}</Text>
+          </TouchableOpacity>
           <Text variant="labelSmall" style={{ color: theme.colors.onSurfaceVariant }}>{formatRelativeTime(item.createdAt)}</Text>
         </View>
         <Text variant="bodySmall" style={{ color: theme.colors.onSurfaceVariant, marginTop: 2 }}>{item.text}</Text>
@@ -146,79 +126,88 @@ export default function EpisodeDetailScreen() {
     </View>
   );
 
-  const Header = () => (
-    <>
-      <Surface style={[s.player, { backgroundColor: isDark ? Palette.dark.surfaceVariant : Palette.light.surfaceVariant }]} elevation={1}>
-        <View style={[s.cover, { backgroundColor: isDark ? Palette.dark.elevated : Palette.primary[100], overflow: 'hidden' }]}>
-          {episode?.podcast?.coverImageUrl ? (
-            <Image source={{ uri: episode.podcast.coverImageUrl }} style={{ width: '100%', height: '100%', resizeMode: 'cover' }} />
-          ) : (
-            <Play size={48} color={isDark ? Palette.primary[300] : Palette.primary[500]} fill={isDark ? Palette.primary[300] : Palette.primary[500]} />
-          )}
-        </View>
-        <Text variant="headlineSmall" style={{ fontWeight: '800', textAlign: 'center', color: theme.colors.onSurface, marginBottom: 4 }} numberOfLines={3}>{episode?.title}</Text>
-        <TouchableOpacity onPress={() => episode?.podcast?._id && router.push(`/podcast/${episode.podcast._id}` as any)}>
-          <Text variant="titleSmall" style={{ color: theme.colors.primary, fontWeight: '600', textAlign: 'center' }}>{episode?.podcast?.title || 'Podcast'}</Text>
-        </TouchableOpacity>
-        <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: Spacing.md }}>
-          <Clock size={14} color={theme.colors.onSurfaceVariant} />
-          <Text variant="labelMedium" style={{ color: theme.colors.onSurfaceVariant, marginLeft: 6 }}>
-            {episode?.duration ? `${Math.floor(episode.duration / 60)}m ${episode.duration % 60}s` : '—'}
-          </Text>
-        </View>
+  const Header = () => {
+    const coverUrl = episode?.podcast?.coverImageUrl 
+      ? { uri: `${SERVER_URL}/${episode.podcast.coverImageUrl.replace(/\\/g, '/')}` } 
+      : null;
 
-        {/* Progress Bar */}
-        <View style={{ width: '100%', paddingHorizontal: Spacing.lg, marginTop: Spacing.lg }}>
-          <View style={{ height: 4, backgroundColor: isDark ? Palette.dark.border : Palette.light.border, borderRadius: 2, overflow: 'hidden' }}>
-            <View style={{ height: '100%', backgroundColor: theme.colors.primary, width: duration > 0 ? `${(position / duration) * 100}%` : '0%' }} />
-          </View>
-          <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginTop: 4 }}>
-            <Text variant="labelSmall" style={{ color: theme.colors.onSurfaceVariant }}>{formatTimeMillis(position)}</Text>
-            <Text variant="labelSmall" style={{ color: theme.colors.onSurfaceVariant }}>{formatTimeMillis(duration || (episode?.duration ? episode.duration * 1000 : 0))}</Text>
-          </View>
-        </View>
+    const displayPosition = isCurrentPlaying ? position : 0;
+    const displayDuration = isCurrentPlaying ? duration : (episode?.duration ? episode.duration * 1000 : 0);
 
-        <TouchableOpacity style={[s.playBtn, { backgroundColor: theme.colors.primary }]} onPress={togglePlayPause}>
-          {isPlaying ? <Pause size={28} color="#FFF" fill="#FFF" /> : <Play size={28} color="#FFF" fill="#FFF" />}
-        </TouchableOpacity>
-        <View style={s.actions}>
-          <TouchableOpacity 
-            style={s.action} 
-            onPress={() => {
-              if (!user) {
-                router.push('/(auth)/login' as any);
-                return;
-              }
-              toggleLike.mutate(likeStatus?.isLiked || false);
-            }}
-          >
-            <Heart size={22} color={likeStatus?.isLiked ? '#EF4444' : theme.colors.onSurfaceVariant} fill={likeStatus?.isLiked ? '#EF4444' : 'transparent'} />
-            <Text variant="labelSmall" style={{ color: theme.colors.onSurfaceVariant, marginTop: 4 }}>
-              {likeStatus?.likesCount ?? episode?.likesCount ?? 0}
+    return (
+      <>
+        <Surface style={[s.player, { backgroundColor: isDark ? Palette.dark.surfaceVariant : Palette.primary[50] }]} elevation={1}>
+          <View style={[s.cover, { backgroundColor: isDark ? Palette.dark.elevated : Palette.primary[100], overflow: 'hidden' }]}>
+            {coverUrl ? (
+              <Image source={coverUrl} style={{ width: '100%', height: '100%', resizeMode: 'cover' }} />
+            ) : (
+              <Play size={48} color={isDark ? Palette.primary[300] : Palette.primary[500]} fill={isDark ? Palette.primary[300] : Palette.primary[500]} />
+            )}
+          </View>
+          <Text variant="headlineSmall" style={{ fontWeight: '800', textAlign: 'center', color: theme.colors.onSurface, marginBottom: 4 }} numberOfLines={3}>{episode?.title}</Text>
+          <TouchableOpacity onPress={() => episode?.podcast?._id && router.push(`/podcast/${episode.podcast._id}` as any)}>
+            <Text variant="titleSmall" style={{ color: theme.colors.primary, fontWeight: '600', textAlign: 'center' }}>{episode?.podcast?.title || 'Podcast'}</Text>
+          </TouchableOpacity>
+          <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: Spacing.md }}>
+            <Clock size={14} color={theme.colors.onSurfaceVariant} />
+            <Text variant="labelMedium" style={{ color: theme.colors.onSurfaceVariant, marginLeft: 6 }}>
+              {episode?.duration ? `${Math.floor(episode.duration / 60)}m ${episode.duration % 60}s` : '—'}
             </Text>
+          </View>
+
+          {/* Progress Bar */}
+          <View style={{ width: '100%', paddingHorizontal: Spacing.lg, marginTop: Spacing.lg }}>
+            <View style={{ height: 4, backgroundColor: isDark ? Palette.dark.border : Palette.light.border, borderRadius: 2, overflow: 'hidden' }}>
+              <View style={{ height: '100%', backgroundColor: theme.colors.primary, width: displayDuration > 0 ? `${(displayPosition / displayDuration) * 100}%` : '0%' }} />
+            </View>
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginTop: 4 }}>
+              <Text variant="labelSmall" style={{ color: theme.colors.onSurfaceVariant }}>{formatTimeMillis(displayPosition)}</Text>
+              <Text variant="labelSmall" style={{ color: theme.colors.onSurfaceVariant }}>{formatTimeMillis(displayDuration)}</Text>
+            </View>
+          </View>
+
+          <TouchableOpacity style={[s.playBtn, { backgroundColor: theme.colors.primary }]} onPress={togglePlayPause}>
+            {(isCurrentPlaying && isPlaying) ? <Pause size={28} color="#FFF" fill="#FFF" /> : <Play size={28} color="#FFF" fill="#FFF" />}
           </TouchableOpacity>
-          <TouchableOpacity style={s.action}>
-            <MessageCircle size={22} color={theme.colors.onSurfaceVariant} />
-            <Text variant="labelSmall" style={{ color: theme.colors.onSurfaceVariant, marginTop: 4 }}>{comments.length}</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={s.action} onPress={handleShare}>
-            <Share2 size={22} color={theme.colors.onSurfaceVariant} />
-            <Text variant="labelSmall" style={{ color: theme.colors.onSurfaceVariant, marginTop: 4 }}>Share</Text>
-          </TouchableOpacity>
+          <View style={s.actions}>
+            <TouchableOpacity 
+              style={s.action} 
+              onPress={() => {
+                if (!user) {
+                  router.push('/(auth)/login' as any);
+                  return;
+                }
+                toggleLike.mutate(likeStatus?.isLiked || false);
+              }}
+            >
+              <Heart size={22} color={likeStatus?.isLiked ? '#EF4444' : theme.colors.onSurfaceVariant} fill={likeStatus?.isLiked ? '#EF4444' : 'transparent'} />
+              <Text variant="labelSmall" style={{ color: theme.colors.onSurfaceVariant, marginTop: 4 }}>
+                {likeStatus?.likesCount ?? episode?.likesCount ?? 0}
+              </Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={s.action}>
+              <MessageCircle size={22} color={theme.colors.onSurfaceVariant} />
+              <Text variant="labelSmall" style={{ color: theme.colors.onSurfaceVariant, marginTop: 4 }}>{comments.length}</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={s.action} onPress={handleShare}>
+              <Share2 size={22} color={theme.colors.onSurfaceVariant} />
+              <Text variant="labelSmall" style={{ color: theme.colors.onSurfaceVariant, marginTop: 4 }}>Share</Text>
+            </TouchableOpacity>
+          </View>
+        </Surface>
+        {episode?.description && (
+          <View style={{ paddingHorizontal: Spacing.lg, marginBottom: Spacing.lg }}>
+            <Text variant="titleMedium" style={{ color: theme.colors.onBackground, fontWeight: '700', marginBottom: 8 }}>Description</Text>
+            <Text variant="bodyMedium" style={{ color: theme.colors.onSurfaceVariant, lineHeight: 22 }}>{episode.description}</Text>
+          </View>
+        )}
+        <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: Spacing.lg, marginBottom: Spacing.md }}>
+          <Text variant="titleMedium" style={{ color: theme.colors.onBackground, fontWeight: '700' }}>Comments</Text>
+          <Text variant="labelMedium" style={{ color: theme.colors.onSurfaceVariant }}>{comments.length}</Text>
         </View>
-      </Surface>
-      {episode?.description && (
-        <View style={{ paddingHorizontal: Spacing.lg, marginBottom: Spacing.lg }}>
-          <Text variant="titleMedium" style={{ color: theme.colors.onBackground, fontWeight: '700', marginBottom: 8 }}>Description</Text>
-          <Text variant="bodyMedium" style={{ color: theme.colors.onSurfaceVariant, lineHeight: 22 }}>{episode.description}</Text>
-        </View>
-      )}
-      <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: Spacing.lg, marginBottom: Spacing.md }}>
-        <Text variant="titleMedium" style={{ color: theme.colors.onBackground, fontWeight: '700' }}>Comments</Text>
-        <Text variant="labelMedium" style={{ color: theme.colors.onSurfaceVariant }}>{comments.length}</Text>
-      </View>
-    </>
-  );
+      </>
+    );
+  };
 
   return (
     <SafeAreaView style={[s.root, { backgroundColor: theme.colors.background }]}>

@@ -2,14 +2,14 @@
  * Create Podcast screen — form with React Hook Form + Zod.
  */
 
-import React from 'react';
-import { View, ScrollView, StyleSheet, KeyboardAvoidingView, Platform } from 'react-native';
+import React, { useState } from 'react';
+import { View, ScrollView, StyleSheet, KeyboardAvoidingView, Platform, Image, TouchableOpacity, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Text, Button, IconButton, Surface, useTheme } from 'react-native-paper';
 import { useRouter } from 'expo-router';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { ArrowLeft, Headphones, Plus } from 'lucide-react-native';
+import { ArrowLeft, Headphones, Plus, Camera } from 'lucide-react-native';
 
 import { FormInput } from '@/components/ui/FormInput';
 import { useCreatePodcast } from '@/hooks/queries/use-podcasts';
@@ -18,6 +18,7 @@ import { Palette, Spacing, Radius } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { isCreator } from '@/utils/roles';
 import { createPodcastSchema, CreatePodcastFormData } from '@/validation/podcast.schemas';
+import { pickImage, SelectedImage } from '@/utils/image-picker';
 
 export default function CreatePodcastScreen() {
   const theme = useTheme();
@@ -25,6 +26,7 @@ export default function CreatePodcastScreen() {
   const router = useRouter();
   const createPodcast = useCreatePodcast();
   const { user } = useAuthContext();
+  const [coverImage, setCoverImage] = useState<SelectedImage | null>(null);
 
   React.useEffect(() => {
     if (user && !isCreator(user)) {
@@ -41,9 +43,23 @@ export default function CreatePodcastScreen() {
     return null;
   }
 
+  const handlePickImage = async () => {
+    const selected = await pickImage();
+    if (selected) {
+      setCoverImage(selected);
+    }
+  };
+
   const onSubmit = handleSubmit(async (data) => {
-    await createPodcast.mutateAsync({ data });
-    router.back();
+    try {
+      await createPodcast.mutateAsync({ 
+        data,
+        coverImage: coverImage || undefined
+      });
+      router.back();
+    } catch (err) {
+      Alert.alert('Error', 'Failed to create podcast');
+    }
   });
 
   return (
@@ -55,9 +71,22 @@ export default function CreatePodcastScreen() {
       </View>
       <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
         <ScrollView contentContainerStyle={{ padding: Spacing.lg }} keyboardShouldPersistTaps="handled">
-          <Surface style={[s.iconBox, { backgroundColor: isDark ? Palette.dark.surfaceVariant : Palette.primary[50] }]} elevation={0}>
-            <Headphones size={48} color={isDark ? Palette.primary[300] : Palette.primary[500]} strokeWidth={1.5} />
-          </Surface>
+          
+          <TouchableOpacity onPress={handlePickImage} style={s.coverPicker}>
+            <Surface style={[s.iconBox, { backgroundColor: isDark ? Palette.dark.surfaceVariant : Palette.primary[50] }]} elevation={2}>
+              {coverImage ? (
+                <Image source={{ uri: coverImage.uri }} style={s.coverImage} />
+              ) : (
+                <Headphones size={48} color={isDark ? Palette.primary[300] : Palette.primary[500]} strokeWidth={1.5} />
+              )}
+              <View style={[s.cameraBadge, { backgroundColor: theme.colors.primary }]}>
+                <Camera size={14} color="#FFF" />
+              </View>
+            </Surface>
+            <Text variant="labelSmall" style={{ color: theme.colors.primary, marginTop: Spacing.sm, fontWeight: '600' }}>
+              {coverImage ? 'Change Cover' : 'Add Cover Image'}
+            </Text>
+          </TouchableOpacity>
 
           <FormInput name="title" control={control} label="Podcast Title" placeholder="e.g. Tech Talks Daily" autoCapitalize="words" icon={<Headphones size={20} color={theme.colors.onSurfaceVariant} />} />
           <FormInput name="description" control={control} label="Description" placeholder="What is your podcast about?" multiline numberOfLines={4} />
@@ -76,6 +105,9 @@ export default function CreatePodcastScreen() {
 const s = StyleSheet.create({
   root: { flex: 1 },
   topBar: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: Spacing.xs },
-  iconBox: { width: 96, height: 96, borderRadius: Radius.xl, alignItems: 'center', justifyContent: 'center', alignSelf: 'center', marginBottom: Spacing.lg },
+  coverPicker: { alignSelf: 'center', alignItems: 'center', marginBottom: Spacing.xl },
+  iconBox: { width: 120, height: 120, borderRadius: Radius.xl, alignItems: 'center', justifyContent: 'center', overflow: 'hidden' },
+  coverImage: { width: '100%', height: '100%', resizeMode: 'cover' },
+  cameraBadge: { position: 'absolute', bottom: 4, right: 4, width: 28, height: 28, borderRadius: 14, alignItems: 'center', justifyContent: 'center', borderWidth: 2, borderColor: '#FFF' },
   submitBtn: { borderRadius: Radius.md, marginTop: Spacing.lg },
 });

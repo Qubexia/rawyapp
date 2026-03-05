@@ -21,11 +21,14 @@ import { getItem, setItem, deleteItem } from './token-storage';
 
 // ─── Constants ───────────────────────────────────────────────────────────────
 
-export const API_BASE_URL = Platform.select({
-  android: 'http://10.0.2.2:3000/api/v1',
-  ios: 'http://localhost:3000/api/v1',
-  default: 'http://localhost:3000/api/v1',
+export const SERVER_URL = Platform.select({
+  android: 'http://10.0.2.2:3000',
+  ios: 'http://localhost:3000',
+  default: 'http://localhost:3000',
 }) as string;
+
+export const API_BASE_URL = `${SERVER_URL}/api/v1`;
+
 
 export const TOKEN_KEYS = {
   ACCESS: 'rawy_access_token',

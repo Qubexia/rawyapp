@@ -1,4 +1,5 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
+import { ApiProperty } from '@nestjs/swagger';
 import { Document, Types } from 'mongoose';
 import { Role } from '../../common/constants/roles.enum';
 
@@ -43,6 +44,17 @@ export class User {
 
   @Prop({ select: false })
   refreshTokenExpiresAt?: Date;
+
+  @Prop()
+  avatarUrl?: string;
+
+  @Prop({ required: true, default: 0, min: 0 })
+  @ApiProperty({ description: 'Number of followers', default: 0 })
+  followerCount: number;
+
+  @Prop({ required: true, default: 0, min: 0 })
+  @ApiProperty({ description: 'Number of users this user is following', default: 0 })
+  followingCount: number;
 }
 
 export const UserSchema = SchemaFactory.createForClass(User);

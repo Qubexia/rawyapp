@@ -33,8 +33,13 @@ import { HapticTab } from "@/components/layout/haptic-tab";
 import { Palette } from "@/constants/theme";
 import { useAuthContext } from "@/context/auth-context";
 import { isCreator } from "@/utils/roles";
+import MiniPlayer from "@/components/layout/MiniPlayer";
+
+
+import { usePlayer } from "@/context/player-context";
 
 const TAB_BAR_HEIGHT = Platform.OS === "ios" ? 88 : 80;
+const MINI_PLAYER_HEIGHT = 64;
 const FAB_SIZE = 56;
 
 export default function TabLayout() {
@@ -42,6 +47,7 @@ export default function TabLayout() {
   const theme = useTheme();
   const router = useRouter();
   const { user } = useAuthContext();
+  const { currentEpisode } = usePlayer();
 
   const [fabOpen, setFabOpen] = useState(false);
   const creatorUser = isCreator(user);
@@ -96,54 +102,60 @@ export default function TabLayout() {
     ],
   }));
 
+  const bottomOffset = currentEpisode ? MINI_PLAYER_HEIGHT + TAB_BAR_HEIGHT : TAB_BAR_HEIGHT;
+
   return (
     <View style={{ flex: 1 }}>
-      <Tabs
-        screenOptions={{
-          headerShown: false,
-          tabBarButton: HapticTab,
-          tabBarActiveTintColor: theme.colors.primary,
-          tabBarInactiveTintColor: isDark
-            ? Palette.text.darkTertiary
-            : Palette.text.lightTertiary,
-          tabBarStyle: {
-            backgroundColor: "#FFFFFF",
-            borderTopWidth: 0.5,
-            height: TAB_BAR_HEIGHT,
-            paddingBottom: Platform.OS === "ios" ? 28 : 8,
-            paddingTop: 8,
-          },
-        }}
-      >
-        <Tabs.Screen
-          name="index"
-          options={{
-            title: "Home",
-            tabBarIcon: ({ color }) => <Home size={24} color={color} />,
+      <View style={{ flex: 1 }}>
+        <Tabs
+          screenOptions={{
+            headerShown: false,
+            tabBarButton: HapticTab,
+            tabBarActiveTintColor: theme.colors.primary,
+            tabBarInactiveTintColor: isDark
+              ? Palette.text.darkTertiary
+              : Palette.text.lightTertiary,
+            tabBarStyle: {
+              backgroundColor: "#FFFFFF",
+              borderTopWidth: 0.5,
+              height: TAB_BAR_HEIGHT,
+              paddingBottom: Platform.OS === "ios" ? 28 : 8,
+              paddingTop: 8,
+            },
           }}
-        />
-        <Tabs.Screen
-          name="explore"
-          options={{
-            title: "Explore",
-            tabBarIcon: ({ color }) => <Search size={24} color={color} />,
-          }}
-        />
-        <Tabs.Screen
-          name="library"
-          options={{
-            title: "Library",
-            tabBarIcon: ({ color }) => <Library size={24} color={color} />,
-          }}
-        />
-        <Tabs.Screen
-          name="profile"
-          options={{
-            title: "Profile",
-            tabBarIcon: ({ color }) => <User size={24} color={color} />,
-          }}
-        />
-      </Tabs>
+        >
+          <Tabs.Screen
+            name="index"
+            options={{
+              title: "Home",
+              tabBarIcon: ({ color }) => <Home size={24} color={color} />,
+            }}
+          />
+          <Tabs.Screen
+            name="explore"
+            options={{
+              title: "Explore",
+              tabBarIcon: ({ color }) => <Search size={24} color={color} />,
+            }}
+          />
+          <Tabs.Screen
+            name="library"
+            options={{
+              title: "Library",
+              tabBarIcon: ({ color }) => <Library size={24} color={color} />,
+            }}
+          />
+          <Tabs.Screen
+            name="profile"
+            options={{
+              title: "Profile",
+              tabBarIcon: ({ color }) => <User size={24} color={color} />,
+            }}
+          />
+        </Tabs>
+      </View>
+
+      <MiniPlayer />
 
       {creatorUser && (
         <>
@@ -160,7 +172,7 @@ export default function TabLayout() {
             pointerEvents={fabOpen ? "auto" : "none"}
             style={[
               styles.actionsRow,
-              { bottom: TAB_BAR_HEIGHT + 40 },
+              { bottom: bottomOffset + 40 },
               actionsStyle,
             ]}
           >
@@ -199,7 +211,7 @@ export default function TabLayout() {
           <View
             style={[
               styles.fabContainer,
-              { bottom: TAB_BAR_HEIGHT - FAB_SIZE / 2 },
+              { bottom: bottomOffset - FAB_SIZE / 2 },
             ]}
           >
             <TouchableOpacity activeOpacity={0.85} onPress={toggleFab}>
@@ -219,6 +231,7 @@ export default function TabLayout() {
     </View>
   );
 }
+
 
 const styles = StyleSheet.create({
   fabContainer: {

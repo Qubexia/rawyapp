@@ -4,6 +4,8 @@ import { Model, Types } from 'mongoose';
 import { User, UserDocument } from './schemas/user.schema';
 import { Role } from '../common/constants/roles.enum';
 import { PaginatedResponseDto } from '../common/dto/paginated-response.dto';
+import { unlink } from 'fs/promises';
+import { join } from 'path';
 
 @Injectable()
 export class UsersService {
@@ -63,6 +65,26 @@ export class UsersService {
       role: createUserDto.role || Role.USER,
     });
     return newUser.save();
+  }
+
+  async updateAvatar(id: string, avatarUrl: string): Promise<UserDocument> {
+    const user = await this.userModel.findById(id).exec();
+    if (!user) {
+      throw new NotFoundException(`User with ID ${id} not found`);
+    }
+
+    // If there's an old avatar, delete it
+    if (user.avatarUrl) {
+      try {
+        const oldPath = join(process.cwd(), user.avatarUrl);
+        await unlink(oldPath).catch(() => {});
+      } catch (err) {
+        // Ignore deletion errors
+      }
+    }
+
+    user.avatarUrl = avatarUrl;
+    return user.save();
   }
 
   async update(
@@ -136,6 +158,38 @@ export class UsersService {
   async findByIds(ids: Types.ObjectId[], select: string = 'name'): Promise<UserDocument[]> {
     if (ids.length === 0) return [];
     return this.userModel.find({ _id: { $in: ids } }).select(select).exec();
+  }
+
+  async incrementFollowerCount(userId: Types.ObjectId): Promise<void> {
+    await this.userModel.findByIdAndUpdate(userId, { $inc: { followerCount: 1 } }).exec();
+  }
+
+  async decrementFollowerCount(userId: Types.ObjectId): Promise<void> {
+    await this.userModel.findByIdAndUpdate(userId, { $inc: { followerCount: -1 } }).exec();
+  }
+
+  async incrementFollowingCount(userId: Types.ObjectId): Promise<void> {
+    await this.userModel.findByIdAndUpdate(userId, { $inc: { followingCount: 1 } }).exec();
+  }
+
+  async decrementFollowingCount(userId: Types.ObjectId): Promise<void> {
+    await this.userModel.findByIdAndUpdate(userId, { $inc: { followingCount: -1 } }).exec();
+  }
+
+  async getPublicProfile(id: string): Promise<any> {
+    const user = await this.userModel.findById(id).exec();
+    if (!user) {
+      throw new NotFoundException(`User with ID ${id} not found`);
+    }
+
+    return {
+      id: user._id.toString(),
+      name: user.name,
+      avatarUrl: user.avatarUrl,
+      role: user.role,
+      followerCount: user.followerCount,
+      followingCount: user.followingCount,
+    };
   }
 
   /**

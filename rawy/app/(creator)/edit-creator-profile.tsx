@@ -3,17 +3,19 @@
  */
 
 import React, { useEffect } from 'react';
-import { View, ScrollView, StyleSheet, KeyboardAvoidingView, Platform, Alert } from 'react-native';
+import { View, ScrollView, StyleSheet, KeyboardAvoidingView, Platform, Alert, Image, TouchableOpacity } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Text, Button, IconButton, Surface, useTheme, ActivityIndicator } from 'react-native-paper';
 import { useRouter } from 'expo-router';
 import { useForm } from 'react-hook-form';
-import { ArrowLeft, Mic, Save, Globe, Twitter, Instagram, Youtube } from 'lucide-react-native';
+import { ArrowLeft, Mic, Save, Globe, Twitter, Instagram, Youtube, Camera } from 'lucide-react-native';
 
 import { FormInput } from '@/components/ui';
 import { useMyCreatorProfile, useUpdateCreatorProfile } from '@/hooks/queries/use-creators';
 import { Palette, Spacing, Radius } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
+import { pickImage } from '@/utils/image-picker';
+import { SERVER_URL } from '@/services/axios-client';
 
 type EditCreatorFormData = {
   bio: string;
@@ -47,6 +49,20 @@ export default function EditCreatorProfileScreen() {
     }
   }, [profile, reset]);
 
+  const handlePickAvatar = async () => {
+    const selected = await pickImage();
+    if (selected) {
+      try {
+        await updateProfile.mutateAsync({
+          data: {}, // Just uploading avatar
+          avatar: selected,
+        });
+      } catch (err) {
+        Alert.alert('Error', 'Failed to upload avatar');
+      }
+    }
+  };
+
   const onSubmit = handleSubmit(async (data) => {
     try {
       await updateProfile.mutateAsync({
@@ -74,6 +90,10 @@ export default function EditCreatorProfileScreen() {
     );
   }
 
+  const avatarSource = profile?.avatarUrl 
+    ? { uri: `${SERVER_URL}/${profile.avatarUrl.replace(/\\/g, '/')}` } 
+    : null;
+
   return (
     <SafeAreaView style={[s.root, { backgroundColor: theme.colors.background }]}>
       <View style={s.topBar}>
@@ -83,9 +103,21 @@ export default function EditCreatorProfileScreen() {
       </View>
       <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
         <ScrollView contentContainerStyle={{ padding: Spacing.lg }} keyboardShouldPersistTaps="handled">
-          <Surface style={[s.iconBox, { backgroundColor: isDark ? Palette.dark.surfaceVariant : Palette.primary[50] }]} elevation={0}>
-            <Mic size={48} color={isDark ? Palette.primary[300] : Palette.primary[500]} strokeWidth={1.5} />
-          </Surface>
+          
+          <TouchableOpacity onPress={handlePickAvatar} disabled={updateProfile.isPending} style={s.avatarContainer}>
+            <Surface style={[s.iconBox, { backgroundColor: isDark ? Palette.dark.surfaceVariant : Palette.primary[50] }]} elevation={2}>
+              {updateProfile.isPending && !isDirty ? (
+                <ActivityIndicator size="small" color={theme.colors.primary} />
+              ) : avatarSource ? (
+                <Image source={avatarSource} style={s.avatarImage} />
+              ) : (
+                <Mic size={48} color={isDark ? Palette.primary[300] : Palette.primary[500]} strokeWidth={1.5} />
+              )}
+              <View style={[s.cameraBadge, { backgroundColor: theme.colors.primary }]}>
+                <Camera size={14} color="#FFF" />
+              </View>
+            </Surface>
+          </TouchableOpacity>
 
           <Text variant="titleMedium" style={{ color: theme.colors.onBackground, fontWeight: '700', marginBottom: Spacing.md }}>About You</Text>
           <FormInput name="bio" control={control} label="Bio" placeholder="Tell your audience about yourself..." multiline numberOfLines={4} />
@@ -107,10 +139,14 @@ export default function EditCreatorProfileScreen() {
   );
 }
 
+
 const s = StyleSheet.create({
   root: { flex: 1 },
   center: { flex: 1, justifyContent: 'center', alignItems: 'center' },
   topBar: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: Spacing.xs },
-  iconBox: { width: 96, height: 96, borderRadius: Radius.xl, alignItems: 'center', justifyContent: 'center', alignSelf: 'center', marginBottom: Spacing.lg },
+  avatarContainer: { alignSelf: 'center', marginBottom: Spacing.xl },
+  iconBox: { width: 110, height: 110, borderRadius: Radius.full, alignItems: 'center', justifyContent: 'center', overflow: 'visible', alignSelf: 'center', marginBottom: Spacing.lg },
+  avatarImage: { width: '100%', height: '100%', borderRadius: Radius.full },
+  cameraBadge: { position: 'absolute', bottom: 2, right: 2, width: 32, height: 32, borderRadius: 16, alignItems: 'center', justifyContent: 'center', borderWidth: 3, borderColor: '#FFF' },
   submitBtn: { borderRadius: Radius.md, marginTop: Spacing.lg },
 });

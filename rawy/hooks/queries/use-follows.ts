@@ -5,47 +5,47 @@
 import { useQuery, useInfiniteQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   getFollowStatus,
-  followCreator,
-  unfollowCreator,
+  followUser,
+  unfollowUser,
   getFollowing,
   getFollowers,
 } from '../../services/follows.service';
 
 export const followKeys = {
   all: ['follows'] as const,
-  status: (creatorId: string) =>
-    [...followKeys.all, 'status', creatorId] as const,
+  status: (targetId: string) =>
+    [...followKeys.all, 'status', targetId] as const,
   following: () => [...followKeys.all, 'following'] as const,
-  followers: (creatorId: string) =>
-    [...followKeys.all, 'followers', creatorId] as const,
+  followers: (targetId: string) =>
+    [...followKeys.all, 'followers', targetId] as const,
 };
 
-export function useFollowStatus(creatorId: string, options?: { enabled?: boolean }) {
+export function useFollowStatus(targetId: string, options?: { enabled?: boolean }) {
   return useQuery({
-    queryKey: followKeys.status(creatorId),
-    queryFn: () => getFollowStatus(creatorId),
-    enabled: !!creatorId && options?.enabled !== false,
+    queryKey: followKeys.status(targetId),
+    queryFn: () => getFollowStatus(targetId),
+    enabled: !!targetId && options?.enabled !== false,
     ...options,
   });
 }
 
-export function useToggleFollow(creatorId: string) {
+export function useToggleFollow(targetId: string) {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (isCurrentlyFollowing: boolean) =>
       isCurrentlyFollowing
-        ? unfollowCreator(creatorId)
-        : followCreator(creatorId),
+        ? unfollowUser(targetId)
+        : followUser(targetId),
     onMutate: async (isCurrentlyFollowing) => {
       await queryClient.cancelQueries({
-        queryKey: followKeys.status(creatorId),
+        queryKey: followKeys.status(targetId),
       });
       const previous = queryClient.getQueryData(
-        followKeys.status(creatorId),
+        followKeys.status(targetId),
       );
 
       queryClient.setQueryData(
-        followKeys.status(creatorId),
+        followKeys.status(targetId),
         (old: any) => ({
           isFollowing: !isCurrentlyFollowing,
           followerCount: old
@@ -61,14 +61,17 @@ export function useToggleFollow(creatorId: string) {
     onError: (_err, _vars, context) => {
       if (context?.previous) {
         queryClient.setQueryData(
-          followKeys.status(creatorId),
+          followKeys.status(targetId),
           context.previous,
         );
       }
     },
     onSettled: () => {
       queryClient.invalidateQueries({
-        queryKey: followKeys.status(creatorId),
+        queryKey: followKeys.status(targetId),
+      });
+      queryClient.invalidateQueries({
+        queryKey: ['users', targetId, 'public'],
       });
       queryClient.invalidateQueries({ queryKey: followKeys.following() });
     },
@@ -86,13 +89,13 @@ export function useFollowing(options?: { enabled?: boolean }) {
   });
 }
 
-export function useFollowers(creatorId: string) {
+export function useFollowers(targetId: string) {
   return useInfiniteQuery({
-    queryKey: followKeys.followers(creatorId),
-    queryFn: ({ pageParam = 1 }) => getFollowers(creatorId, pageParam, 20),
+    queryKey: followKeys.followers(targetId),
+    queryFn: ({ pageParam = 1 }) => getFollowers(targetId, pageParam, 20),
     getNextPageParam: (lastPage) =>
       lastPage.page < lastPage.totalPages ? lastPage.page + 1 : undefined,
     initialPageParam: 1,
-    enabled: !!creatorId,
+    enabled: !!targetId,
   });
 }

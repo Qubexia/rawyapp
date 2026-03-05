@@ -13,7 +13,7 @@ export interface CreatorProfile {
   name: string;
   showName?: string;
   bio?: string;
-  avatar?: string;
+  avatarUrl?: string;
   socialLinks?: {
     website?: string;
     twitter?: string;
