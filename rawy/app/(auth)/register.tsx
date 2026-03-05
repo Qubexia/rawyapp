@@ -29,8 +29,8 @@ import {
 } from 'lucide-react-native';
 
 import { FormInput } from '@/components/ui/FormInput';
-import { useRegister } from '@/hooks/use-register';
-import { useGoogleAuth } from '@/hooks/use-google-auth';
+import { useRegister } from '@/hooks/auth/use-register';
+import { useGoogleAuth } from '@/hooks/auth/use-google-auth';
 import { Palette, Spacing, Radius } from '@/constants/theme';
 
 export default function RegisterScreen() {
@@ -333,7 +333,7 @@ export default function RegisterScreen() {
                 <Button
                   mode="text"
                   compact
-                  onPress={() => router.push('/login')}
+                  onPress={() => router.push('/(auth)/login')}
                   labelStyle={styles.footerLink}
                 >
                   Sign In

@@ -14,10 +14,10 @@ import {
   registerUserSchema,
   registerCreatorSchema,
   RegisterUserFormData,
-} from '../validation/auth.schemas';
-import { registerUser, registerCreator } from '../services/auth.service';
-import { useAuthContext } from '../context/auth-context';
-import { ApiError } from '../services/axios-client';
+} from '@/validation/auth.schemas';
+import { registerUser, registerCreator } from '@/services/auth.service';
+import { useAuthContext } from '@/context/auth-context';
+import { ApiError } from '@/services/axios-client';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 

@@ -21,8 +21,8 @@ import { Stack, router } from 'expo-router';
 import { Mail, Lock, ArrowRight, Headphones } from 'lucide-react-native';
 
 import { FormInput } from '@/components/ui/FormInput';
-import useLogin from '@/hooks/use-login';
-import { useGoogleAuth } from '@/hooks/use-google-auth';
+import useLogin from '@/hooks/auth/use-login';
+import { useGoogleAuth } from '@/hooks/auth/use-google-auth';
 import { Palette, Spacing, Radius } from '@/constants/theme';
 
 export default function LoginScreen() {
@@ -178,7 +178,7 @@ export default function LoginScreen() {
                   <Button
                     mode="text"
                     compact
-                    onPress={() => router.push('/register')}
+                    onPress={() => router.push('/(auth)/register')}
                     labelStyle={styles.footerLink}
                   >
                     Sign Up

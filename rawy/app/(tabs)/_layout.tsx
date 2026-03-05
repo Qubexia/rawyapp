@@ -4,13 +4,12 @@
 
 import { Tabs } from 'expo-router';
 import React from 'react';
-import { Platform, StyleSheet, View } from 'react-native';
+import { Platform} from 'react-native';
 import { useTheme } from 'react-native-paper';
 import { Home, Search, Library, User } from 'lucide-react-native';
 
 import { HapticTab } from '@/components/layout/haptic-tab';
 import { Palette } from '@/constants/theme';
-import { useColorScheme } from '@/hooks/use-color-scheme';
 
 export default function TabLayout() {
   const isDark = false;
@@ -29,7 +28,7 @@ export default function TabLayout() {
           backgroundColor: isDark ? Palette.dark.surface : '#FFFFFF',
           borderTopColor: isDark ? Palette.dark.border : Palette.light.border,
           borderTopWidth: 0.5,
-          height: Platform.OS === 'ios' ? 88 : 64,
+          height: Platform.OS === 'ios' ? 88 : 80,
           paddingBottom: Platform.OS === 'ios' ? 28 : 8,
           paddingTop: 8,
           elevation: 0,

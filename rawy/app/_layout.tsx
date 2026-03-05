@@ -55,10 +55,13 @@ export default function RootLayout() {
         <AuthProvider>
           <ThemeProvider value={DefaultTheme}>
             <Stack screenOptions={{ headerShown: false }}>
-              <Stack.Screen name="onboarding" />
-              <Stack.Screen name="login" />
-              <Stack.Screen name="register" />
+              {/* Auth screens */}
+              <Stack.Screen name="(auth)/onboarding" />
+              <Stack.Screen name="(auth)/login" />
+              <Stack.Screen name="(auth)/register" />
+              {/* Tab navigator */}
               <Stack.Screen name="(tabs)" />
+              {/* Detail screens */}
               <Stack.Screen
                 name="podcast/[id]"
                 options={{ headerShown: false, animation: 'slide_from_right' }}
@@ -71,17 +74,43 @@ export default function RootLayout() {
                 name="creator/[id]"
                 options={{ headerShown: false, animation: 'slide_from_right' }}
               />
+              {/* Creator management screens */}
               <Stack.Screen
-                name="creator-dashboard"
+                name="(creator)/creator-dashboard"
                 options={{ headerShown: false, animation: 'slide_from_right' }}
               />
               <Stack.Screen
-                name="create-podcast"
+                name="(creator)/create-podcast"
                 options={{ headerShown: false, animation: 'slide_from_bottom' }}
               />
               <Stack.Screen
-                name="upload-episode"
+                name="(creator)/upload-episode"
                 options={{ headerShown: false, animation: 'slide_from_bottom' }}
+              />
+              <Stack.Screen
+                name="(creator)/become-creator"
+                options={{ headerShown: false, animation: 'slide_from_bottom' }}
+              />
+              <Stack.Screen
+                name="(creator)/edit-creator-profile"
+                options={{ headerShown: false, animation: 'slide_from_right' }}
+              />
+              <Stack.Screen
+                name="(creator)/edit-podcast"
+                options={{ headerShown: false, animation: 'slide_from_right' }}
+              />
+              <Stack.Screen
+                name="(creator)/edit-episode"
+                options={{ headerShown: false, animation: 'slide_from_right' }}
+              />
+              {/* Profile screens */}
+              <Stack.Screen
+                name="(profile)/edit-profile"
+                options={{ headerShown: false, animation: 'slide_from_right' }}
+              />
+              <Stack.Screen
+                name="(profile)/settings"
+                options={{ headerShown: false, animation: 'slide_from_right' }}
               />
             </Stack>
             <StatusBar style="dark" />

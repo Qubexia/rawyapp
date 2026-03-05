@@ -20,19 +20,19 @@ const slides = [
         id: '1',
         title: 'Discover Podcasts That Inspire',
         description: 'Listen to the best audio content and episodes from your favorite creators. Rawy takes you on an enjoyable journey of knowledge and entertainment.',
-        image: require('../assets/images/onboarding1.png'),
+        image: require('../../assets/images/onboarding1.png'),
     },
     {
         id: '2',
         title: 'Connect With Your Community',
         description: 'Engage with episodes through likes and comments. Follow your favorite creators and share your thoughts with the Rawy community.',
-        image: require('../assets/images/onboarding2.png'),
+        image: require('../../assets/images/onboarding2.png'),
     },
     {
         id: '3',
         title: 'Become A Creator',
         description: 'Have something to share? Become a creator and start publishing your own episodes. Get instant notifications and build your audience.',
-        image: require('../assets/images/onboarding3.png'),
+        image: require('../../assets/images/onboarding3.png'),
     },
 ];
 
@@ -61,7 +61,7 @@ export default function OnboardingScreen() {
                 // Ignore error saving state
             }
             // Navigate to the register app screen
-            router.replace('/register' as any);
+            router.replace('/(auth)/register' as any);
         }
     };
 

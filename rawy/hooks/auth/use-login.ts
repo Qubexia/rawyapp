@@ -8,9 +8,9 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { STORAGE_KEYS } from '@/utils/constants';
-import { loginSchema, LoginFormData } from '../validation/auth.schemas';
-import { useAuthContext } from '../context/auth-context';
-import { ApiError } from '../services/axios-client';
+import { loginSchema, LoginFormData } from '@/validation/auth.schemas';
+import { useAuthContext } from '@/context/auth-context';
+import { ApiError } from '@/services/axios-client';
 
 export function useLogin() {
   const router = useRouter();

@@ -41,7 +41,7 @@ export default function CreatorDashboard() {
 
   React.useEffect(() => {
     if (user && !isCreator(user)) {
-      router.replace('/profile' as any);
+      router.replace('/(tabs)/profile' as any);
     }
   }, [user, router]);
 
@@ -109,11 +109,11 @@ export default function CreatorDashboard() {
         {/* Quick actions */}
         <Text variant="titleMedium" style={{ color: theme.colors.onBackground, fontWeight: '700', marginBottom: Spacing.md }}>Quick Actions</Text>
         <View style={s.actionsRow}>
-          <TouchableOpacity style={[s.actionCard, { backgroundColor: Palette.primary[500] }]} activeOpacity={0.8} onPress={() => router.push('/create-podcast' as any)}>
+          <TouchableOpacity style={[s.actionCard, { backgroundColor: Palette.primary[500] }]} activeOpacity={0.8} onPress={() => router.push('/(creator)/create-podcast' as any)}>
             <Plus size={24} color="#FFF" />
             <Text style={s.actionText}>New Podcast</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={[s.actionCard, { backgroundColor: Palette.secondary[500] }]} activeOpacity={0.8} onPress={() => router.push('/upload-episode' as any)}>
+          <TouchableOpacity style={[s.actionCard, { backgroundColor: Palette.secondary[500] }]} activeOpacity={0.8} onPress={() => router.push('/(creator)/upload-episode' as any)}>
             <Upload size={24} color="#FFF" />
             <Text style={s.actionText}>Upload Episode</Text>
           </TouchableOpacity>
@@ -135,7 +135,7 @@ export default function CreatorDashboard() {
             <View style={{ flexDirection: 'row', alignItems: 'center' }}>
               <IconButton
                 icon={() => <Upload size={20} color={theme.colors.onSurfaceVariant} />}
-                onPress={() => router.push({ pathname: '/upload-episode', params: { preselect: p._id } } as any)}
+                onPress={() => router.push({ pathname: '/(creator)/upload-episode', params: { preselect: p._id } } as any)}
                 size={20}
               />
               <IconButton

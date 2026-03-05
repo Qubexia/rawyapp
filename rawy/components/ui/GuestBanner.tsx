@@ -35,7 +35,7 @@ export const GuestBanner: React.FC = () => {
         <View style={styles.actions}>
           <Button
             mode="contained"
-            onPress={() => router.push('/login')}
+            onPress={() => router.push('/(auth)/login')}
             style={styles.button}
             labelStyle={styles.buttonLabel}
             icon={() => <LogIn size={16} color="#FFF" />}
@@ -44,7 +44,7 @@ export const GuestBanner: React.FC = () => {
           </Button>
           <Button
             mode="outlined"
-            onPress={() => router.push('/register')}
+            onPress={() => router.push('/(auth)/register')}
             style={[styles.button, { borderColor: theme.colors.primary }]}
             labelStyle={[styles.buttonLabel, { color: theme.colors.primary }]}
             icon={() => <UserPlus size={16} color={theme.colors.primary} />}

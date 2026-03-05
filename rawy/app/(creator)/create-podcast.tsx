@@ -28,7 +28,7 @@ export default function CreatePodcastScreen() {
 
   React.useEffect(() => {
     if (user && !isCreator(user)) {
-      router.replace('/profile' as any);
+      router.replace('/(tabs)/profile' as any);
     }
   }, [user, router]);
 

@@ -31,7 +31,7 @@ export default function UploadEpisodeScreen() {
 
   React.useEffect(() => {
     if (user && !isCreator(user)) {
-      router.replace('/profile' as any);
+      router.replace('/(tabs)/profile' as any);
     }
   }, [user, router]);
 

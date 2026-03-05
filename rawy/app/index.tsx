@@ -37,10 +37,10 @@ export default function Index() {
     }
 
     if (!hasSeenOnboarding) {
-        console.debug('[Index] Redirecting to /onboarding');
-        return <Redirect href="/onboarding" />;
+        console.debug('[Index] Redirecting to /(auth)/onboarding');
+        return <Redirect href="/(auth)/onboarding" />;
     }
 
-    console.debug('[Index] Not authenticated, redirecting to /login');
-    return <Redirect href="/login" />;
+    console.debug('[Index] Not authenticated, redirecting to /(auth)/login');
+    return <Redirect href="/(auth)/login" />;
 }

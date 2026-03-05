@@ -61,6 +61,14 @@ export default function EpisodeDetailScreen() {
   const loadAudio = async () => {
     if (!episode?.audioFileUrl) return;
     try {
+      // Configure audio session before creating sound — prevents "Unable to activate keep awake" error
+      await Audio.setAudioModeAsync({
+        allowsRecordingIOS: false,
+        staysActiveInBackground: true,
+        playsInSilentModeIOS: true,
+        shouldDuckAndroid: true,
+        playThroughEarpieceAndroid: false,
+      });
       const { sound: newSound } = await Audio.Sound.createAsync(
         { uri: episode.audioFileUrl },
         { shouldPlay: true },
@@ -193,7 +201,7 @@ export default function EpisodeDetailScreen() {
             style={s.action} 
             onPress={() => {
               if (!user) {
-                router.push('/login' as any);
+                router.push('/(auth)/login' as any);
                 return;
               }
               toggleLike.mutate(likeStatus?.isLiked || false);

@@ -50,7 +50,7 @@ export default function BecomeCreatorScreen() {
       if (updateUserRole) {
         updateUserRole('CREATOR');
       }
-      router.replace('/creator-dashboard' as any);
+      router.replace('/(creator)/creator-dashboard' as any);
     } catch (error) {
       console.error('Failed to become creator:', error);
       // Handle error visually if necessary

@@ -113,7 +113,7 @@ export default function PodcastDetailScreen() {
             <View style={{ flexDirection: 'row', alignItems: 'center' }}>
               <IconButton
                 icon={() => <Edit2 size={18} color={theme.colors.onSurfaceVariant} />}
-                onPress={() => router.push(`/edit-episode?id=${item._id}` as any)}
+                onPress={() => router.push(`/(creator)/edit-episode?id=${item._id}` as any)}
                 size={20}
                 style={{ margin: 0 }}
               />
@@ -211,7 +211,7 @@ export default function PodcastDetailScreen() {
               mode={followStatus?.isFollowing ? 'outlined' : 'contained'}
               onPress={() => {
                 if (!user) {
-                  router.push('/login' as any);
+                  router.push('/(auth)/login' as any);
                   return;
                 }
                 toggleFollow.mutate(followStatus?.isFollowing || false);

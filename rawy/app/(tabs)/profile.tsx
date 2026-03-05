@@ -28,7 +28,6 @@ import {
 
 import { useAuthContext } from "@/context/auth-context";
 import { Palette, Spacing, Radius } from "@/constants/theme";
-import { useColorScheme } from "@/hooks/use-color-scheme";
 import { isCreator, isAdmin } from "@/utils/roles";
 
 export default function ProfileScreen() {
@@ -70,7 +69,7 @@ export default function ProfileScreen() {
           </Text>
           <Button
             mode="contained"
-            onPress={() => router.push("/login")}
+            onPress={() => router.push("/(auth)/login")}
             style={{ marginTop: Spacing.lg, borderRadius: Radius.md }}
             contentStyle={{ height: 48 }}
           >
@@ -88,13 +87,13 @@ export default function ProfileScreen() {
             icon: LayoutDashboard,
             label: "Creator Dashboard",
             subtitle: "Manage your podcasts",
-            onPress: () => router.push("/creator-dashboard" as any),
+            onPress: () => router.push("/(creator)/creator-dashboard" as any),
           },
           {
             icon: Mic,
             label: "Creator Profile",
             subtitle: "Edit your public creator info",
-            onPress: () => router.push("/edit-creator-profile" as any),
+            onPress: () => router.push("/(creator)/edit-creator-profile" as any),
           },
         ]
       : [
@@ -102,14 +101,14 @@ export default function ProfileScreen() {
             icon: Mic,
             label: "Become a Creator",
             subtitle: "Start your podcast journey",
-            onPress: () => router.push("/become-creator" as any),
+            onPress: () => router.push("/(creator)/become-creator" as any),
           },
         ]),
     {
       icon: Settings,
       label: "Settings",
       subtitle: "App preferences",
-      onPress: () => router.push("/settings" as any),
+      onPress: () => router.push("/(profile)/settings" as any),
     },
     {
       icon: Shield,
@@ -121,7 +120,7 @@ export default function ProfileScreen() {
 
   const handleLogout = async () => {
     await logout();
-    router.replace("/login");
+    router.replace("/(auth)/login");
   };
 
   return (
@@ -190,7 +189,7 @@ export default function ProfileScreen() {
                   <Edit2 size={18} color={theme.colors.onSurfaceVariant} />
                 )}
                 size={20}
-                onPress={() => router.push("/edit-profile" as any)}
+                onPress={() => router.push("/(profile)/edit-profile" as any)}
                 style={{ margin: 0 }}
               />
             </View>

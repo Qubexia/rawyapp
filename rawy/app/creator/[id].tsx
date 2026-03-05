@@ -92,7 +92,7 @@ export default function CreatorDetailScreen() {
             mode={followStatus?.isFollowing ? 'outlined' : 'contained'}
             onPress={() => {
               if (!user) {
-                router.push('/login' as any);
+                router.push('/(auth)/login' as any);
                 return;
               }
               toggleFollow.mutate(followStatus?.isFollowing || false);
