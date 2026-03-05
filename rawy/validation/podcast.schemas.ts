@@ -9,13 +9,13 @@ import { z } from 'zod';
 export const createPodcastSchema = z.object({
   title: z
     .string()
-    .min(1, 'Title is required')
-    .max(200, 'Title must not exceed 200 characters')
+    .min(3, 'Title must be at least 3 characters long')
+    .max(100, 'Title must not exceed 100 characters')
     .transform((v) => v.trim()),
   description: z
     .string()
-    .max(2000, 'Description must not exceed 2000 characters')
-    .default(''),
+    .min(10, 'Description must be at least 10 characters long')
+    .max(2000, 'Description must not exceed 2000 characters'),
 });
 
 export type CreatePodcastFormData = z.input<typeof createPodcastSchema>;
@@ -25,12 +25,13 @@ export type CreatePodcastFormData = z.input<typeof createPodcastSchema>;
 export const updatePodcastSchema = z.object({
   title: z
     .string()
-    .min(1, 'Title is required')
-    .max(200, 'Title must not exceed 200 characters')
+    .min(3, 'Title must be at least 3 characters long')
+    .max(100, 'Title must not exceed 100 characters')
     .transform((v) => v.trim())
     .optional(),
   description: z
     .string()
+    .min(10, 'Description must be at least 10 characters long')
     .max(2000, 'Description must not exceed 2000 characters')
     .optional(),
 });

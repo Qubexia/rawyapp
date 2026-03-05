@@ -22,13 +22,14 @@ import { isCreator } from '@/utils/roles';
 const updateEpisodeSchema = z.object({
   title: z
     .string()
-    .min(1, 'Title is required')
+    .min(3, 'Title must be at least 3 characters long')
     .max(200, 'Title must not exceed 200 characters')
     .transform((v) => v.trim())
     .optional(),
   description: z
     .string()
-    .max(2000, 'Description must not exceed 2000 characters')
+    .min(10, 'Description must be at least 10 characters long')
+    .max(5000, 'Description must not exceed 5000 characters')
     .optional(),
 });
 
@@ -103,7 +104,7 @@ export default function EditEpisodeScreen() {
           </Surface>
 
           <FormInput name="title" control={control} label="Episode Title" autoCapitalize="words" icon={<Play size={20} color={theme.colors.onSurfaceVariant} />} />
-          <FormInput name="description" control={control} label="Description (optional)" multiline numberOfLines={4} />
+          <FormInput name="description" control={control} label="Description" multiline numberOfLines={4} />
 
           <Button mode="contained" onPress={onSubmit} loading={updateEpisode.isPending} disabled={updateEpisode.isPending || !isDirty}
             style={s.submitBtn} contentStyle={{ height: 52 }} labelStyle={{ fontSize: 16, fontWeight: '600' }}

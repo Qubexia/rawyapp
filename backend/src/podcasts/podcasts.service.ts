@@ -115,7 +115,7 @@ export class PodcastsService {
     const podcast = await this.findById(id);
 
     // Check ownership or admin access
-    if (userRole !== 'ADMIN' && !podcast.creatorId.equals(userId)) {
+    if (userRole !== 'ADMIN' && !podcast.creator._id.equals(userId)) {
       throw new ForbiddenException('You do not have permission to update this podcast');
     }
 
@@ -155,7 +155,7 @@ export class PodcastsService {
     const podcast = await this.findById(id);
 
     // Check ownership or admin access
-    if (userRole !== 'ADMIN' && !podcast.creatorId.equals(userId)) {
+    if (userRole !== 'ADMIN' && !podcast.creator._id.equals(userId)) {
       throw new ForbiddenException('You do not have permission to delete this podcast');
     }
 
@@ -173,7 +173,7 @@ export class PodcastsService {
     }
 
     // Decrement CreatorProfile.podcastCount
-    await this.creatorsService.decrementPodcastCount(podcast.creatorId);
+    await this.creatorsService.decrementPodcastCount(podcast.creator._id);
 
     await this.podcastModel.findByIdAndDelete(id).exec();
   }

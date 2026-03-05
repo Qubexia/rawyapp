@@ -154,7 +154,7 @@ export default function UploadEpisodeScreen() {
             )}
           </View>
 
-          <FormInput name="description" control={control} label="Description (optional)" placeholder="Episode summary" multiline numberOfLines={4} />
+          <FormInput name="description" control={control} label="Description" placeholder="Episode summary" multiline numberOfLines={4} />
 
           {/* Audio file picker */}
           <TouchableOpacity onPress={pickAudio} activeOpacity={0.8}>

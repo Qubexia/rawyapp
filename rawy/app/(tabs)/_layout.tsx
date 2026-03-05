@@ -249,7 +249,7 @@ const styles = StyleSheet.create({
     borderRadius: 26,
     justifyContent: "center",
     alignItems: "center",
-    elevation: 8,
+    elevation: 4,
   },
   actionLabel: {
     marginTop: 6,
@@ -263,6 +263,6 @@ const styles = StyleSheet.create({
     borderRadius: FAB_SIZE / 2,
     justifyContent: "center",
     alignItems: "center",
-    elevation: 12,
+    elevation: 3,
   },
 });

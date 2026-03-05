@@ -155,7 +155,7 @@ export class EpisodesService {
     const episode = await this.findById(id);
 
     // Check ownership or admin access
-    if (userRole !== 'ADMIN' && !episode.creatorId.equals(userId)) {
+    if (userRole !== 'ADMIN' && !episode.creator._id.equals(userId)) {
       throw new ForbiddenException('You do not have permission to update this episode');
     }
 
@@ -181,7 +181,7 @@ export class EpisodesService {
     const episode = await this.findById(id);
 
     // Check ownership or admin access
-    if (userRole !== 'ADMIN' && !episode.creatorId.equals(userId)) {
+    if (userRole !== 'ADMIN' && !episode.creator._id.equals(userId)) {
       throw new ForbiddenException('You do not have permission to delete this episode');
     }
 

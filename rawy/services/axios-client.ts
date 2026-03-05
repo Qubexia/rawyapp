@@ -168,15 +168,23 @@ const axiosClient = axios.create({
 
 axiosClient.interceptors.request.use(
   async (config: InternalAxiosRequestConfig) => {
-    const isPublic = PUBLIC_PATHS.some((p) => config.url?.startsWith(p));
-    if (isPublic) return config;
+    const url = config.url || '';
+    const isAuthPath = ['/auth/login', '/auth/register', '/auth/register-creator', '/auth/refresh'].some(p => url.startsWith(p));
+    
+    // Only GET requests to browsing paths are truly "public" (no token needed).
+    // Mutation requests (POST, PATCH, DELETE) to these paths ALWAYS need a token.
+    const isPublicGet = config.method?.toLowerCase() === 'get' && 
+      ['/podcasts', '/episodes', '/comments', '/creators'].some(p => url.startsWith(p));
+
+    if (isAuthPath || isPublicGet) {
+      return config;
+    }
 
     let token = await getItem(TOKEN_KEYS.ACCESS);
     
     if (!token) {
-      if (!isPublic) {
-        console.debug(`[Axios] Request to "${config.url}" sent without access token (user not authenticated).`);
-      }
+      // If we are here, it's a protected route (or a mutation to a public-browsing route)
+      console.debug(`[Axios] Request to "${config.url}" (${config.method}) missing access token.`);
       return config;
     }
 

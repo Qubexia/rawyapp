@@ -60,7 +60,7 @@ export default function CreatePodcastScreen() {
           </Surface>
 
           <FormInput name="title" control={control} label="Podcast Title" placeholder="e.g. Tech Talks Daily" autoCapitalize="words" icon={<Headphones size={20} color={theme.colors.onSurfaceVariant} />} />
-          <FormInput name="description" control={control} label="Description (optional)" placeholder="What is your podcast about?" multiline numberOfLines={4} />
+          <FormInput name="description" control={control} label="Description" placeholder="What is your podcast about?" multiline numberOfLines={4} />
 
           <Button mode="contained" onPress={onSubmit} loading={createPodcast.isPending} disabled={createPodcast.isPending}
             style={s.submitBtn} contentStyle={{ height: 52 }} labelStyle={{ fontSize: 16, fontWeight: '600' }}
