@@ -110,6 +110,15 @@ export class AuthController {
   }
 
   @Public()
+  @Post('google/mobile')
+  @ApiOperation({ summary: 'Login with Google ID Token from mobile client' })
+  @ApiResponse({ status: HttpStatus.OK, description: 'Login successful', type: TokenResponseDto })
+  @ApiResponse({ status: HttpStatus.UNAUTHORIZED, description: 'Invalid Google token' })
+  async googleAuthMobile(@Body('idToken') idToken: string): Promise<TokenResponseDto> {
+    return this.authService.validateGoogleIdToken(idToken);
+  }
+
+  @Public()
   @Get('google/callback')
   @UseGuards(GoogleAuthGuard)
   @ApiOperation({ summary: 'Google OAuth callback' })

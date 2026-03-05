@@ -12,6 +12,7 @@ import { RefreshTokenDto } from './dto/refresh-token.dto';
 import { TokenResponseDto } from './dto/token-response.dto';
 import { Role } from '../common/constants/roles.enum';
 import { Types } from 'mongoose';
+import { OAuth2Client } from 'google-auth-library';
 
 interface OAuthUser {
   provider: 'google' | 'facebook';
@@ -196,8 +197,10 @@ export class AuthService {
       role: user.role,
     };
 
-    const accessTtl = this.configService.get<number>('JWT_ACCESS_TTL');
-    const refreshTtl = this.configService.get<number>('JWT_REFRESH_TTL');
+    // ConfigService always returns strings from .env; Number() converts to actual number
+    // so jsonwebtoken treats it as seconds (not milliseconds like string "900" would be)
+    const accessTtl = Number(this.configService.get('JWT_ACCESS_TTL') ?? 900);
+    const refreshTtl = Number(this.configService.get('JWT_REFRESH_TTL') ?? 604800);
 
     if (!accessTtl || !refreshTtl) {
       throw new Error('JWT TTL values are not configured properly');
@@ -278,5 +281,49 @@ export class AuthService {
 
     user = await this.usersService.create(createData);
     return user;
+  }
+
+  async validateGoogleIdToken(idToken: string): Promise<TokenResponseDto> {
+    const clientId = this.configService.get<string>('GOOGLE_CLIENT_ID');
+    if (!clientId) {
+      throw new Error('Google client ID is not configured');
+    }
+
+    const client = new OAuth2Client(clientId);
+    
+    try {
+      const ticket = await client.verifyIdToken({
+        idToken,
+        audience: clientId,
+      });
+
+      const payload = ticket.getPayload();
+      if (!payload) {
+        throw new UnauthorizedException('Invalid Google token payload');
+      }
+
+      const { sub: providerId, email, name } = payload;
+      if (!email || !name) {
+        throw new UnauthorizedException('Email and name are required from Google');
+      }
+
+      const user = await this.validateOAuthUser({
+        provider: 'google',
+        providerId,
+        email,
+        name,
+      });
+
+      const { accessToken, refreshToken } = await this.generateTokens(user);
+
+      return {
+        accessToken,
+        refreshToken,
+        user: user.toObject(),
+      };
+    } catch (error) {
+      console.error('Error verifying Google ID token:', error);
+      throw new UnauthorizedException('Invalid Google token');
+    }
   }
 }

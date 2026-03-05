@@ -63,37 +63,3 @@ export const commentSchema = z.object({
 });
 
 export type CommentFormData = z.infer<typeof commentSchema>;
-
-// ─── Create Podcast ─────────────────────────────────────────────────────────
-
-export const createPodcastSchema = z.object({
-  title: z
-    .string()
-    .min(1, 'Title is required')
-    .max(200, 'Title must not exceed 200 characters')
-    .transform((v) => v.trim()),
-  description: z
-    .string()
-    .max(2000, 'Description must not exceed 2000 characters')
-    .default(''),
-});
-
-export type CreatePodcastFormData = z.input<typeof createPodcastSchema>;
-
-// ─── Create Episode ─────────────────────────────────────────────────────────
-
-export const createEpisodeSchema = z.object({
-  title: z
-    .string()
-    .min(1, 'Title is required')
-    .max(200, 'Title must not exceed 200 characters')
-    .transform((v) => v.trim()),
-  description: z
-    .string()
-    .max(5000, 'Description must not exceed 5000 characters')
-    .default(''),
-  podcastId: z.string().min(1, 'Please select a podcast'),
-  duration: z.number().positive('Duration must be positive').optional(),
-});
-
-export type CreateEpisodeFormData = z.infer<typeof createEpisodeSchema>;

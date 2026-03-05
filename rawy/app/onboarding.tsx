@@ -13,6 +13,7 @@ import { useRouter } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { STORAGE_KEYS } from '@/utils/constants';
 
 const slides = [
     {
@@ -55,7 +56,7 @@ export default function OnboardingScreen() {
             slidesRef.current?.scrollToIndex({ index: currentIndex + 1 });
         } else {
             try {
-                await AsyncStorage.setItem('@has_seen_onboarding', 'true');
+                await AsyncStorage.setItem(STORAGE_KEYS.HAS_SEEN_ONBOARDING, 'true');
             } catch (error) {
                 // Ignore error saving state
             }

@@ -39,3 +39,24 @@ export async function getLikeStatus(episodeId: string): Promise<LikeStatus> {
   );
   return data;
 }
+
+// ─── Liked episodes list ─────────────────────────────────────────────────────
+
+export interface PaginatedLikedEpisodes {
+  data: any[];
+  total: number;
+  page: number;
+  limit: number;
+  totalPages: number;
+}
+
+export async function getLikedEpisodes(
+  page: number = 1,
+  limit: number = 20,
+): Promise<PaginatedLikedEpisodes> {
+  const { data } = await axiosClient.get<PaginatedLikedEpisodes>(
+    `/likes/me/episodes`,
+    { params: { page, limit } },
+  );
+  return data;
+}

@@ -2,17 +2,18 @@
  * Profile tab — user info, settings, logout.
  */
 
-import React from 'react';
-import { View, ScrollView, StyleSheet, TouchableOpacity } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import React from "react";
+import { View, ScrollView, StyleSheet, TouchableOpacity } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import {
   Text,
   Surface,
   Button,
   Divider,
   useTheme,
-} from 'react-native-paper';
-import { useRouter } from 'expo-router';
+  IconButton,
+} from "react-native-paper";
+import { useRouter } from "expo-router";
 import {
   User,
   Settings,
@@ -22,11 +23,13 @@ import {
   LayoutDashboard,
   Shield,
   Mail,
-} from 'lucide-react-native';
+  Edit2,
+} from "lucide-react-native";
 
-import { useAuthContext } from '@/context/auth-context';
-import { Palette, Spacing, Radius } from '@/constants/theme';
-import { useColorScheme } from '@/hooks/use-color-scheme';
+import { useAuthContext } from "@/context/auth-context";
+import { Palette, Spacing, Radius } from "@/constants/theme";
+import { useColorScheme } from "@/hooks/use-color-scheme";
+import { isCreator, isAdmin } from "@/utils/roles";
 
 export default function ProfileScreen() {
   const theme = useTheme();
@@ -37,10 +40,7 @@ export default function ProfileScreen() {
   if (!isAuthenticated) {
     return (
       <SafeAreaView
-        style={[
-          styles.container,
-          { backgroundColor: theme.colors.background },
-        ]}
+        style={[styles.container, { backgroundColor: theme.colors.background }]}
       >
         <View style={styles.authPrompt}>
           <User
@@ -53,7 +53,7 @@ export default function ProfileScreen() {
             style={{
               color: theme.colors.onSurface,
               marginTop: Spacing.md,
-              fontWeight: '600',
+              fontWeight: "600",
             }}
           >
             Sign in to your account
@@ -63,14 +63,14 @@ export default function ProfileScreen() {
             style={{
               color: theme.colors.onSurfaceVariant,
               marginTop: Spacing.xs,
-              textAlign: 'center',
+              textAlign: "center",
             }}
           >
             Manage your profile and preferences
           </Text>
           <Button
             mode="contained"
-            onPress={() => router.push('/login')}
+            onPress={() => router.push("/login")}
             style={{ marginTop: Spacing.lg, borderRadius: Radius.md }}
             contentStyle={{ height: 48 }}
           >
@@ -82,48 +82,51 @@ export default function ProfileScreen() {
   }
 
   const menuItems = [
-    ...((user?.role === 'creator' || user?.role === 'CREATOR')
+    ...(isCreator(user)
       ? [
           {
             icon: LayoutDashboard,
-            label: 'Creator Dashboard',
-            subtitle: 'Manage your podcasts',
-            onPress: () => router.push('/creator-dashboard' as any),
+            label: "Creator Dashboard",
+            subtitle: "Manage your podcasts",
+            onPress: () => router.push("/creator-dashboard" as any),
+          },
+          {
+            icon: Mic,
+            label: "Creator Profile",
+            subtitle: "Edit your public creator info",
+            onPress: () => router.push("/edit-creator-profile" as any),
           },
         ]
       : [
           {
             icon: Mic,
-            label: 'Become a Creator',
-            subtitle: 'Start your podcast journey',
-            onPress: () => {},
+            label: "Become a Creator",
+            subtitle: "Start your podcast journey",
+            onPress: () => router.push("/become-creator" as any),
           },
         ]),
     {
       icon: Settings,
-      label: 'Settings',
-      subtitle: 'App preferences',
-      onPress: () => {},
+      label: "Settings",
+      subtitle: "App preferences",
+      onPress: () => router.push("/settings" as any),
     },
     {
       icon: Shield,
-      label: 'Privacy & Security',
-      subtitle: 'Account protection',
+      label: "Privacy & Security",
+      subtitle: "Account protection",
       onPress: () => {},
     },
   ];
 
   const handleLogout = async () => {
     await logout();
-    router.replace('/login');
+    router.replace("/login");
   };
 
   return (
     <SafeAreaView
-      style={[
-        styles.container,
-        { backgroundColor: theme.colors.background },
-      ]}
+      style={[styles.container, { backgroundColor: theme.colors.background }]}
     >
       <ScrollView showsVerticalScrollIndicator={false}>
         {/* Header */}
@@ -164,12 +167,33 @@ export default function ProfileScreen() {
             />
           </View>
           <View style={styles.userInfo}>
-            <Text
-              variant="titleLarge"
-              style={{ color: theme.colors.onSurface, fontWeight: '700' }}
+            <View
+              style={{
+                flexDirection: "row",
+                justifyContent: "space-between",
+                alignItems: "center",
+              }}
             >
-              {user?.name || 'User'}
-            </Text>
+              <Text
+                variant="titleLarge"
+                numberOfLines={1}
+                style={{
+                  color: theme.colors.onSurface,
+                  fontWeight: "700",
+                  flex: 1,
+                }}
+              >
+                {user?.name || "User"}
+              </Text>
+              <IconButton
+                icon={() => (
+                  <Edit2 size={18} color={theme.colors.onSurfaceVariant} />
+                )}
+                size={20}
+                onPress={() => router.push("/edit-profile" as any)}
+                style={{ margin: 0 }}
+              />
+            </View>
             <View style={styles.emailRow}>
               <Mail size={14} color={theme.colors.onSurfaceVariant} />
               <Text
@@ -184,11 +208,11 @@ export default function ProfileScreen() {
             </View>
             <View style={styles.roleChip}>
               <Text style={styles.roleText}>
-                {(user?.role === 'creator' || user?.role === 'CREATOR')
-                  ? '🎙 Creator'
-                  : (user?.role === 'admin' || user?.role === 'ADMIN')
-                    ? '👑 Admin'
-                    : '🎧 Listener'}
+                {isCreator(user)
+                  ? "🎙 Creator"
+                  : isAdmin(user)
+                    ? "👑 Admin"
+                    : "🎧 Listener"}
               </Text>
             </View>
           </View>
@@ -225,9 +249,7 @@ export default function ProfileScreen() {
                 >
                   <item.icon
                     size={20}
-                    color={
-                      isDark ? Palette.primary[300] : Palette.primary[500]
-                    }
+                    color={isDark ? Palette.primary[300] : Palette.primary[500]}
                   />
                 </View>
                 <View style={styles.menuLabel}>
@@ -235,7 +257,7 @@ export default function ProfileScreen() {
                     variant="titleSmall"
                     style={{
                       color: theme.colors.onSurface,
-                      fontWeight: '600',
+                      fontWeight: "600",
                     }}
                   >
                     {item.label}
@@ -247,10 +269,7 @@ export default function ProfileScreen() {
                     {item.subtitle}
                   </Text>
                 </View>
-                <ChevronRight
-                  size={20}
-                  color={theme.colors.onSurfaceVariant}
-                />
+                <ChevronRight size={20} color={theme.colors.onSurfaceVariant} />
               </TouchableOpacity>
               {index < menuItems.length - 1 && (
                 <Divider style={{ marginHorizontal: Spacing.md }} />
@@ -287,31 +306,31 @@ const styles = StyleSheet.create({
     paddingBottom: Spacing.lg,
   },
   title: {
-    fontWeight: '700',
+    fontWeight: "700",
   },
   // ── User card ──
   userCard: {
     marginHorizontal: Spacing.lg,
     borderRadius: Radius.xl,
     padding: Spacing.lg,
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     marginBottom: Spacing.lg,
   },
   avatar: {
     width: 64,
     height: 64,
     borderRadius: Radius.full,
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: "center",
+    justifyContent: "center",
     marginRight: Spacing.md,
   },
   userInfo: {
     flex: 1,
   },
   emailRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     marginTop: 4,
   },
   roleChip: {
@@ -319,24 +338,24 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
     paddingVertical: 3,
     borderRadius: Radius.full,
-    alignSelf: 'flex-start',
+    alignSelf: "flex-start",
     marginTop: 8,
   },
   roleText: {
     fontSize: 12,
-    fontWeight: '600',
+    fontWeight: "600",
     color: Palette.primary[700],
   },
   // ── Menu ──
   menuCard: {
     marginHorizontal: Spacing.lg,
     borderRadius: Radius.xl,
-    overflow: 'hidden',
+    overflow: "hidden",
     marginBottom: Spacing.lg,
   },
   menuItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     paddingVertical: Spacing.md,
     paddingHorizontal: Spacing.md,
   },
@@ -344,8 +363,8 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: Radius.md,
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: "center",
+    justifyContent: "center",
     marginRight: Spacing.md,
   },
   menuLabel: {
@@ -355,7 +374,7 @@ const styles = StyleSheet.create({
   logoutButton: {
     marginHorizontal: Spacing.lg,
     borderRadius: Radius.md,
-    borderColor: '#EF4444',
+    borderColor: "#EF4444",
   },
   logoutContent: {
     height: 48,
@@ -363,8 +382,8 @@ const styles = StyleSheet.create({
   // ── Auth prompt ──
   authPrompt: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
     paddingHorizontal: Spacing.xl,
   },
 });

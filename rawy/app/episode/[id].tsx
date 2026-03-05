@@ -2,15 +2,16 @@
  * Episode detail screen — player, comments, likes.
  */
 
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   View, FlatList, StyleSheet, TouchableOpacity,
-  TextInput, KeyboardAvoidingView, Platform,
+  TextInput, KeyboardAvoidingView, Platform, Share, RefreshControl, Image
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Text, Surface, IconButton, useTheme, ActivityIndicator } from 'react-native-paper';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { ArrowLeft, Heart, MessageCircle, Play, Pause, Clock, Send, Trash2, Share2 } from 'lucide-react-native';
+import { Audio } from 'expo-av';
 
 import { useEpisode } from '@/hooks/queries/use-episodes';
 import { useLikeStatus, useToggleLike } from '@/hooks/queries/use-likes';
@@ -19,6 +20,7 @@ import { useAuthContext } from '@/context/auth-context';
 import { Palette, Spacing, Radius } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import type { Comment } from '@/services/comments.service';
+import { formatRelativeTime } from '@/utils/format';
 
 export default function EpisodeDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -29,13 +31,92 @@ export default function EpisodeDetailScreen() {
   const [isPlaying, setIsPlaying] = useState(false);
   const [commentText, setCommentText] = useState('');
 
+  const [sound, setSound] = useState<Audio.Sound | null>(null);
+  const [position, setPosition] = useState(0);
+  const [duration, setDuration] = useState(0);
+  const [refreshing, setRefreshing] = useState(false);
+
   const { data: episode, isLoading } = useEpisode(id);
   const { data: likeStatus } = useLikeStatus(id);
   const toggleLike = useToggleLike(id);
-  const { data: commentsData, isLoading: commentsLoading } = useComments(id);
+  const { data: commentsData, isLoading: commentsLoading, refetch: refetchComments } = useComments(id);
   const createComment = useCreateComment(id);
   const deleteComment = useDeleteComment(id);
   const comments = commentsData?.pages.flatMap((p) => p.data) ?? [];
+
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+    await refetchComments();
+    setRefreshing(false);
+  }, [refetchComments]);
+
+  useEffect(() => {
+    return sound
+      ? () => {
+          sound.unloadAsync();
+        }
+      : undefined;
+  }, [sound]);
+
+  const loadAudio = async () => {
+    if (!episode?.audioFileUrl) return;
+    try {
+      const { sound: newSound } = await Audio.Sound.createAsync(
+        { uri: episode.audioFileUrl },
+        { shouldPlay: true },
+        onPlaybackStatusUpdate
+      );
+      setSound(newSound);
+      setIsPlaying(true);
+    } catch (err) {
+      console.error('Failed to load audio', err);
+    }
+  };
+
+  const onPlaybackStatusUpdate = (status: any) => {
+    if (status.isLoaded) {
+      setPosition(status.positionMillis);
+      setDuration(status.durationMillis || 0);
+      setIsPlaying(status.isPlaying);
+      if (status.didJustFinish) {
+        setIsPlaying(false);
+        setPosition(status.durationMillis || 0);
+      }
+    }
+  };
+
+  const togglePlayPause = async () => {
+    if (!sound) {
+      await loadAudio();
+      return;
+    }
+    if (isPlaying) {
+      await sound.pauseAsync();
+    } else {
+      if (position >= duration && duration > 0) {
+        await sound.replayAsync();
+      } else {
+        await sound.playAsync();
+      }
+    }
+  };
+
+  const formatTimeMillis = (millis: number) => {
+    const totalSeconds = Math.floor(millis / 1000);
+    const minutes = Math.floor(totalSeconds / 60);
+    const seconds = totalSeconds % 60;
+    return `${minutes}:${seconds < 10 ? '0' : ''}${seconds}`;
+  };
+
+  const handleShare = async () => {
+    try {
+      await Share.share({
+        message: `Listen to "${episode?.title}" from "${episode?.podcast?.title}" on Rawy!`,
+      });
+    } catch (error) {
+      console.error('Error sharing', error);
+    }
+  };
 
   if (isLoading) {
     return (
@@ -60,7 +141,10 @@ export default function EpisodeDetailScreen() {
         </Text>
       </View>
       <View style={s.commentBody}>
-        <Text variant="labelMedium" style={{ color: theme.colors.onSurface, fontWeight: '600' }}>{item.user?.name || 'Anon'}</Text>
+        <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+          <Text variant="labelMedium" style={{ color: theme.colors.onSurface, fontWeight: '600' }}>{item.user?.name || 'Anon'}</Text>
+          <Text variant="labelSmall" style={{ color: theme.colors.onSurfaceVariant }}>{formatRelativeTime(item.createdAt)}</Text>
+        </View>
         <Text variant="bodySmall" style={{ color: theme.colors.onSurfaceVariant, marginTop: 2 }}>{item.text}</Text>
       </View>
       {user?._id === item.user?._id && (
@@ -72,8 +156,12 @@ export default function EpisodeDetailScreen() {
   const Header = () => (
     <>
       <Surface style={[s.player, { backgroundColor: isDark ? Palette.dark.surfaceVariant : Palette.light.surfaceVariant }]} elevation={1}>
-        <View style={[s.cover, { backgroundColor: isDark ? Palette.dark.elevated : Palette.primary[100] }]}>
-          <Play size={48} color={isDark ? Palette.primary[300] : Palette.primary[500]} fill={isDark ? Palette.primary[300] : Palette.primary[500]} />
+        <View style={[s.cover, { backgroundColor: isDark ? Palette.dark.elevated : Palette.primary[100], overflow: 'hidden' }]}>
+          {episode?.podcast?.coverImageUrl ? (
+            <Image source={{ uri: episode.podcast.coverImageUrl }} style={{ width: '100%', height: '100%', resizeMode: 'cover' }} />
+          ) : (
+            <Play size={48} color={isDark ? Palette.primary[300] : Palette.primary[500]} fill={isDark ? Palette.primary[300] : Palette.primary[500]} />
+          )}
         </View>
         <Text variant="headlineSmall" style={{ fontWeight: '800', textAlign: 'center', color: theme.colors.onSurface, marginBottom: 4 }} numberOfLines={3}>{episode?.title}</Text>
         <TouchableOpacity onPress={() => episode?.podcast?._id && router.push(`/podcast/${episode.podcast._id}` as any)}>
@@ -85,7 +173,19 @@ export default function EpisodeDetailScreen() {
             {episode?.duration ? `${Math.floor(episode.duration / 60)}m ${episode.duration % 60}s` : '—'}
           </Text>
         </View>
-        <TouchableOpacity style={[s.playBtn, { backgroundColor: theme.colors.primary }]} onPress={() => setIsPlaying(!isPlaying)}>
+
+        {/* Progress Bar */}
+        <View style={{ width: '100%', paddingHorizontal: Spacing.lg, marginTop: Spacing.lg }}>
+          <View style={{ height: 4, backgroundColor: isDark ? Palette.dark.border : Palette.light.border, borderRadius: 2, overflow: 'hidden' }}>
+            <View style={{ height: '100%', backgroundColor: theme.colors.primary, width: duration > 0 ? `${(position / duration) * 100}%` : '0%' }} />
+          </View>
+          <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginTop: 4 }}>
+            <Text variant="labelSmall" style={{ color: theme.colors.onSurfaceVariant }}>{formatTimeMillis(position)}</Text>
+            <Text variant="labelSmall" style={{ color: theme.colors.onSurfaceVariant }}>{formatTimeMillis(duration || (episode?.duration ? episode.duration * 1000 : 0))}</Text>
+          </View>
+        </View>
+
+        <TouchableOpacity style={[s.playBtn, { backgroundColor: theme.colors.primary }]} onPress={togglePlayPause}>
           {isPlaying ? <Pause size={28} color="#FFF" fill="#FFF" /> : <Play size={28} color="#FFF" fill="#FFF" />}
         </TouchableOpacity>
         <View style={s.actions}>
@@ -108,7 +208,7 @@ export default function EpisodeDetailScreen() {
             <MessageCircle size={22} color={theme.colors.onSurfaceVariant} />
             <Text variant="labelSmall" style={{ color: theme.colors.onSurfaceVariant, marginTop: 4 }}>{comments.length}</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={s.action}>
+          <TouchableOpacity style={s.action} onPress={handleShare}>
             <Share2 size={22} color={theme.colors.onSurfaceVariant} />
             <Text variant="labelSmall" style={{ color: theme.colors.onSurfaceVariant, marginTop: 4 }}>Share</Text>
           </TouchableOpacity>
@@ -135,8 +235,16 @@ export default function EpisodeDetailScreen() {
         <View style={{ width: 48 }} />
       </View>
       <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined} keyboardVerticalOffset={90}>
-        <FlatList data={comments} keyExtractor={(i, index) => i?._id ? String(i._id) : String(index)} renderItem={renderComment} ListHeaderComponent={Header} contentContainerStyle={{ paddingBottom: Spacing.xxl }} showsVerticalScrollIndicator={false}
-          ListEmptyComponent={() => !commentsLoading ? <View style={s.emptyC}><MessageCircle size={28} color={theme.colors.onSurfaceVariant} strokeWidth={1} /><Text variant="bodySmall" style={{ color: theme.colors.onSurfaceVariant, marginTop: 8 }}>Be the first to comment!</Text></View> : null} />
+        <FlatList 
+          data={comments} 
+          keyExtractor={(i, index) => i?._id ? String(i._id) : String(index)} 
+          renderItem={renderComment} 
+          ListHeaderComponent={Header} 
+          contentContainerStyle={{ paddingBottom: Spacing.xxl }} 
+          showsVerticalScrollIndicator={false}
+          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={theme.colors.primary} />}
+          ListEmptyComponent={() => !commentsLoading ? <View style={s.emptyC}><MessageCircle size={28} color={theme.colors.onSurfaceVariant} strokeWidth={1} /><Text variant="bodySmall" style={{ color: theme.colors.onSurfaceVariant, marginTop: 8 }}>Be the first to comment!</Text></View> : null} 
+        />
         {user && (
           <Surface style={[s.inputBar, { backgroundColor: isDark ? Palette.dark.surface : '#FFF', borderTopColor: isDark ? Palette.dark.border : Palette.light.border }]} elevation={2}>
             <TextInput style={[s.input, { color: theme.colors.onSurface }]} placeholder="Write a comment..." placeholderTextColor={theme.colors.onSurfaceVariant} value={commentText} onChangeText={setCommentText} multiline />

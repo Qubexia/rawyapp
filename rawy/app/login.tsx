@@ -22,11 +22,13 @@ import { Mail, Lock, ArrowRight, Headphones } from 'lucide-react-native';
 
 import { FormInput } from '@/components/ui/FormInput';
 import useLogin from '@/hooks/use-login';
+import { useGoogleAuth } from '@/hooks/use-google-auth';
 import { Palette, Spacing, Radius } from '@/constants/theme';
 
 export default function LoginScreen() {
   const theme = useTheme();
   const { control, errors, isLoading, serverError, handleSubmit } = useLogin();
+  const { signInWithGoogle, googleLoading, googleError, isReady } = useGoogleAuth();
 
   return (
     <>
@@ -109,9 +111,9 @@ export default function LoginScreen() {
                   />
 
                   {/* Server error */}
-                  {!!serverError && (
+                  {(!!serverError || !!googleError) && (
                     <Surface style={styles.errorBanner} elevation={0}>
-                      <Text style={styles.errorText}>{serverError}</Text>
+                      <Text style={styles.errorText}>{serverError || googleError}</Text>
                     </Surface>
                   )}
 
@@ -150,6 +152,23 @@ export default function LoginScreen() {
                     ]}
                   />
                 </View>
+
+                {/* Google Sign In */}
+                <Button
+                  mode="outlined"
+                  onPress={signInWithGoogle}
+                  loading={googleLoading}
+                  disabled={!isReady || googleLoading || isLoading}
+                  contentStyle={styles.socialContent}
+                  style={styles.socialButton}
+                  labelStyle={styles.socialLabel}
+                  textColor={Palette.text.lightPrimary}
+                  icon="google"
+                >
+                  Continue with Google
+                </Button>
+
+                <View style={{ height: Spacing.lg }} />
 
                 {/* Footer */}
                 <View style={styles.footer}>
@@ -255,6 +274,18 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
     letterSpacing: 0.5,
+  },
+  socialButton: {
+    borderRadius: Radius.md,
+    borderColor: Palette.light.border,
+    backgroundColor: '#FFFFFF',
+  },
+  socialContent: {
+    height: 52,
+  },
+  socialLabel: {
+    fontSize: 16,
+    fontWeight: '600',
   },
   divider: {
     flexDirection: 'row',

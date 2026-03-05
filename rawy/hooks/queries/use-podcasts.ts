@@ -10,6 +10,7 @@ import {
   updatePodcast,
   deletePodcast,
 } from '../../services/podcasts.service';
+import { creatorKeys } from './use-creators';
 
 export const podcastKeys = {
   all: ['podcasts'] as const,
@@ -51,6 +52,7 @@ export function useCreatePodcast() {
     }) => createPodcast(data, coverImage),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: podcastKeys.lists() });
+      queryClient.invalidateQueries({ queryKey: creatorKeys.me() });
     },
   });
 }
@@ -82,6 +84,7 @@ export function useDeletePodcast() {
     mutationFn: (id: string) => deletePodcast(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: podcastKeys.lists() });
+      queryClient.invalidateQueries({ queryKey: creatorKeys.me() });
     },
   });
 }

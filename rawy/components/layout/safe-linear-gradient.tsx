@@ -13,16 +13,11 @@ type Props = ViewProps & {
  * SafeLinearGradient
  * - Uses `expo-linear-gradient` on platforms where it's available.
  * - Falls back to a plain `View` (using the first color) when the native
- *   gradient view isn't registered (prevents "Unable to get the view config"
- *   runtime warning in environments like Expo Go / web where native module
- *   may not be present).
+ *   gradient view isn't registered.
  */
 export default function SafeLinearGradient(props: Props) {
   const { colors, style, children, ...rest } = props;
 
-  // Check if the native view manager for ExpoLinearGradient is registered.
-  // If it's missing (e.g., running in Expo Go without native plugin), avoid
-  // requiring the native module to prevent view config warnings.
   const viewManagerName = 'ExpoLinearGradient';
   let canUseNative = false;
   try {
@@ -35,7 +30,6 @@ export default function SafeLinearGradient(props: Props) {
 
   if (canUseNative) {
     try {
-      // eslint-disable-next-line @typescript-eslint/no-var-requires
       const { LinearGradient } = require('expo-linear-gradient');
       if (LinearGradient) {
         return (
@@ -50,7 +44,6 @@ export default function SafeLinearGradient(props: Props) {
     }
   }
 
-  // Fallback: use a View with the first color as background.
   const bg = colors && colors.length ? colors[0] : 'transparent';
   return (
     <View style={[{ backgroundColor: bg }, style]} {...rest}>

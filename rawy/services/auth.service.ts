@@ -114,6 +114,12 @@ export async function loginUser(payload: LoginPayload): Promise<AuthTokens> {
   return data;
 }
 
+export async function loginWithGoogleMobile(idToken: string): Promise<AuthTokens> {
+  const { data } = await axiosClient.post<AuthTokens>('/auth/google/mobile', { idToken });
+  await persistTokens(data);
+  return data;
+}
+
 export async function refreshAccessToken(): Promise<AuthTokens> {
   const { refreshToken } = await getStoredTokens();
   if (!refreshToken) throw new Error('No refresh token stored');

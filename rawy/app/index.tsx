@@ -2,6 +2,7 @@ import { Redirect } from 'expo-router';
 import { useEffect, useState } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useAuthContext } from '@/context/auth-context';
+import { STORAGE_KEYS } from '@/utils/constants';
 import { View, ActivityIndicator } from 'react-native';
 
 export default function Index() {
@@ -11,7 +12,7 @@ export default function Index() {
     useEffect(() => {
         async function checkOnboarding() {
             try {
-                const value = await AsyncStorage.getItem('@has_seen_onboarding');
+                const value = await AsyncStorage.getItem(STORAGE_KEYS.HAS_SEEN_ONBOARDING);
                 console.debug('[Index] hasSeenOnboarding:', value);
                 setHasSeenOnboarding(value === 'true');
             } catch (error) {

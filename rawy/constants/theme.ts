@@ -85,18 +85,12 @@ export const Radius = {
 
 // ─── Typography ──────────────────────────────────────────────────────────────
 
-export const FontFamily = Platform.select({
-  ios: {
-    regular: 'System',
-    medium: 'System',
-    bold: 'System',
-  },
-  default: {
-    regular: 'sans-serif',
-    medium: 'sans-serif-medium',
-    bold: 'sans-serif',
-  },
-})!;
+export const FontFamily = {
+  regular: 'Inter_400Regular',
+  medium: 'Inter_500Medium',
+  semiBold: 'Inter_600SemiBold',
+  bold: 'Inter_700Bold',
+};
 
 export const FontSizes = {
   xs: 11,
@@ -131,8 +125,13 @@ export const Colors = {
 
 // ─── React Native Paper MD3 Themes ──────────────────────────────────────────
 
+const fontConfig = {
+  fontFamily: FontFamily.regular,
+};
+
 export const PaperLightTheme: MD3Theme = {
   ...MD3LightTheme,
+  fonts: configureFonts({ config: fontConfig }),
   colors: {
     ...MD3LightTheme.colors,
     primary: '#000000',
@@ -161,6 +160,7 @@ export const PaperLightTheme: MD3Theme = {
 
 export const PaperDarkTheme: MD3Theme = {
   ...MD3DarkTheme,
+  fonts: configureFonts({ config: fontConfig }),
   colors: {
     ...MD3DarkTheme.colors,
     primary: '#FFFFFF',

@@ -1,5 +1,0 @@
-export { default as InputField } from './InputField'
-export { default as TabSwitcher } from './TabSwitcher'
-export { default as Card } from './Card'
-export { default as ErrorBanner } from './ErrorBanner'
-export { default as SubmitButton } from './SubmitButton'

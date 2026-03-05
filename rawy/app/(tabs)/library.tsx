@@ -19,18 +19,19 @@ import {
   useTheme,
   ActivityIndicator,
 } from 'react-native-paper';
-import { useRouter } from 'expo-router';
 import {
   Heart,
   Users,
-  Play,
-  Clock,
-  Mic,
   Library as LibraryIcon,
 } from 'lucide-react-native';
 
+import {
+  EpisodeRow,
+  CreatorChip,
+  EmptyState,
+} from '@/components/ui';
 import { useFollowing } from '@/hooks/queries/use-follows';
-import { useEpisodes } from '@/hooks/queries/use-episodes';
+import { useLikedEpisodes } from '@/hooks/queries/use-likes';
 import { Palette, Spacing, Radius } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { useAuthContext } from '@/context/auth-context';
@@ -39,8 +40,6 @@ import type { FollowedCreator } from '@/services/follows.service';
 
 export default function LibraryScreen() {
   const theme = useTheme();
-  const isDark = false;
-  const router = useRouter();
   const { isAuthenticated } = useAuthContext();
 
   const [segment, setSegment] = useState('episodes');
@@ -56,7 +55,7 @@ export default function LibraryScreen() {
     data: episodesData,
     isLoading: episodesLoading,
     refetch: refetchEpisodes,
-  } = useEpisodes();
+  } = useLikedEpisodes();
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
@@ -65,7 +64,7 @@ export default function LibraryScreen() {
   }, [refetchFollowing, refetchEpisodes]);
 
   const following = followingData?.pages.flatMap((p) => p.data) ?? [];
-  const episodes = episodesData?.pages.flatMap((p) => p.data) ?? [];
+  const episodes = episodesData?.data ?? [];
 
   if (!isAuthenticated) {
     return (
@@ -76,146 +75,28 @@ export default function LibraryScreen() {
         ]}
       >
         <View style={styles.authPrompt}>
-          <LibraryIcon
-            size={48}
-            color={theme.colors.onSurfaceVariant}
-            strokeWidth={1}
+          <EmptyState
+            icon={
+              <LibraryIcon
+                size={48}
+                color={theme.colors.onSurfaceVariant}
+                strokeWidth={1}
+              />
+            }
+            title="Sign in to see your library"
+            message="Your liked episodes and followed creators will appear here."
           />
-          <Text
-            variant="titleMedium"
-            style={{
-              color: theme.colors.onSurface,
-              marginTop: Spacing.md,
-              fontWeight: '600',
-            }}
-          >
-            Sign in to see your library
-          </Text>
-          <Text
-            variant="bodyMedium"
-            style={{
-              color: theme.colors.onSurfaceVariant,
-              marginTop: Spacing.xs,
-              textAlign: 'center',
-            }}
-          >
-            Your liked episodes and followed creators will appear here.
-          </Text>
         </View>
       </SafeAreaView>
     );
   }
 
   const renderEpisodeRow = ({ item }: { item: Episode }) => (
-    <TouchableOpacity
-      activeOpacity={0.8}
-      onPress={() => router.push(`/episode/${item._id}` as any)}
-    >
-      <Surface
-        style={[
-          styles.row,
-          {
-            backgroundColor: isDark
-              ? Palette.dark.surfaceVariant
-              : Palette.light.surface,
-          },
-        ]}
-        elevation={1}
-      >
-        <View
-          style={[
-            styles.rowIcon,
-            {
-              backgroundColor: isDark
-                ? Palette.dark.elevated
-                : Palette.primary[50],
-            },
-          ]}
-        >
-          <Play
-            size={18}
-            color={isDark ? Palette.primary[300] : Palette.primary[500]}
-            fill={isDark ? Palette.primary[300] : Palette.primary[500]}
-          />
-        </View>
-        <View style={styles.rowInfo}>
-          <Text
-            variant="titleSmall"
-            numberOfLines={1}
-            style={{ color: theme.colors.onSurface, fontWeight: '600' }}
-          >
-            {item.title}
-          </Text>
-          <View style={styles.rowMeta}>
-            <Clock size={12} color={theme.colors.onSurfaceVariant} />
-            <Text
-              variant="labelSmall"
-              style={{
-                color: theme.colors.onSurfaceVariant,
-                marginLeft: 4,
-              }}
-            >
-              {item.duration
-                ? `${Math.floor(item.duration / 60)} min`
-                : 'Unknown'}
-            </Text>
-          </View>
-        </View>
-      </Surface>
-    </TouchableOpacity>
+    <EpisodeRow episode={item} />
   );
 
   const renderCreatorRow = ({ item }: { item: FollowedCreator }) => (
-    <TouchableOpacity
-      activeOpacity={0.8}
-      onPress={() => router.push(`/creator/${item._id}` as any)}
-    >
-      <Surface
-        style={[
-          styles.row,
-          {
-            backgroundColor: isDark
-              ? Palette.dark.surfaceVariant
-              : Palette.light.surface,
-          },
-        ]}
-        elevation={1}
-      >
-        <View
-          style={[
-            styles.creatorAvatar,
-            {
-              backgroundColor: isDark
-                ? Palette.dark.elevated
-                : Palette.primary[100],
-            },
-          ]}
-        >
-          <Mic
-            size={18}
-            color={isDark ? Palette.primary[300] : Palette.primary[500]}
-          />
-        </View>
-        <View style={styles.rowInfo}>
-          <Text
-            variant="titleSmall"
-            numberOfLines={1}
-            style={{ color: theme.colors.onSurface, fontWeight: '600' }}
-          >
-            {item.name}
-          </Text>
-          {item.showName && (
-            <Text
-              variant="bodySmall"
-              numberOfLines={1}
-              style={{ color: theme.colors.onSurfaceVariant }}
-            >
-              {item.showName}
-            </Text>
-          )}
-        </View>
-      </Surface>
-    </TouchableOpacity>
+    <CreatorChip creator={item} />
   );
 
   const isLoading = followingLoading || episodesLoading;
@@ -285,43 +166,28 @@ export default function LibraryScreen() {
             />
           }
           ListEmptyComponent={() => (
-            <View style={styles.emptyState}>
-              {segment === 'episodes' ? (
-                <>
+            <EmptyState
+              icon={
+                segment === 'episodes' ? (
                   <Heart
                     size={32}
                     color={theme.colors.onSurfaceVariant}
                     strokeWidth={1}
                   />
-                  <Text
-                    variant="bodyMedium"
-                    style={{
-                      color: theme.colors.onSurfaceVariant,
-                      marginTop: Spacing.sm,
-                    }}
-                  >
-                    No liked episodes yet
-                  </Text>
-                </>
-              ) : (
-                <>
+                ) : (
                   <Users
                     size={32}
                     color={theme.colors.onSurfaceVariant}
                     strokeWidth={1}
                   />
-                  <Text
-                    variant="bodyMedium"
-                    style={{
-                      color: theme.colors.onSurfaceVariant,
-                      marginTop: Spacing.sm,
-                    }}
-                  >
-                    Not following anyone yet
-                  </Text>
-                </>
-              )}
-            </View>
+                )
+              }
+              message={
+                segment === 'episodes'
+                  ? 'No liked episodes yet'
+                  : 'Not following anyone yet'
+              }
+            />
           )}
         />
       )}
@@ -357,42 +223,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.lg,
     gap: Spacing.sm,
     paddingBottom: Spacing.xxl,
-  },
-  row: {
-    flexDirection: 'row',
-    borderRadius: Radius.lg,
-    padding: Spacing.md,
-    alignItems: 'center',
-  },
-  rowIcon: {
-    width: 44,
-    height: 44,
-    borderRadius: Radius.md,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: Spacing.md,
-  },
-  rowInfo: {
-    flex: 1,
-    justifyContent: 'center',
-  },
-  rowMeta: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginTop: 4,
-  },
-  creatorAvatar: {
-    width: 44,
-    height: 44,
-    borderRadius: Radius.full,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: Spacing.md,
-  },
-  emptyState: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: Spacing.xxl * 2,
   },
   authPrompt: {
     flex: 1,

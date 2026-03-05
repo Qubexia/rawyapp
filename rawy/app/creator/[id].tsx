@@ -2,13 +2,14 @@
  * Creator profile screen — bio, podcasts, follow.
  */
 
-import React from 'react';
-import { View, FlatList, StyleSheet, TouchableOpacity } from 'react-native';
+import React, { useState, useCallback } from 'react';
+import { View, FlatList, StyleSheet, TouchableOpacity, Image, RefreshControl } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Text, Surface, Button, IconButton, useTheme, ActivityIndicator } from 'react-native-paper';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { ArrowLeft, Mic, Headphones, UserPlus, UserCheck, Users } from 'lucide-react-native';
 
+import { EmptyState } from '@/components/ui';
 import { useCreator } from '@/hooks/queries/use-creators';
 import { usePodcasts } from '@/hooks/queries/use-podcasts';
 import { useFollowStatus, useToggleFollow } from '@/hooks/queries/use-follows';
@@ -24,12 +25,19 @@ export default function CreatorDetailScreen() {
   const router = useRouter();
   const { user } = useAuthContext();
 
-  const { data: creator, isLoading } = useCreator(id);
-  const { data: podcastsData } = usePodcasts(id);
-  const { data: followStatus } = useFollowStatus(id);
+  const { data: creator, isLoading, refetch: refetchCreator } = useCreator(id);
+  const { data: podcastsData, refetch: refetchPodcasts } = usePodcasts(id);
+  const { data: followStatus, refetch: refetchFollowStatus } = useFollowStatus(id);
   const toggleFollow = useToggleFollow(id);
 
   const podcasts = podcastsData?.pages.flatMap((p) => p.data) ?? [];
+
+  const [refreshing, setRefreshing] = useState(false);
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+    await Promise.all([refetchCreator(), refetchPodcasts(), refetchFollowStatus()]);
+    setRefreshing(false);
+  }, [refetchCreator, refetchPodcasts, refetchFollowStatus]);
 
   if (isLoading) {
     return (
@@ -58,7 +66,11 @@ export default function CreatorDetailScreen() {
       {/* Profile */}
       <View style={s.profile}>
         <View style={[s.avatar, { backgroundColor: isDark ? Palette.dark.elevated : Palette.primary[100] }]}>
-          <Mic size={36} color={isDark ? Palette.primary[300] : Palette.primary[500]} />
+          {creator?.avatar ? (
+            <Image source={{ uri: creator.avatar }} style={{ width: '100%', height: '100%', borderRadius: 48, resizeMode: 'cover' }} />
+          ) : (
+            <Mic size={36} color={isDark ? Palette.primary[300] : Palette.primary[500]} />
+          )}
         </View>
         <Text variant="headlineSmall" style={{ color: theme.colors.onBackground, fontWeight: '800', marginTop: Spacing.md }}>{creator?.name}</Text>
         {creator?.showName && <Text variant="titleSmall" style={{ color: theme.colors.primary, marginTop: 4 }}>{creator.showName}</Text>}
@@ -78,7 +90,13 @@ export default function CreatorDetailScreen() {
         {creator?.userId?.toString() !== user?._id?.toString() && (
           <Button
             mode={followStatus?.isFollowing ? 'outlined' : 'contained'}
-            onPress={() => toggleFollow.mutate(followStatus?.isFollowing || false)}
+            onPress={() => {
+              if (!user) {
+                router.push('/login' as any);
+                return;
+              }
+              toggleFollow.mutate(followStatus?.isFollowing || false);
+            }}
             loading={toggleFollow.isPending}
             icon={() => followStatus?.isFollowing ? <UserCheck size={18} color={theme.colors.primary} /> : <UserPlus size={18} color="#FFF" />}
             style={s.followBtn}
@@ -104,9 +122,12 @@ export default function CreatorDetailScreen() {
       </View>
       <FlatList data={podcasts} keyExtractor={(i, index) => i?._id ? String(i._id) : String(index)} renderItem={renderPodcast} ListHeaderComponent={Header}
         contentContainerStyle={{ paddingHorizontal: Spacing.lg, paddingBottom: Spacing.xxl, gap: Spacing.sm }} showsVerticalScrollIndicator={false}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={theme.colors.primary} />}
         ListEmptyComponent={() => (
-          <View style={s.empty}><Headphones size={32} color={theme.colors.onSurfaceVariant} strokeWidth={1} />
-            <Text variant="bodyMedium" style={{ color: theme.colors.onSurfaceVariant, marginTop: 8 }}>No podcasts yet</Text></View>
+          <EmptyState
+            icon={<Headphones size={32} color={theme.colors.onSurfaceVariant} strokeWidth={1} />}
+            message="No podcasts yet"
+          />
         )} />
     </SafeAreaView>
   );

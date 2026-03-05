@@ -2,12 +2,15 @@
  * Podcast detail screen — shows podcast info, episodes list, follow button.
  */
 
-import React from 'react';
+import React, { useState, useCallback } from 'react';
 import {
   View,
   FlatList,
   StyleSheet,
   TouchableOpacity,
+  Image,
+  RefreshControl,
+  Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import {
@@ -22,14 +25,15 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import {
   ArrowLeft,
   Headphones,
-  Play,
-  Clock,
   UserPlus,
   UserCheck,
+  Edit2,
+  Trash2,
 } from 'lucide-react-native';
 
+import { EpisodeRow, EmptyState } from '@/components/ui';
 import { usePodcast } from '@/hooks/queries/use-podcasts';
-import { useEpisodes } from '@/hooks/queries/use-episodes';
+import { useEpisodes, useDeleteEpisode } from '@/hooks/queries/use-episodes';
 import { useFollowStatus, useToggleFollow } from '@/hooks/queries/use-follows';
 import { useAuthContext } from '@/context/auth-context';
 import { Palette, Spacing, Radius } from '@/constants/theme';
@@ -42,10 +46,11 @@ export default function PodcastDetailScreen() {
   const isDark = false;
   const router = useRouter();
   const { user } = useAuthContext();
+  const deleteEpisode = useDeleteEpisode();
 
-  const { data: podcast, isLoading: podcastLoading } = usePodcast(id);
-  const { data: episodesData, isLoading: episodesLoading } = useEpisodes(id);
-  const { data: followStatus } = useFollowStatus(
+  const { data: podcast, isLoading: podcastLoading, refetch: refetchPodcast } = usePodcast(id);
+  const { data: episodesData, isLoading: episodesLoading, refetch: refetchEpisodes } = useEpisodes(id);
+  const { data: followStatus, refetch: refetchFollowStatus } = useFollowStatus(
     podcast?.creator?._id || '',
   );
   const toggleFollow = useToggleFollow(podcast?.creator?._id || '');
@@ -58,6 +63,30 @@ export default function PodcastDetailScreen() {
   }, [podcast, user]);
 
   const episodes = episodesData?.pages.flatMap((p) => p.data) ?? [];
+
+  const [refreshing, setRefreshing] = useState(false);
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+    await Promise.all([refetchPodcast(), refetchEpisodes(), refetchFollowStatus()]);
+    setRefreshing(false);
+  }, [refetchPodcast, refetchEpisodes, refetchFollowStatus]);
+
+  const confirmDeleteEpisode = (episodeId: string, title: string) => {
+    import('react-native').then(({ Alert }) => {
+      Alert.alert(
+        'Delete Episode',
+        `Are you sure you want to delete "${title}"? This cannot be undone.`,
+        [
+          { text: 'Cancel', style: 'cancel' },
+          {
+            text: 'Delete',
+            style: 'destructive',
+            onPress: () => deleteEpisode.mutate(episodeId),
+          },
+        ]
+      );
+    });
+  };
 
   if (podcastLoading) {
     return (
@@ -75,62 +104,30 @@ export default function PodcastDetailScreen() {
   }
 
   const renderEpisode = ({ item }: { item: Episode }) => (
-    <TouchableOpacity
-      activeOpacity={0.8}
-      onPress={() => router.push(`/episode/${item._id}` as any)}
-    >
-      <Surface
-        style={[
-          styles.episodeRow,
-          {
-            backgroundColor: isDark
-              ? Palette.dark.surfaceVariant
-              : Palette.light.surface,
-          },
-        ]}
-        elevation={1}
-      >
-        <View
-          style={[
-            styles.playIcon,
-            {
-              backgroundColor: isDark
-                ? Palette.dark.elevated
-                : Palette.primary[50],
-            },
-          ]}
-        >
-          <Play
-            size={18}
-            color={isDark ? Palette.primary[300] : Palette.primary[500]}
-            fill={isDark ? Palette.primary[300] : Palette.primary[500]}
-          />
-        </View>
-        <View style={styles.episodeInfo}>
-          <Text
-            variant="titleSmall"
-            numberOfLines={2}
-            style={{ color: theme.colors.onSurface, fontWeight: '600' }}
-          >
-            {item.title}
-          </Text>
-          <View style={styles.episodeMeta}>
-            <Clock size={12} color={theme.colors.onSurfaceVariant} />
-            <Text
-              variant="labelSmall"
-              style={{
-                color: theme.colors.onSurfaceVariant,
-                marginLeft: 4,
-              }}
-            >
-              {item.duration
-                ? `${Math.floor(item.duration / 60)} min`
-                : '—'}
-            </Text>
-          </View>
-        </View>
-      </Surface>
-    </TouchableOpacity>
+    <View style={{ marginBottom: Spacing.sm }}>
+      <EpisodeRow
+        episode={item}
+        showPodcastName={false}
+        rightAction={
+          isOwnPodcast ? (
+            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+              <IconButton
+                icon={() => <Edit2 size={18} color={theme.colors.onSurfaceVariant} />}
+                onPress={() => router.push(`/edit-episode?id=${item._id}` as any)}
+                size={20}
+                style={{ margin: 0 }}
+              />
+              <IconButton
+                icon={() => <Trash2 size={18} color={theme.colors.error} />}
+                onPress={() => confirmDeleteEpisode(item._id, item.title)}
+                size={20}
+                style={{ margin: 0 }}
+              />
+            </View>
+          ) : undefined
+        }
+      />
+    </View>
   );
 
   const ListHeader = () => (
@@ -156,11 +153,18 @@ export default function PodcastDetailScreen() {
             },
           ]}
         >
-          <Headphones
-            size={48}
-            color={isDark ? Palette.primary[300] : Palette.primary[500]}
-            strokeWidth={1.5}
-          />
+          {podcast?.coverImageUrl ? (
+            <Image
+              source={{ uri: podcast.coverImageUrl }}
+              style={{ width: '100%', height: '100%', borderRadius: Radius.xl, resizeMode: 'cover' }}
+            />
+          ) : (
+            <Headphones
+              size={48}
+              color={isDark ? Palette.primary[300] : Palette.primary[500]}
+              strokeWidth={1.5}
+            />
+          )}
         </View>
       </View>
 
@@ -205,9 +209,13 @@ export default function PodcastDetailScreen() {
           {!isOwnPodcast && (
             <Button
               mode={followStatus?.isFollowing ? 'outlined' : 'contained'}
-              onPress={() =>
-                toggleFollow.mutate(followStatus?.isFollowing || false)
-              }
+              onPress={() => {
+                if (!user) {
+                  router.push('/login' as any);
+                  return;
+                }
+                toggleFollow.mutate(followStatus?.isFollowing || false);
+              }}
               loading={toggleFollow.isPending}
               icon={() =>
                 followStatus?.isFollowing ? (
@@ -272,22 +280,16 @@ export default function PodcastDetailScreen() {
         showsVerticalScrollIndicator={false}
         ListEmptyComponent={() =>
           !episodesLoading ? (
-            <View style={styles.emptyState}>
-              <Play
-                size={32}
-                color={theme.colors.onSurfaceVariant}
-                strokeWidth={1}
-              />
-              <Text
-                variant="bodyMedium"
-                style={{
-                  color: theme.colors.onSurfaceVariant,
-                  marginTop: Spacing.sm,
-                }}
-              >
-                No episodes yet
-              </Text>
-            </View>
+            <EmptyState
+              icon={
+                <Headphones
+                  size={32}
+                  color={theme.colors.onSurfaceVariant}
+                  strokeWidth={1}
+                />
+              }
+              message="No episodes yet"
+            />
           ) : null
         }
       />
@@ -349,32 +351,5 @@ const styles = StyleSheet.create({
   listContent: {
     paddingHorizontal: Spacing.lg,
     paddingBottom: Spacing.xxl,
-    gap: Spacing.sm,
-  },
-  episodeRow: {
-    flexDirection: 'row',
-    borderRadius: Radius.lg,
-    padding: Spacing.md,
-    alignItems: 'center',
-  },
-  playIcon: {
-    width: 44,
-    height: 44,
-    borderRadius: Radius.md,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: Spacing.md,
-  },
-  episodeInfo: {
-    flex: 1,
-  },
-  episodeMeta: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginTop: 4,
-  },
-  emptyState: {
-    alignItems: 'center',
-    paddingVertical: Spacing.xxl,
   },
 });

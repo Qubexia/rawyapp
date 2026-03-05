@@ -21,7 +21,9 @@ import { CreatorsModule } from '../creators/creators.module';
       useFactory: async (configService: ConfigService) => ({
         secret: configService.get<string>('JWT_ACCESS_SECRET'),
         signOptions: {
-          expiresIn: configService.get<number>('JWT_ACCESS_TTL'),
+          // ConfigService always returns strings from .env; Number() converts to actual number
+          // so jsonwebtoken treats it as seconds (not milliseconds like string "900" would be)
+          expiresIn: Number(configService.get('JWT_ACCESS_TTL') ?? 900),
         },
       }),
       inject: [ConfigService],

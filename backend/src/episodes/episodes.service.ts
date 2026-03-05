@@ -305,6 +305,31 @@ export class EpisodesService {
   }
 
   /**
+   * Find multiple episodes by IDs (for liked episodes list).
+   * Returns populated episodes in the same order as input IDs.
+   */
+  async findByIds(ids: Types.ObjectId[]): Promise<any[]> {
+    if (ids.length === 0) return [];
+    const rawData = await this.episodeModel
+      .find({ _id: { $in: ids } })
+      .populate('podcastId', 'title coverImageUrl')
+      .populate('creatorId', 'name avatarUrl')
+      .lean()
+      .exec();
+
+    // Rename podcastId → podcast, creatorId → creator
+    const mapped = rawData.map(({ podcastId, creatorId, ...rest }: any) => ({
+      ...rest,
+      podcast: podcastId,
+      creator: creatorId,
+    }));
+
+    // Preserve order of input IDs
+    const idMap = new Map(mapped.map((ep: any) => [ep._id.toString(), ep]));
+    return ids.map((id) => idMap.get(id.toString())).filter(Boolean);
+  }
+
+  /**
    * Find episodes by creator ID
    */
   async findByCreatorId(creatorId: string, page: number = 1, limit: number = 20): Promise<PaginatedResponseDto<Episode>> {

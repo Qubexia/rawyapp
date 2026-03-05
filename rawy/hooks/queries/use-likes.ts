@@ -7,13 +7,22 @@ import {
   getLikeStatus,
   likeEpisode,
   unlikeEpisode,
+  getLikedEpisodes,
   LikeResult,
 } from '../../services/likes.service';
 
 export const likeKeys = {
   all: ['likes'] as const,
   status: (episodeId: string) => [...likeKeys.all, 'status', episodeId] as const,
+  likedEpisodes: (page: number) => [...likeKeys.all, 'liked-episodes', page] as const,
 };
+
+export function useLikedEpisodes(page: number = 1, limit: number = 20) {
+  return useQuery({
+    queryKey: likeKeys.likedEpisodes(page),
+    queryFn: () => getLikedEpisodes(page, limit),
+  });
+}
 
 export function useLikeStatus(episodeId: string) {
   return useQuery({

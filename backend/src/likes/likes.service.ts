@@ -83,6 +83,44 @@ export class LikesService {
   }
 
   /**
+   * Get episodes liked by a user (paginated, with populated episode + podcast data).
+   */
+  async getLikedEpisodes(
+    userId: Types.ObjectId,
+    page: number = 1,
+    limit: number = 20,
+  ): Promise<{ data: any[]; total: number; page: number; limit: number; totalPages: number }> {
+    const skip = (page - 1) * limit;
+
+    const [likes, total] = await Promise.all([
+      this.likeModel
+        .find({ userId })
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(limit)
+        .lean()
+        .exec(),
+      this.likeModel.countDocuments({ userId }).exec(),
+    ]);
+
+    const episodeIds = likes.map((l) => l.episodeId);
+
+    // Fetch full episode documents with populated podcast info
+    const episodes = await this.episodesService
+      .findByIds(episodeIds);
+
+    const totalPages = Math.ceil(total / limit);
+
+    return {
+      data: episodes,
+      total,
+      page,
+      limit,
+      totalPages,
+    };
+  }
+
+  /**
    * Remove all likes for an episode (cascade cleanup).
    */
   async deleteLikesForEpisode(episodeId: Types.ObjectId): Promise<void> {

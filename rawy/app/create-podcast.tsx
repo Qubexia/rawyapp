@@ -12,21 +12,34 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { ArrowLeft, Headphones, Plus } from 'lucide-react-native';
 
 import { FormInput } from '@/components/ui/FormInput';
-import { createPodcastSchema, CreatePodcastFormData } from '@/validation/auth.schemas';
 import { useCreatePodcast } from '@/hooks/queries/use-podcasts';
+import { useAuthContext } from '@/context/auth-context';
 import { Palette, Spacing, Radius } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
+import { isCreator } from '@/utils/roles';
+import { createPodcastSchema, CreatePodcastFormData } from '@/validation/podcast.schemas';
 
 export default function CreatePodcastScreen() {
   const theme = useTheme();
   const isDark = useColorScheme() === 'dark';
   const router = useRouter();
   const createPodcast = useCreatePodcast();
+  const { user } = useAuthContext();
+
+  React.useEffect(() => {
+    if (user && !isCreator(user)) {
+      router.replace('/profile' as any);
+    }
+  }, [user, router]);
 
   const { control, handleSubmit, formState: { errors } } = useForm<CreatePodcastFormData>({
     resolver: zodResolver(createPodcastSchema) as any,
     defaultValues: { title: '', description: '' },
   });
+
+  if (!user || (!isCreator(user))) {
+    return null;
+  }
 
   const onSubmit = handleSubmit(async (data) => {
     await createPodcast.mutateAsync({ data });

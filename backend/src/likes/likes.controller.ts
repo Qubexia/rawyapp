@@ -4,6 +4,9 @@ import {
   Post,
   Delete,
   Param,
+  Query,
+  ParseIntPipe,
+  DefaultValuePipe,
   BadRequestException,
 } from '@nestjs/common';
 import { Types } from 'mongoose';
@@ -13,6 +16,7 @@ import {
   ApiResponse,
   ApiBearerAuth,
   ApiParam,
+  ApiQuery,
 } from '@nestjs/swagger';
 import { LikesService } from './likes.service';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
@@ -100,6 +104,29 @@ export class LikesController {
     const result = await this.likesService.getLikeStatus(
       userId ? new Types.ObjectId(userId) : null,
       new Types.ObjectId(episodeId),
+    );
+    return { statusCode: 200, data: result };
+  }
+
+  @Get('me/episodes')
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Get episodes liked by the current user (paginated)' })
+  @ApiQuery({ name: 'page', required: false, type: Number, example: 1 })
+  @ApiQuery({ name: 'limit', required: false, type: Number, example: 20 })
+  @ApiResponse({ status: 200, description: 'Paginated liked episodes' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  async getLikedEpisodes(
+    @CurrentUser('id') userId: string,
+    @Query('page', new DefaultValuePipe(1), ParseIntPipe) page: number,
+    @Query('limit', new DefaultValuePipe(20), ParseIntPipe) limit: number,
+  ) {
+    if (limit > 100) {
+      throw new BadRequestException('Limit cannot exceed 100');
+    }
+    const result = await this.likesService.getLikedEpisodes(
+      new Types.ObjectId(userId),
+      page,
+      limit,
     );
     return { statusCode: 200, data: result };
   }

@@ -116,7 +116,10 @@ async function executeRefresh(): Promise<string> {
   console.debug('[Axios] Executing token refresh...');
   refreshPromise = (async () => {
     const storedRefreshToken = await getItem(TOKEN_KEYS.REFRESH);
-    if (!storedRefreshToken) throw new Error('No refresh token stored');
+    if (!storedRefreshToken) {
+      console.warn('[Axios] Cannot refresh at this time: no refresh token stored locally.');
+      throw new Error('No refresh token stored');
+    }
 
     // Use raw axios (not axiosClient) to avoid going through our interceptors.
     const { data } = await axios.post(`${API_BASE_URL}/auth/refresh`, {
@@ -165,17 +168,25 @@ axiosClient.interceptors.request.use(
     if (isPublic) return config;
 
     let token = await getItem(TOKEN_KEYS.ACCESS);
-    if (!token) return config;
+    
+    if (!token) {
+      if (!isPublic) {
+        console.warn(`[Axios] Warning: Request to protected route "${config.url}" is being sent without an access token.`);
+      }
+      return config;
+    }
 
     // Proactively refresh when the token is about to expire (within 60 s).
     // This is the main mechanism that prevents 401s during normal usage.
     if (isExpiringSoon(token)) {
       try {
+        console.debug('[Axios] Proactive refresh triggered for:', config.url);
         token = await executeRefresh();
       } catch {
         // Refresh failed (e.g. refresh token is also expired). Send the request
         // without a token; the 401 handler below will deal with it and clear
         // credentials so the user is redirected to login.
+        console.debug('[Axios] Proactive refresh failed, sending request without token.');
         return config;
       }
     }
@@ -215,12 +226,14 @@ axiosClient.interceptors.response.use(
       originalRequest._retry = true;
 
       try {
-        // Refresh updates the memory cache. Do NOT manually set the Authorization
-        // header here — the request interceptor will read the fresh token from
-        // the cache on the retry, guaranteeing the correct value regardless of
-        // any Axios 1.x AxiosHeaders / mergeConfig normalization behaviour.
-        await executeRefresh();
-        return axiosClient(originalRequest);
+        // Only attempt refresh if we actually have a refresh token.
+        const hasRefreshToken = !!(await getItem(TOKEN_KEYS.REFRESH));
+        if (hasRefreshToken) {
+          await executeRefresh();
+          return axiosClient(originalRequest);
+        } else {
+          console.debug('[Axios] 401 encountered but no refresh token available. Skipping retry.');
+        }
       } catch (refreshError) {
         return Promise.reject(refreshError);
       }

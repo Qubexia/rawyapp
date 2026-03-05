@@ -2,18 +2,20 @@
  * Creator Dashboard — manage podcasts, upload episodes.
  */
 
-import React from 'react';
-import { View, ScrollView, StyleSheet, TouchableOpacity } from 'react-native';
+import React, { useState, useCallback } from 'react';
+import { View, ScrollView, StyleSheet, TouchableOpacity, Alert, RefreshControl } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Text, Surface, Button, IconButton, useTheme, ActivityIndicator } from 'react-native-paper';
 import { useRouter } from 'expo-router';
-import { ArrowLeft, Plus, Headphones, Upload, BarChart3, Mic } from 'lucide-react-native';
+import { ArrowLeft, Plus, Headphones, Upload, BarChart3, Mic, MoreVertical, Edit2, Trash2 } from 'lucide-react-native';
 
+import { EmptyState } from '@/components/ui';
 import { useMyCreatorProfile } from '@/hooks/queries/use-creators';
-import { usePodcasts } from '@/hooks/queries/use-podcasts';
+import { usePodcasts, useDeletePodcast } from '@/hooks/queries/use-podcasts';
 import { useAuthContext } from '@/context/auth-context';
 import { Palette, Spacing, Radius } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
+import { isCreator } from '@/utils/roles';
 import type { Podcast } from '@/services/podcasts.service';
 
 export default function CreatorDashboard() {
@@ -21,13 +23,48 @@ export default function CreatorDashboard() {
   const isDark = useColorScheme() === 'dark';
   const router = useRouter();
   const { user } = useAuthContext();
+  const deletePodcast = useDeletePodcast();
 
-  const { data: profile, isLoading: profileLoading } = useMyCreatorProfile();
-  const { data: podcastsData, isLoading: podcastsLoading } = usePodcasts(
+  const { data: profile, isLoading: profileLoading, refetch: refetchProfile } = useMyCreatorProfile();
+  const { data: podcastsData, isLoading: podcastsLoading, refetch: refetchPodcasts } = usePodcasts(
     profile?._id,
     { enabled: !!profile?._id },
   );
   const podcasts = podcastsData?.pages.flatMap((p) => p.data) ?? [];
+
+  const [refreshing, setRefreshing] = useState(false);
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+    await Promise.all([refetchProfile(), refetchPodcasts()]);
+    setRefreshing(false);
+  }, [refetchProfile, refetchPodcasts]);
+
+  React.useEffect(() => {
+    if (user && !isCreator(user)) {
+      router.replace('/profile' as any);
+    }
+  }, [user, router]);
+
+  if (!user || (!isCreator(user))) {
+    return null;
+  }
+
+  const confirmDelete = (id: string, title: string) => {
+    import('react-native').then(({ Alert }) => {
+      Alert.alert(
+        'Delete Podcast',
+        `Are you sure you want to delete "${title}" and all its episodes? This cannot be undone.`,
+        [
+          { text: 'Cancel', style: 'cancel' },
+          {
+            text: 'Delete',
+            style: 'destructive',
+            onPress: () => deletePodcast.mutate(id),
+          },
+        ]
+      );
+    });
+  };
 
   if (profileLoading) {
     return (
@@ -45,13 +82,22 @@ export default function CreatorDashboard() {
         <View style={{ width: 48 }} />
       </View>
 
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ padding: Spacing.lg, paddingBottom: Spacing.xxl }}>
+      <ScrollView 
+        showsVerticalScrollIndicator={false} 
+        contentContainerStyle={{ padding: Spacing.lg, paddingBottom: Spacing.xxl }}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={theme.colors.primary} />}
+      >
         {/* Stats */}
         <View style={s.statsRow}>
           <Surface style={[s.statCard, { backgroundColor: isDark ? Palette.dark.surfaceVariant : Palette.light.surface }]} elevation={1}>
             <Headphones size={24} color={theme.colors.primary} />
             <Text variant="headlineSmall" style={{ color: theme.colors.onSurface, fontWeight: '700', marginTop: 8 }}>{profile?.podcastCount || podcasts.length}</Text>
             <Text variant="labelSmall" style={{ color: theme.colors.onSurfaceVariant }}>Podcasts</Text>
+          </Surface>
+          <Surface style={[s.statCard, { backgroundColor: isDark ? Palette.dark.surfaceVariant : Palette.light.surface }]} elevation={1}>
+            <Mic size={24} color={theme.colors.primary} />
+            <Text variant="headlineSmall" style={{ color: theme.colors.onSurface, fontWeight: '700', marginTop: 8 }}>{podcasts.reduce((acc, p) => acc + (p.episodeCount || 0), 0)}</Text>
+            <Text variant="labelSmall" style={{ color: theme.colors.onSurfaceVariant }}>Episodes</Text>
           </Surface>
           <Surface style={[s.statCard, { backgroundColor: isDark ? Palette.dark.surfaceVariant : Palette.light.surface }]} elevation={1}>
             <BarChart3 size={24} color={Palette.secondary[500]} />
@@ -76,8 +122,8 @@ export default function CreatorDashboard() {
         {/* My Podcasts */}
         <Text variant="titleMedium" style={{ color: theme.colors.onBackground, fontWeight: '700', marginTop: Spacing.lg, marginBottom: Spacing.md }}>My Podcasts</Text>
         {podcasts.length > 0 ? podcasts.map((p, idx) => (
-          <TouchableOpacity key={p?._id ? String(p._id) : String(idx)} activeOpacity={0.8} onPress={() => router.push(`/podcast/${p._id}` as any)}>
-            <Surface style={[s.podcastRow, { backgroundColor: isDark ? Palette.dark.surfaceVariant : Palette.light.surface }]} elevation={1}>
+          <Surface key={p?._id ? String(p._id) : String(idx)} style={[s.podcastRow, { backgroundColor: isDark ? Palette.dark.surfaceVariant : Palette.light.surface }]} elevation={1}>
+            <TouchableOpacity style={{ flex: 1, flexDirection: 'row', alignItems: 'center' }} activeOpacity={0.8} onPress={() => router.push(`/podcast/${p._id}` as any)}>
               <View style={[s.podcastIcon, { backgroundColor: isDark ? Palette.dark.elevated : Palette.primary[50] }]}>
                 <Mic size={20} color={isDark ? Palette.primary[300] : Palette.primary[500]} />
               </View>
@@ -85,13 +131,31 @@ export default function CreatorDashboard() {
                 <Text variant="titleSmall" numberOfLines={1} style={{ color: theme.colors.onSurface, fontWeight: '600' }}>{p.title}</Text>
                 <Text variant="bodySmall" style={{ color: theme.colors.onSurfaceVariant }}>{p.episodeCount || 0} episodes</Text>
               </View>
-            </Surface>
-          </TouchableOpacity>
-        )) : (
-          <Surface style={[s.empty, { backgroundColor: isDark ? Palette.dark.surfaceVariant : Palette.light.surfaceVariant }]} elevation={0}>
-            <Headphones size={32} color={theme.colors.onSurfaceVariant} strokeWidth={1} />
-            <Text variant="bodyMedium" style={{ color: theme.colors.onSurfaceVariant, marginTop: 8 }}>No podcasts yet. Create your first!</Text>
+            </TouchableOpacity>
+            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+              <IconButton
+                icon={() => <Upload size={20} color={theme.colors.onSurfaceVariant} />}
+                onPress={() => router.push({ pathname: '/upload-episode', params: { preselect: p._id } } as any)}
+                size={20}
+              />
+              <IconButton
+                icon={() => <Edit2 size={20} color={theme.colors.onSurfaceVariant} />}
+                onPress={() => router.push(`/edit-podcast?id=${p._id}` as any)}
+                size={20}
+              />
+              <IconButton
+                icon={() => <Trash2 size={20} color={theme.colors.error} />}
+                onPress={() => confirmDelete(p._id, p.title)}
+                size={20}
+              />
+            </View>
           </Surface>
+        )) : (
+          <EmptyState
+            icon={<Headphones size={32} color={theme.colors.onSurfaceVariant} strokeWidth={1} />}
+            message="No podcasts yet. Create your first!"
+            isCard
+          />
         )}
       </ScrollView>
     </SafeAreaView>

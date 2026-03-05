@@ -10,6 +10,7 @@ import {
   updateEpisode,
   deleteEpisode,
 } from '../../services/episodes.service';
+import { creatorKeys } from './use-creators';
 
 export const episodeKeys = {
   all: ['episodes'] as const,
@@ -56,6 +57,7 @@ export function useCreateEpisode() {
     }) => createEpisode(data, audioFile),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: episodeKeys.lists() });
+      queryClient.invalidateQueries({ queryKey: creatorKeys.me() });
     },
   });
 }
@@ -85,6 +87,7 @@ export function useDeleteEpisode() {
     mutationFn: (id: string) => deleteEpisode(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: episodeKeys.lists() });
+      queryClient.invalidateQueries({ queryKey: creatorKeys.me() });
     },
   });
 }
