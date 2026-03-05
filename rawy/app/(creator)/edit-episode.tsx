@@ -16,8 +16,8 @@ import { FormInput } from '@/components/ui';
 import { useEpisode, useUpdateEpisode } from '@/hooks/queries/use-episodes';
 import { useAuthContext } from '@/context/auth-context';
 import { Palette, Spacing, Radius } from '@/constants/theme';
-import { useColorScheme } from '@/hooks/use-color-scheme';
 import { isCreator } from '@/utils/roles';
+import { resolveImageUrl } from '@/utils/url';
 
 const updateEpisodeSchema = z.object({
   title: z
@@ -38,7 +38,6 @@ type UpdateEpisodeFormData = z.infer<typeof updateEpisodeSchema>;
 export default function EditEpisodeScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const theme = useTheme();
-  const isDark = useColorScheme() === 'dark';
   const router = useRouter();
   const updateEpisode = useUpdateEpisode();
   const { user } = useAuthContext();
@@ -95,11 +94,11 @@ export default function EditEpisodeScreen() {
       </View>
       <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
         <ScrollView contentContainerStyle={{ padding: Spacing.lg }} keyboardShouldPersistTaps="handled">
-          <Surface style={[s.iconBox, { backgroundColor: isDark ? Palette.dark.surfaceVariant : Palette.primary[50], overflow: 'hidden' }]} elevation={0}>
+          <Surface style={[s.iconBox, { backgroundColor: Palette.primary[50], overflow: 'hidden' }]} elevation={0}>
             {episode?.podcast?.coverImageUrl ? (
-              <Image source={{ uri: episode.podcast.coverImageUrl }} style={{ width: '100%', height: '100%', resizeMode: 'cover' }} />
+              <Image source={{ uri: resolveImageUrl(episode.podcast.coverImageUrl) }} style={{ width: '100%', height: '100%', resizeMode: 'cover' }} />
             ) : (
-              <Play size={48} color={isDark ? Palette.primary[300] : Palette.primary[500]} strokeWidth={1.5} />
+              <Play size={48} color={Palette.primary[500]} strokeWidth={1.5} />
             )}
           </Surface>
 

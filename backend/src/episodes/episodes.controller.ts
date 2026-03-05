@@ -31,7 +31,7 @@ import { CurrentUser } from '../common/decorators/current-user.decorator';
 import { Roles } from '../common/decorators/roles.decorator';
 import { Public } from '../common/decorators/public.decorator';
 import { Role } from '../common/constants/roles.enum';
-import { getAudioMulterConfig } from '../common/utils/file-upload.util';
+import { getAudioMulterConfig, normalizePath } from '../common/utils/file-upload.util';
 import { Types } from 'mongoose';
 import { ApiCommonErrorResponses } from '../common/decorators/api-error-responses.decorator';
 
@@ -81,7 +81,7 @@ export class EpisodesController {
       throw new BadRequestException('Audio file is required');
     }
 
-    const audioFileUrl = audioFile.path;
+    const audioFileUrl = normalizePath(audioFile.path);
 
     const episode = await this.episodesService.create(
       new Types.ObjectId(userId),

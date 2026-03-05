@@ -39,7 +39,6 @@ import { usePodcasts } from '@/hooks/queries/use-podcasts';
 import { useEpisodes } from '@/hooks/queries/use-episodes';
 import { useFollowing } from '@/hooks/queries/use-follows';
 import { Palette, Spacing, Radius } from '@/constants/theme';
-import { useColorScheme } from '@/hooks/use-color-scheme';
 import type { Podcast } from '@/services/podcasts.service';
 import type { Episode } from '@/services/episodes.service';
 

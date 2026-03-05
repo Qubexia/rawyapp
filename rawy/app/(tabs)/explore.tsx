@@ -48,7 +48,6 @@ const CATEGORIES = [
 
 export default function ExploreScreen() {
   const theme = useTheme();
-  const isDark = false;
   const router = useRouter();
 
   const [searchQuery, setSearchQuery] = useState('');
@@ -97,9 +96,7 @@ export default function ExploreScreen() {
         style={[
           styles.podcastRow,
           {
-            backgroundColor: isDark
-              ? Palette.dark.surfaceVariant
-              : Palette.light.surface,
+            backgroundColor: Palette.light.surface,
           },
         ]}
         elevation={1}
@@ -108,15 +105,13 @@ export default function ExploreScreen() {
           style={[
             styles.podcastIcon,
             {
-              backgroundColor: isDark
-                ? Palette.dark.elevated
-                : Palette.primary[50],
+              backgroundColor: Palette.primary[50],
             },
           ]}
         >
           <Headphones
             size={22}
-            color={isDark ? Palette.primary[300] : Palette.primary[500]}
+            color={Palette.primary[500]}
             strokeWidth={1.5}
           />
         </View>
@@ -150,9 +145,7 @@ export default function ExploreScreen() {
         style={[
           styles.creatorChip,
           {
-            backgroundColor: isDark
-              ? Palette.dark.surfaceVariant
-              : Palette.light.surfaceVariant,
+            backgroundColor: Palette.light.surfaceVariant,
           },
         ]}
         elevation={0}
@@ -161,15 +154,13 @@ export default function ExploreScreen() {
           style={[
             styles.creatorAvatar,
             {
-              backgroundColor: isDark
-                ? Palette.dark.elevated
-                : Palette.primary[100],
+              backgroundColor: Palette.primary[100],
             },
           ]}
         >
           <Mic
             size={16}
-            color={isDark ? Palette.primary[300] : Palette.primary[500]}
+            color={Palette.primary[500]}
           />
         </View>
         <Text
@@ -229,9 +220,7 @@ export default function ExploreScreen() {
             style={[
               styles.searchbar,
               {
-                backgroundColor: isDark
-                  ? Palette.dark.surfaceVariant
-                  : Palette.light.surfaceVariant,
+                backgroundColor: Palette.light.surfaceVariant,
               },
             ]}
             inputStyle={styles.searchInput}
@@ -332,9 +321,7 @@ export default function ExploreScreen() {
                   style={[
                     styles.emptyState,
                     {
-                      backgroundColor: isDark
-                        ? Palette.dark.surfaceVariant
-                        : Palette.light.surfaceVariant,
+                      backgroundColor: Palette.light.surfaceVariant,
                     },
                   ]}
                   elevation={0}

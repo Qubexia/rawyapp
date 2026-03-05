@@ -106,6 +106,12 @@ export const getAudioMulterConfig = (maxFileSize: number) => {
 };
 
 /**
+ * Normalize a file path to always use forward slashes (safe for URLs on Windows)
+ */
+export const normalizePath = (filePath: string): string =>
+  filePath.replace(/\\/g, '/');
+
+/**
  * Get Multer configuration for image uploads
  */
 export const getImageMulterConfig = (maxFileSize: number) => {

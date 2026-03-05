@@ -13,7 +13,6 @@ import { ArrowLeft, Mic, Save, Globe, Twitter, Instagram, Youtube, Camera } from
 import { FormInput } from '@/components/ui';
 import { useMyCreatorProfile, useUpdateCreatorProfile } from '@/hooks/queries/use-creators';
 import { Palette, Spacing, Radius } from '@/constants/theme';
-import { useColorScheme } from '@/hooks/use-color-scheme';
 import { pickImage } from '@/utils/image-picker';
 import { SERVER_URL } from '@/services/axios-client';
 
@@ -27,7 +26,6 @@ type EditCreatorFormData = {
 
 export default function EditCreatorProfileScreen() {
   const theme = useTheme();
-  const isDark = useColorScheme() === 'dark';
   const router = useRouter();
   
   const { data: profile, isLoading } = useMyCreatorProfile();
@@ -105,13 +103,13 @@ export default function EditCreatorProfileScreen() {
         <ScrollView contentContainerStyle={{ padding: Spacing.lg }} keyboardShouldPersistTaps="handled">
           
           <TouchableOpacity onPress={handlePickAvatar} disabled={updateProfile.isPending} style={s.avatarContainer}>
-            <Surface style={[s.iconBox, { backgroundColor: isDark ? Palette.dark.surfaceVariant : Palette.primary[50] }]} elevation={2}>
+            <Surface style={[s.iconBox, { backgroundColor: Palette.primary[50] }]} elevation={2}>
               {updateProfile.isPending && !isDirty ? (
                 <ActivityIndicator size="small" color={theme.colors.primary} />
               ) : avatarSource ? (
                 <Image source={avatarSource} style={s.avatarImage} />
               ) : (
-                <Mic size={48} color={isDark ? Palette.primary[300] : Palette.primary[500]} strokeWidth={1.5} />
+                <Mic size={48} color={Palette.primary[500]} strokeWidth={1.5} />
               )}
               <View style={[s.cameraBadge, { backgroundColor: theme.colors.primary }]}>
                 <Camera size={14} color="#FFF" />

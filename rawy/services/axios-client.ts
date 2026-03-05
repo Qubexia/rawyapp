@@ -21,10 +21,14 @@ import { getItem, setItem, deleteItem } from './token-storage';
 
 // ─── Constants ───────────────────────────────────────────────────────────────
 
+// Use your local machine's IP address instead of localhost/10.0.2.2 for physical device testing
+// Run 'ipconfig' (Windows) or 'ifconfig' (Mac/Linux) to find yours.
+const LOCAL_IP = '192.168.1.3'; // Your current local IP
+
 export const SERVER_URL = Platform.select({
-  android: 'http://10.0.2.2:3000',
-  ios: 'http://localhost:3000',
-  default: 'http://localhost:3000',
+  android: `http://${LOCAL_IP}:3000`, // Was 'http://10.0.2.2:3000' for emulator
+  ios: `http://${LOCAL_IP}:3000`,     // Was 'http://localhost:3000' for simulator
+  default: `http://${LOCAL_IP}:3000`,
 }) as string;
 
 export const API_BASE_URL = `${SERVER_URL}/api/v1`;
@@ -166,6 +170,9 @@ const axiosClient = axios.create({
   timeout: 15_000,
   headers: { 'Content-Type': 'application/json' },
 });
+
+/** Timeout used for multipart/file-upload requests (5 minutes). */
+export const UPLOAD_TIMEOUT = 5 * 60 * 1000;
 
 // ─── Request interceptor: attach (and proactively refresh) auth token ────────
 

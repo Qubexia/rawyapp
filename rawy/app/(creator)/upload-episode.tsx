@@ -26,12 +26,10 @@ import { usePodcasts } from '@/hooks/queries/use-podcasts';
 import { useMyCreatorProfile } from '@/hooks/queries/use-creators';
 import { useAuthContext } from '@/context/auth-context';
 import { Palette, Spacing, Radius } from '@/constants/theme';
-import { useColorScheme } from '@/hooks/use-color-scheme';
 import { isCreator } from '@/utils/roles';
 
 export default function UploadEpisodeScreen() {
   const theme = useTheme();
-  const isDark = useColorScheme() === 'dark';
   const router = useRouter();
   const createEpisode = useCreateEpisode();
   const { user } = useAuthContext();
@@ -104,10 +102,10 @@ export default function UploadEpisodeScreen() {
         <Text variant="titleMedium" style={{ color: theme.colors.onBackground, fontWeight: '700' }}>Upload Episode</Text>
         <View style={{ width: 48 }} />
       </View>
-      <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+      <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : 'height'} keyboardVerticalOffset={Platform.OS === 'ios' ? 80 : 0}>
         <ScrollView contentContainerStyle={{ padding: Spacing.lg }} keyboardShouldPersistTaps="handled">
-          <Surface style={[s.iconBox, { backgroundColor: isDark ? Palette.dark.surfaceVariant : Palette.secondary[400] + '20' }]} elevation={0}>
-            <Music size={48} color={isDark ? Palette.secondary[400] : Palette.secondary[500]} strokeWidth={1.5} />
+          <Surface style={[s.iconBox, { backgroundColor: Palette.secondary[400] + '20' }]} elevation={0}>
+            <Music size={48} color={Palette.secondary[500]} strokeWidth={1.5} />
           </Surface>
 
           <FormInput name="title" control={control} label="Episode Title" placeholder="e.g. Episode 1: Introduction" autoCapitalize="words" icon={<Music size={20} color={theme.colors.onSurfaceVariant} />} />
@@ -115,7 +113,7 @@ export default function UploadEpisodeScreen() {
           <View style={{ marginBottom: Spacing.md }}>
             <Text variant="labelMedium" style={{ color: theme.colors.onSurfaceVariant, marginBottom: 8, marginLeft: 4 }}>Select Podcast</Text>
             <Surface 
-              style={[s.podcastSelector, { backgroundColor: isDark ? Palette.dark.surfaceVariant : Palette.light.surface, borderColor: errors.podcastId ? theme.colors.error : (isDark ? Palette.dark.border : Palette.light.border) }]} 
+              style={[s.podcastSelector, { backgroundColor: Palette.light.surface, borderColor: errors.podcastId ? theme.colors.error : Palette.light.border }]} 
               elevation={0}
             >
               <Menu
@@ -158,7 +156,7 @@ export default function UploadEpisodeScreen() {
 
           {/* Audio file picker */}
           <TouchableOpacity onPress={pickAudio} activeOpacity={0.8}>
-            <Surface style={[s.uploadArea, { backgroundColor: isDark ? Palette.dark.surfaceVariant : Palette.light.surfaceVariant, borderColor: isDark ? Palette.dark.border : Palette.light.border }]} elevation={0}>
+            <Surface style={[s.uploadArea, { backgroundColor: Palette.light.surfaceVariant, borderColor: Palette.light.border }]} elevation={0}>
               <Upload size={28} color={theme.colors.primary} />
               {audioFile ? (
                 <>

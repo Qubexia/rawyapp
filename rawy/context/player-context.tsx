@@ -1,53 +1,83 @@
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useEffect, useRef, ReactNode } from 'react';
 import { Alert } from 'react-native';
 import * as ExpoAudio from 'expo-audio';
 import { Episode } from '@/services/episodes.service';
+import { SERVER_URL } from '@/services/axios-client';
+
+// Resolve audio URL — stored as relative path from backend
+function resolveAudioUrl(path?: string): string {
+  if (!path) return '';
+  if (path.startsWith('http')) return path;
+  return `${SERVER_URL}/${path.replace(/\\/g, '/')}`;
+}
 
 interface PlayerContextType {
   currentEpisode: Episode | null;
   isPlaying: boolean;
-  position: number;
-  duration: number;
+  position: number;        // milliseconds
+  duration: number;        // milliseconds
   playEpisode: (episode: Episode) => Promise<void>;
   togglePlay: () => Promise<void>;
-  seek: (seconds: number) => Promise<void>;
+  seek: (millis: number) => Promise<void>;
+  skipForward: () => Promise<void>;
+  skipBackward: () => Promise<void>;
+  dismiss: () => void;
 }
 
 const PlayerContext = createContext<PlayerContextType | undefined>(undefined);
 
+const SKIP_MS = 15_000; // 15 seconds
+
 export function PlayerProvider({ children }: { children: ReactNode }) {
   const [currentEpisode, setCurrentEpisode] = useState<Episode | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
-  const [position, setPosition] = useState(0); // in millis
-  const [duration, setDuration] = useState(0); // in millis
+  const [position, setPosition] = useState(0);
+  const [duration, setDuration] = useState(0);
 
-  // Create a single audio player instance
-  // Note: We'll update the source when playEpisode is called.
-  const player = ExpoAudio.useAudioPlayer(currentEpisode?.audioFileUrl || '');
+  // Configure audio session once on mount
+  useEffect(() => {
+    ExpoAudio.setAudioModeAsync({
+      playsInSilentMode: true,
+      interruptionMode: 'doNotMix',
+    }).catch(() => {});
+  }, []);
 
+  // Resolve to full URL for the audio player
+  const audioUrl = resolveAudioUrl(currentEpisode?.audioFileUrl);
+  const player = ExpoAudio.useAudioPlayer(audioUrl);
+
+  // Poll playback state every 500ms
   useEffect(() => {
     if (!player) return;
-
     const interval = setInterval(() => {
       setPosition(player.currentTime * 1000);
       setDuration(player.duration * 1000);
       setIsPlaying(player.playing);
     }, 500);
-
     return () => clearInterval(interval);
   }, [player]);
+
+  // Auto-play whenever currentEpisode changes and player source updates
+  const prevEpisodeId = useRef<string | null>(null);
+  useEffect(() => {
+    if (!player || !currentEpisode) return;
+    if (currentEpisode._id !== prevEpisodeId.current) {
+      prevEpisodeId.current = currentEpisode._id;
+      // Small delay to let expo-audio load the new source
+      const t = setTimeout(() => {
+        try { player.play(); } catch {}
+      }, 300);
+      return () => clearTimeout(t);
+    }
+  }, [player, currentEpisode]);
 
   const playEpisode = async (episode: Episode) => {
     try {
       if (currentEpisode?._id === episode._id) {
-        player.play();
+        if (!player.playing) player.play();
         return;
       }
-
       setCurrentEpisode(episode);
-      // The player source will update via the useAudioPlayer hook dependency on the URL
-      // However, we might need to explicitly play it after the source changes.
-      // With expo-audio, setting the source might reset the player.
     } catch (error) {
       console.error('[PlayerContext] playEpisode error:', error);
       Alert.alert('Error', 'Failed to play episode');
@@ -58,15 +88,37 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
     if (!player) return;
     if (player.playing) {
       player.pause();
+      setIsPlaying(false);
     } else {
       player.play();
+      setIsPlaying(true);
     }
-    setIsPlaying(player.playing);
   };
 
-  const seek = async (seconds: number) => {
+  const seek = async (millis: number) => {
     if (!player) return;
-    player.seekTo(seconds);
+    player.seekTo(millis / 1000);
+  };
+
+  const skipForward = async () => {
+    if (!player) return;
+    const next = Math.min((player.currentTime * 1000) + SKIP_MS, player.duration * 1000);
+    player.seekTo(next / 1000);
+  };
+
+  const skipBackward = async () => {
+    if (!player) return;
+    const prev = Math.max((player.currentTime * 1000) - SKIP_MS, 0);
+    player.seekTo(prev / 1000);
+  };
+
+  const dismiss = () => {
+    try { player?.pause(); } catch {}
+    setCurrentEpisode(null);
+    setIsPlaying(false);
+    setPosition(0);
+    setDuration(0);
+    prevEpisodeId.current = null;
   };
 
   return (
@@ -79,6 +131,9 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
         playEpisode,
         togglePlay,
         seek,
+        skipForward,
+        skipBackward,
+        dismiss,
       }}
     >
       {children}

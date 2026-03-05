@@ -2,7 +2,7 @@
  * Episodes service — CRUD operations for episodes.
  */
 
-import axiosClient from './axios-client';
+import axiosClient, { UPLOAD_TIMEOUT } from './axios-client';
 import type { PaginatedResponse } from './podcasts.service';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
@@ -73,6 +73,7 @@ export async function createEpisode(
 
   const { data } = await axiosClient.post<Episode>('/episodes', formData, {
     headers: { 'Content-Type': 'multipart/form-data' },
+    timeout: UPLOAD_TIMEOUT,
   });
   return data;
 }

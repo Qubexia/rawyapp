@@ -2,7 +2,7 @@
  * Podcasts service — CRUD operations for podcasts.
  */
 
-import axiosClient from './axios-client';
+import axiosClient, { UPLOAD_TIMEOUT } from './axios-client';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -67,6 +67,7 @@ export async function createPodcast(
 
   const { data } = await axiosClient.post<Podcast>('/podcasts', formData, {
     headers: { 'Content-Type': 'multipart/form-data' },
+    timeout: UPLOAD_TIMEOUT,
   });
   return data;
 }
@@ -90,6 +91,7 @@ export async function updatePodcast(
 
   const { data } = await axiosClient.patch<Podcast>(`/podcasts/${id}`, formData, {
     headers: { 'Content-Type': 'multipart/form-data' },
+    timeout: UPLOAD_TIMEOUT,
   });
   return data;
 }

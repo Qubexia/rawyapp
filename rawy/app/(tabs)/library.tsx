@@ -33,7 +33,6 @@ import {
 import { useFollowing } from '@/hooks/queries/use-follows';
 import { useLikedEpisodes } from '@/hooks/queries/use-likes';
 import { Palette, Spacing, Radius } from '@/constants/theme';
-import { useColorScheme } from '@/hooks/use-color-scheme';
 import { useAuthContext } from '@/context/auth-context';
 import type { Episode } from '@/services/episodes.service';
 import type { FollowedCreator } from '@/services/follows.service';

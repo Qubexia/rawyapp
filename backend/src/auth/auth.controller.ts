@@ -23,7 +23,7 @@ import { TokenResponseDto } from './dto/token-response.dto';
 import { Public } from '../common/decorators/public.decorator';
 import { GoogleAuthGuard } from './guards/google-auth.guard';
 import { FacebookAuthGuard } from './guards/facebook-auth.guard';
-import { getImageMulterConfig } from '../common/utils/file-upload.util';
+import { getImageMulterConfig, normalizePath } from '../common/utils/file-upload.util';
 
 @ApiTags('auth')
 @ApiCommonErrorResponses()
@@ -66,7 +66,7 @@ export class AuthController {
     @Body() registerCreatorDto: RegisterCreatorDto,
     @UploadedFile() avatar?: Express.Multer.File,
   ): Promise<TokenResponseDto> {
-    const avatarPath = avatar ? avatar.path : undefined;
+    const avatarPath = avatar ? normalizePath(avatar.path) : undefined;
     return this.authService.registerCreator(registerCreatorDto, avatarPath);
   }
 

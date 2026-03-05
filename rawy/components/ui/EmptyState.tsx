@@ -2,7 +2,6 @@ import React from 'react';
 import { View, StyleSheet, ViewStyle } from 'react-native';
 import { Text, Surface, useTheme } from 'react-native-paper';
 import { Palette, Spacing, Radius } from '@/constants/theme';
-import { useColorScheme } from '@/hooks/use-color-scheme';
 
 interface EmptyStateProps {
   icon: React.ReactNode;
@@ -22,8 +21,6 @@ export function EmptyState({
   isCard = false,
 }: EmptyStateProps) {
   const theme = useTheme();
-  const colorScheme = useColorScheme();
-  const isDark = colorScheme === 'dark';
 
   const content = (
     <>
@@ -61,9 +58,7 @@ export function EmptyState({
         style={[
           styles.card,
           {
-            backgroundColor: isDark
-              ? Palette.dark.surfaceVariant
-              : Palette.light.surfaceVariant,
+            backgroundColor: Palette.light.surfaceVariant,
           },
           style,
         ]}

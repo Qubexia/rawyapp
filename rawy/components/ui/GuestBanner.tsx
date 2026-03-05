@@ -4,11 +4,9 @@ import { Text, Surface, Button, useTheme } from 'react-native-paper';
 import { LogIn, UserPlus } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
 import { Palette, Spacing, Radius } from '@/constants/theme';
-import { useColorScheme } from '@/hooks/use-color-scheme';
 
 export const GuestBanner: React.FC = () => {
   const theme = useTheme();
-  const isDark = useColorScheme() === 'dark';
   const router = useRouter();
 
   return (
@@ -16,9 +14,7 @@ export const GuestBanner: React.FC = () => {
       style={[
         styles.container,
         {
-          backgroundColor: isDark
-            ? Palette.dark.surfaceVariant
-            : Palette.primary[50],
+          backgroundColor: Palette.primary[50],
         },
       ]}
       elevation={1}

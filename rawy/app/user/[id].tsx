@@ -10,12 +10,10 @@ import { useToggleFollow } from '@/hooks/queries/use-follows';
 import { useAuthContext } from '@/context/auth-context';
 import { SERVER_URL } from '@/services/axios-client';
 import { Palette, Spacing, Radius } from '@/constants/theme';
-import { useColorScheme } from '@/hooks/use-color-scheme';
 
 export default function UserProfileScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const theme = useTheme();
-  const isDark = useColorScheme() === 'dark';
   const router = useRouter();
   const { user: currentUser } = useAuthContext();
 
@@ -110,7 +108,7 @@ export default function UserProfileScreen() {
         {/* Placeholder for future sections like 'Recent Activity', 'Listen History' etc. */}
         <View style={s.section}>
           <Text variant="titleMedium" style={s.sectionTitle}>About</Text>
-          <Surface style={[s.infoCard, { backgroundColor: isDark ? Palette.dark.elevated : '#FFF' }]} elevation={1}>
+          <Surface style={[s.infoCard, { backgroundColor: '#FFF' }]} elevation={1}>
             <Text variant="bodyMedium" style={{ color: theme.colors.onSurfaceVariant }}>
               This user is a {profile.role.toLowerCase()} on Rawy. Join them to explore amazing stories and podcasts.
             </Text>

@@ -3,7 +3,7 @@
  */
 
 import React from "react";
-import { View, ScrollView, StyleSheet, TouchableOpacity } from "react-native";
+import { View, ScrollView, StyleSheet, TouchableOpacity, Image } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import {
   Text,
@@ -29,12 +29,13 @@ import {
 import { useAuthContext } from "@/context/auth-context";
 import { Palette, Spacing, Radius } from "@/constants/theme";
 import { isCreator, isAdmin } from "@/utils/roles";
+import { resolveImageUrl } from "@/utils/url";
 
 export default function ProfileScreen() {
   const theme = useTheme();
-  const isDark = false;
   const router = useRouter();
   const { user, isAuthenticated, logout } = useAuthContext();
+  const avatarUri = resolveImageUrl(user?.avatarUrl);
 
   if (!isAuthenticated) {
     return (
@@ -143,9 +144,7 @@ export default function ProfileScreen() {
           style={[
             styles.userCard,
             {
-              backgroundColor: isDark
-                ? Palette.dark.surfaceVariant
-                : Palette.light.surface,
+              backgroundColor: Palette.light.surface,
             },
           ]}
           elevation={1}
@@ -154,16 +153,22 @@ export default function ProfileScreen() {
             style={[
               styles.avatar,
               {
-                backgroundColor: isDark
-                  ? Palette.dark.elevated
-                  : Palette.primary[100],
+                backgroundColor: Palette.primary[100],
               },
+              { overflow: "hidden" },
             ]}
           >
-            <User
-              size={32}
-              color={isDark ? Palette.primary[300] : Palette.primary[500]}
-            />
+            {avatarUri ? (
+              <Image
+                source={{ uri: avatarUri }}
+                style={{ width: "100%", height: "100%", resizeMode: "cover" }}
+              />
+            ) : (
+              <User
+                size={32}
+                color={Palette.primary[500]}
+              />
+            )}
           </View>
           <View style={styles.userInfo}>
             <View
@@ -222,9 +227,7 @@ export default function ProfileScreen() {
           style={[
             styles.menuCard,
             {
-              backgroundColor: isDark
-                ? Palette.dark.surfaceVariant
-                : Palette.light.surface,
+              backgroundColor: Palette.light.surface,
             },
           ]}
           elevation={1}
@@ -240,15 +243,13 @@ export default function ProfileScreen() {
                   style={[
                     styles.menuIconBox,
                     {
-                      backgroundColor: isDark
-                        ? Palette.dark.elevated
-                        : Palette.primary[50],
+                      backgroundColor: Palette.primary[50],
                     },
                   ]}
                 >
                   <item.icon
                     size={20}
-                    color={isDark ? Palette.primary[300] : Palette.primary[500]}
+                    color={Palette.primary[500]}
                   />
                 </View>
                 <View style={styles.menuLabel}>

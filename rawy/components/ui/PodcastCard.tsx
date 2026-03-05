@@ -1,12 +1,13 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { View, StyleSheet, TouchableOpacity, StyleProp, ViewStyle, Image } from 'react-native';
 import { Text, Surface, useTheme } from 'react-native-paper';
 import { Headphones } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
 
 import { Palette, Spacing, Radius } from '@/constants/theme';
-import { useColorScheme } from '@/hooks/use-color-scheme';
 import type { Podcast } from '@/services/podcasts.service';
+
+import { resolveImageUrl } from '@/utils/url';
 
 interface PodcastCardProps {
   podcast: Podcast;
@@ -16,9 +17,10 @@ interface PodcastCardProps {
 
 export function PodcastCard({ podcast, style, width = 160 }: PodcastCardProps) {
   const theme = useTheme();
-  const colorScheme = useColorScheme();
-  const isDark = colorScheme === 'dark';
   const router = useRouter();
+
+  const coverUri = resolveImageUrl(podcast.coverImageUrl);
+  const [imgError, setImgError] = useState(false);
 
   return (
     <TouchableOpacity
@@ -30,9 +32,7 @@ export function PodcastCard({ podcast, style, width = 160 }: PodcastCardProps) {
         style={[
           styles.inner,
           {
-            backgroundColor: isDark
-              ? Palette.dark.surfaceVariant
-              : Palette.light.surfaceVariant,
+            backgroundColor: Palette.light.surfaceVariant,
           },
         ]}
         elevation={1}
@@ -41,18 +41,19 @@ export function PodcastCard({ podcast, style, width = 160 }: PodcastCardProps) {
           style={[
             styles.cover,
             { height: width - 32 },
-            { backgroundColor: isDark ? Palette.dark.elevated : Palette.primary[100] },
+            { backgroundColor: Palette.primary[100] },
           ]}
         >
-          {podcast.coverImageUrl ? (
+          {coverUri && !imgError ? (
             <Image
-              source={{ uri: podcast.coverImageUrl }}
+              source={{ uri: coverUri }}
               style={{ width: '100%', height: '100%', resizeMode: 'cover' }}
+              onError={() => setImgError(true)}
             />
           ) : (
             <Headphones
               size={32}
-              color={isDark ? Palette.primary[300] : Palette.primary[500]}
+              color={Palette.primary[500]}
               strokeWidth={1.5}
             />
           )}

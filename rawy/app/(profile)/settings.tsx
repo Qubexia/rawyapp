@@ -7,14 +7,12 @@ import { View, ScrollView, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Text, Surface, IconButton, useTheme, Divider, Switch } from 'react-native-paper';
 import { useRouter } from 'expo-router';
-import { ArrowLeft, Moon, Bell, Shield, CircleHelp } from 'lucide-react-native';
+import { ArrowLeft, Bell, Shield, CircleHelp } from 'lucide-react-native';
 
 import { Palette, Spacing, Radius } from '@/constants/theme';
-import { useColorScheme } from '@/hooks/use-color-scheme';
 
 export default function SettingsScreen() {
   const theme = useTheme();
-  const isDark = useColorScheme() === 'dark';
   const router = useRouter();
 
   return (
@@ -26,15 +24,7 @@ export default function SettingsScreen() {
       </View>
       <ScrollView contentContainerStyle={{ padding: Spacing.lg }}>
         <Text variant="titleMedium" style={{ color: theme.colors.primary, fontWeight: '700', marginBottom: Spacing.md }}>Preferences</Text>
-        <Surface style={[s.card, { backgroundColor: isDark ? Palette.dark.surfaceVariant : Palette.light.surface }]} elevation={1}>
-          <View style={s.row}>
-            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-              <Moon size={20} color={theme.colors.onSurface} strokeWidth={1.5} />
-              <Text variant="bodyLarge" style={{ color: theme.colors.onSurface, marginLeft: Spacing.md }}>Dark Mode</Text>
-            </View>
-            <Switch value={isDark} onValueChange={() => {}} color={theme.colors.primary} />
-          </View>
-          <Divider style={{ marginHorizontal: Spacing.md }} />
+        <Surface style={[s.card, { backgroundColor: Palette.light.surface }]} elevation={1}>
           <View style={s.row}>
             <View style={{ flexDirection: 'row', alignItems: 'center' }}>
               <Bell size={20} color={theme.colors.onSurface} strokeWidth={1.5} />
@@ -45,7 +35,7 @@ export default function SettingsScreen() {
         </Surface>
 
         <Text variant="titleMedium" style={{ color: theme.colors.primary, fontWeight: '700', marginTop: Spacing.xl, marginBottom: Spacing.md }}>About</Text>
-        <Surface style={[s.card, { backgroundColor: isDark ? Palette.dark.surfaceVariant : Palette.light.surface }]} elevation={1}>
+        <Surface style={[s.card, { backgroundColor: Palette.light.surface }]} elevation={1}>
           <View style={s.row}>
             <View style={{ flexDirection: 'row', alignItems: 'center' }}>
               <Shield size={20} color={theme.colors.onSurface} strokeWidth={1.5} />

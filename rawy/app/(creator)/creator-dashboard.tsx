@@ -14,13 +14,11 @@ import { useMyCreatorProfile } from '@/hooks/queries/use-creators';
 import { usePodcasts, useDeletePodcast } from '@/hooks/queries/use-podcasts';
 import { useAuthContext } from '@/context/auth-context';
 import { Palette, Spacing, Radius } from '@/constants/theme';
-import { useColorScheme } from '@/hooks/use-color-scheme';
 import { isCreator } from '@/utils/roles';
 import type { Podcast } from '@/services/podcasts.service';
 
 export default function CreatorDashboard() {
   const theme = useTheme();
-  const isDark = useColorScheme() === 'dark';
   const router = useRouter();
   const { user } = useAuthContext();
   const deletePodcast = useDeletePodcast();
@@ -89,17 +87,17 @@ export default function CreatorDashboard() {
       >
         {/* Stats */}
         <View style={s.statsRow}>
-          <Surface style={[s.statCard, { backgroundColor: isDark ? Palette.dark.surfaceVariant : Palette.light.surface }]} elevation={1}>
+          <Surface style={[s.statCard, { backgroundColor: Palette.light.surface }]} elevation={1}>
             <Headphones size={24} color={theme.colors.primary} />
             <Text variant="headlineSmall" style={{ color: theme.colors.onSurface, fontWeight: '700', marginTop: 8 }}>{profile?.podcastCount || podcasts.length}</Text>
             <Text variant="labelSmall" style={{ color: theme.colors.onSurfaceVariant }}>Podcasts</Text>
           </Surface>
-          <Surface style={[s.statCard, { backgroundColor: isDark ? Palette.dark.surfaceVariant : Palette.light.surface }]} elevation={1}>
+          <Surface style={[s.statCard, { backgroundColor: Palette.light.surface }]} elevation={1}>
             <Mic size={24} color={theme.colors.primary} />
             <Text variant="headlineSmall" style={{ color: theme.colors.onSurface, fontWeight: '700', marginTop: 8 }}>{podcasts.reduce((acc, p) => acc + (p.episodeCount || 0), 0)}</Text>
             <Text variant="labelSmall" style={{ color: theme.colors.onSurfaceVariant }}>Episodes</Text>
           </Surface>
-          <Surface style={[s.statCard, { backgroundColor: isDark ? Palette.dark.surfaceVariant : Palette.light.surface }]} elevation={1}>
+          <Surface style={[s.statCard, { backgroundColor: Palette.light.surface }]} elevation={1}>
             <BarChart3 size={24} color={Palette.secondary[500]} />
             <Text variant="headlineSmall" style={{ color: theme.colors.onSurface, fontWeight: '700', marginTop: 8 }}>{profile?.followerCount || 0}</Text>
             <Text variant="labelSmall" style={{ color: theme.colors.onSurfaceVariant }}>Followers</Text>
@@ -122,10 +120,10 @@ export default function CreatorDashboard() {
         {/* My Podcasts */}
         <Text variant="titleMedium" style={{ color: theme.colors.onBackground, fontWeight: '700', marginTop: Spacing.lg, marginBottom: Spacing.md }}>My Podcasts</Text>
         {podcasts.length > 0 ? podcasts.map((p, idx) => (
-          <Surface key={p?._id ? String(p._id) : String(idx)} style={[s.podcastRow, { backgroundColor: isDark ? Palette.dark.surfaceVariant : Palette.light.surface }]} elevation={1}>
+          <Surface key={p?._id ? String(p._id) : String(idx)} style={[s.podcastRow, { backgroundColor: Palette.light.surface }]} elevation={1}>
             <TouchableOpacity style={{ flex: 1, flexDirection: 'row', alignItems: 'center' }} activeOpacity={0.8} onPress={() => router.push(`/podcast/${p._id}` as any)}>
-              <View style={[s.podcastIcon, { backgroundColor: isDark ? Palette.dark.elevated : Palette.primary[50] }]}>
-                <Mic size={20} color={isDark ? Palette.primary[300] : Palette.primary[500]} />
+              <View style={[s.podcastIcon, { backgroundColor: Palette.primary[50] }]}>
+                <Mic size={20} color={Palette.primary[500]} />
               </View>
               <View style={{ flex: 1 }}>
                 <Text variant="titleSmall" numberOfLines={1} style={{ color: theme.colors.onSurface, fontWeight: '600' }}>{p.title}</Text>

@@ -15,14 +15,12 @@ import { FormInput } from '@/components/ui/FormInput';
 import { useCreatePodcast } from '@/hooks/queries/use-podcasts';
 import { useAuthContext } from '@/context/auth-context';
 import { Palette, Spacing, Radius } from '@/constants/theme';
-import { useColorScheme } from '@/hooks/use-color-scheme';
 import { isCreator } from '@/utils/roles';
 import { createPodcastSchema, CreatePodcastFormData } from '@/validation/podcast.schemas';
 import { pickImage, SelectedImage } from '@/utils/image-picker';
 
 export default function CreatePodcastScreen() {
   const theme = useTheme();
-  const isDark = useColorScheme() === 'dark';
   const router = useRouter();
   const createPodcast = useCreatePodcast();
   const { user } = useAuthContext();
@@ -73,11 +71,11 @@ export default function CreatePodcastScreen() {
         <ScrollView contentContainerStyle={{ padding: Spacing.lg }} keyboardShouldPersistTaps="handled">
           
           <TouchableOpacity onPress={handlePickImage} style={s.coverPicker}>
-            <Surface style={[s.iconBox, { backgroundColor: isDark ? Palette.dark.surfaceVariant : Palette.primary[50] }]} elevation={2}>
+            <Surface style={[s.iconBox, { backgroundColor: Palette.primary[50] }]} elevation={2}>
               {coverImage ? (
                 <Image source={{ uri: coverImage.uri }} style={s.coverImage} />
               ) : (
-                <Headphones size={48} color={isDark ? Palette.primary[300] : Palette.primary[500]} strokeWidth={1.5} />
+                <Headphones size={48} color={Palette.primary[500]} strokeWidth={1.5} />
               )}
               <View style={[s.cameraBadge, { backgroundColor: theme.colors.primary }]}>
                 <Camera size={14} color="#FFF" />

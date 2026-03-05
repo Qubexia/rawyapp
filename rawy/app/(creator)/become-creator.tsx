@@ -17,7 +17,6 @@ import { FormInput } from '@/components/ui/FormInput';
 import { useBecomeCreator } from '@/hooks/queries/use-creators';
 import { useAuthContext } from '@/context/auth-context';
 import { Palette, Spacing, Radius } from '@/constants/theme';
-import { useColorScheme } from '@/hooks/use-color-scheme';
 
 const becomeCreatorSchema = z.object({
   showName: z
@@ -32,7 +31,6 @@ type FormData = z.infer<typeof becomeCreatorSchema>;
 
 export default function BecomeCreatorScreen() {
   const theme = useTheme();
-  const isDark = useColorScheme() === 'dark';
   const router = useRouter();
   
   const { updateUserRole } = useAuthContext();
@@ -81,13 +79,13 @@ export default function BecomeCreatorScreen() {
           <Surface 
             style={[
               styles.iconBox, 
-              { backgroundColor: isDark ? Palette.dark.surfaceVariant : Palette.primary[50] }
+              { backgroundColor: Palette.primary[50] }
             ]} 
             elevation={0}
           >
             <Mic 
               size={48} 
-              color={isDark ? Palette.primary[300] : Palette.primary[500]} 
+              color={Palette.primary[500]} 
               strokeWidth={1.5} 
             />
           </Surface>

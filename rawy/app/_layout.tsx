@@ -130,6 +130,15 @@ export default function RootLayout() {
                         name="(profile)/settings"
                         options={{ headerShown: false, animation: 'slide_from_right' }}
                       />
+                      {/* Full-screen player modal */}
+                      <Stack.Screen
+                        name="player"
+                        options={{
+                          headerShown: false,
+                          presentation: 'modal',
+                          animation: 'slide_from_bottom',
+                        }}
+                      />
                     </Stack>
                   </ThemeProvider>
                 </PlayerProvider>

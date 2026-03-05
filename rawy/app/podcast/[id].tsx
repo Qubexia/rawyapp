@@ -33,17 +33,17 @@ import {
 
 import { EpisodeRow, EmptyState } from '@/components/ui';
 import { usePodcast } from '@/hooks/queries/use-podcasts';
+import { resolveImageUrl } from '@/utils/url';
 import { useEpisodes, useDeleteEpisode } from '@/hooks/queries/use-episodes';
 import { useFollowStatus, useToggleFollow } from '@/hooks/queries/use-follows';
 import { useAuthContext } from '@/context/auth-context';
 import { Palette, Spacing, Radius } from '@/constants/theme';
-import { useColorScheme } from '@/hooks/use-color-scheme';
+
 import type { Episode } from '@/services/episodes.service';
 
 export default function PodcastDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const theme = useTheme();
-  const isDark = false;
   const router = useRouter();
   const { user } = useAuthContext();
   const deleteEpisode = useDeleteEpisode();
@@ -137,9 +137,7 @@ export default function PodcastDetailScreen() {
         style={[
           styles.hero,
           {
-            backgroundColor: isDark
-              ? Palette.dark.surfaceVariant
-              : Palette.primary[50],
+            backgroundColor: Palette.primary[50],
           },
         ]}
       >
@@ -147,21 +145,19 @@ export default function PodcastDetailScreen() {
           style={[
             styles.coverImage,
             {
-              backgroundColor: isDark
-                ? Palette.dark.elevated
-                : Palette.primary[100],
+              backgroundColor: Palette.primary[100],
             },
           ]}
         >
           {podcast?.coverImageUrl ? (
             <Image
-              source={{ uri: podcast.coverImageUrl }}
+              source={{ uri: resolveImageUrl(podcast.coverImageUrl) }}
               style={{ width: '100%', height: '100%', borderRadius: Radius.xl, resizeMode: 'cover' }}
             />
           ) : (
             <Headphones
               size={48}
-              color={isDark ? Palette.primary[300] : Palette.primary[500]}
+              color={Palette.primary[500]}
               strokeWidth={1.5}
             />
           )}

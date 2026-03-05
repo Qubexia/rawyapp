@@ -31,7 +31,7 @@ import { CurrentUser } from '../common/decorators/current-user.decorator';
 import { Roles } from '../common/decorators/roles.decorator';
 import { Public } from '../common/decorators/public.decorator';
 import { Role } from '../common/constants/roles.enum';
-import { getImageMulterConfig } from '../common/utils/file-upload.util';
+import { getImageMulterConfig, normalizePath } from '../common/utils/file-upload.util';
 import { UsersService } from '../users/users.service';
 import { PaginationQueryDto } from '../common/dto/pagination-query.dto';
 import { ApiCommonErrorResponses } from '../common/decorators/api-error-responses.decorator';
@@ -175,7 +175,7 @@ export class CreatorsController {
     let avatarUrl: string | undefined;
 
     if (avatar) {
-      avatarUrl = avatar.path;
+      avatarUrl = normalizePath(avatar.path);
     }
 
     const profile = await this.creatorsService.updateProfile(

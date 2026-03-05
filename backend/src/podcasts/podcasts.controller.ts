@@ -32,7 +32,7 @@ import { CurrentUser } from '../common/decorators/current-user.decorator';
 import { Roles } from '../common/decorators/roles.decorator';
 import { Public } from '../common/decorators/public.decorator';
 import { Role } from '../common/constants/roles.enum';
-import { getImageMulterConfig } from '../common/utils/file-upload.util';
+import { getImageMulterConfig, normalizePath } from '../common/utils/file-upload.util';
 import { PaginationQueryDto } from '../common/dto/pagination-query.dto';
 import { ApiCommonErrorResponses } from '../common/decorators/api-error-responses.decorator';
 
@@ -79,7 +79,7 @@ export class PodcastsController {
     let coverImageUrl: string | undefined;
 
     if (coverImage) {
-      coverImageUrl = coverImage.path;
+      coverImageUrl = normalizePath(coverImage.path);
     }
 
     const podcast = await this.podcastsService.create(
@@ -168,7 +168,7 @@ export class PodcastsController {
     let coverImageUrl: string | undefined;
 
     if (coverImage) {
-      coverImageUrl = coverImage.path;
+      coverImageUrl = normalizePath(coverImage.path);
     }
 
     const podcast = await this.podcastsService.update(

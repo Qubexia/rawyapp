@@ -5,7 +5,8 @@ import { Mic } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
 
 import { Palette, Spacing, Radius } from '@/constants/theme';
-import { useColorScheme } from '@/hooks/use-color-scheme';
+
+import { resolveImageUrl } from '@/utils/url';
 
 interface CreatorChipProps {
   creator: {
@@ -19,9 +20,9 @@ interface CreatorChipProps {
 
 export function CreatorChip({ creator, style }: CreatorChipProps) {
   const theme = useTheme();
-  const colorScheme = useColorScheme();
-  const isDark = colorScheme === 'dark';
   const router = useRouter();
+
+  const avatarUri = resolveImageUrl(creator.avatar);
 
   return (
     <TouchableOpacity
@@ -33,9 +34,7 @@ export function CreatorChip({ creator, style }: CreatorChipProps) {
         style={[
           styles.card,
           {
-            backgroundColor: isDark
-              ? Palette.dark.surfaceVariant
-              : Palette.light.surface,
+            backgroundColor: Palette.light.surface,
           },
         ]}
         elevation={1}
@@ -43,22 +42,18 @@ export function CreatorChip({ creator, style }: CreatorChipProps) {
         <View
           style={[
             styles.avatar,
-            {
-              backgroundColor: isDark
-                ? Palette.dark.elevated
-                : Palette.primary[100],
-            },
+            { backgroundColor: Palette.primary[100] },
           ]}
         >
-          {creator.avatar ? (
+          {avatarUri ? (
             <Image
-              source={{ uri: creator.avatar }}
+              source={{ uri: avatarUri }}
               style={{ width: '100%', height: '100%', resizeMode: 'cover' }}
             />
           ) : (
             <Mic
               size={18}
-              color={isDark ? Palette.primary[300] : Palette.primary[500]}
+              color={Palette.primary[500]}
             />
           )}
         </View>

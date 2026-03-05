@@ -2,7 +2,6 @@ import React, { useEffect, useRef } from 'react';
 import { View, StyleSheet, Animated, StyleProp, ViewStyle } from 'react-native';
 import { useTheme } from 'react-native-paper';
 import { Radius } from '@/constants/theme';
-import { useColorScheme } from '@/hooks/use-color-scheme';
 
 interface SkeletonProps {
   width?: number | string;
@@ -13,9 +12,6 @@ interface SkeletonProps {
 
 export function SkeletonLoader({ width = '100%', height = 20, borderRadius = Radius.md, style }: SkeletonProps) {
   const theme = useTheme();
-  const colorScheme = useColorScheme();
-  const isDark = colorScheme === 'dark';
-  
   const opacity = useRef(new Animated.Value(0.3)).current;
 
   useEffect(() => {
@@ -35,7 +31,7 @@ export function SkeletonLoader({ width = '100%', height = 20, borderRadius = Rad
     ).start();
   }, [opacity]);
 
-  const backgroundColor = isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.08)';
+  const backgroundColor = 'rgba(0,0,0,0.08)';
 
   return (
     <Animated.View

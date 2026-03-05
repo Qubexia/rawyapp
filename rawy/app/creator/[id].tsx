@@ -15,13 +15,11 @@ import { usePodcasts } from '@/hooks/queries/use-podcasts';
 import { useFollowStatus, useToggleFollow } from '@/hooks/queries/use-follows';
 import { useAuthContext } from '@/context/auth-context';
 import { Palette, Spacing, Radius } from '@/constants/theme';
-import { useColorScheme } from '@/hooks/use-color-scheme';
 import type { Podcast } from '@/services/podcasts.service';
 
 export default function CreatorDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const theme = useTheme();
-  const isDark = useColorScheme() === 'dark';
   const router = useRouter();
   const { user } = useAuthContext();
 
@@ -49,9 +47,9 @@ export default function CreatorDetailScreen() {
 
   const renderPodcast = ({ item }: { item: Podcast }) => (
     <TouchableOpacity activeOpacity={0.8} onPress={() => router.push(`/podcast/${item._id}` as any)}>
-      <Surface style={[s.podcastRow, { backgroundColor: isDark ? Palette.dark.surfaceVariant : Palette.light.surface }]} elevation={1}>
-        <View style={[s.podcastIcon, { backgroundColor: isDark ? Palette.dark.elevated : Palette.primary[50] }]}>
-          <Headphones size={22} color={isDark ? Palette.primary[300] : Palette.primary[500]} strokeWidth={1.5} />
+      <Surface style={[s.podcastRow, { backgroundColor: Palette.light.surface }]} elevation={1}>
+        <View style={[s.podcastIcon, { backgroundColor: Palette.primary[50] }]}>
+          <Headphones size={22} color={Palette.primary[500]} strokeWidth={1.5} />
         </View>
         <View style={{ flex: 1 }}>
           <Text variant="titleSmall" numberOfLines={1} style={{ color: theme.colors.onSurface, fontWeight: '600' }}>{item.title}</Text>
@@ -65,11 +63,11 @@ export default function CreatorDetailScreen() {
     <>
       {/* Profile */}
       <View style={s.profile}>
-        <View style={[s.avatar, { backgroundColor: isDark ? Palette.dark.elevated : Palette.primary[100] }]}>
+        <View style={[s.avatar, { backgroundColor: Palette.primary[100] }]}>
           {creator?.avatar ? (
             <Image source={{ uri: creator.avatar }} style={{ width: '100%', height: '100%', borderRadius: 48, resizeMode: 'cover' }} />
           ) : (
-            <Mic size={36} color={isDark ? Palette.primary[300] : Palette.primary[500]} />
+            <Mic size={36} color={Palette.primary[500]} />
           )}
         </View>
         <Text variant="headlineSmall" style={{ color: theme.colors.onBackground, fontWeight: '800', marginTop: Spacing.md }}>{creator?.name}</Text>

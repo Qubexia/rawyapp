@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { Module, forwardRef } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
 import { Follow, FollowSchema } from './schemas/follow.schema';
 import { FollowsController } from './follows.controller';
@@ -9,8 +9,8 @@ import { CreatorsModule } from '../creators/creators.module';
 @Module({
   imports: [
     MongooseModule.forFeature([{ name: Follow.name, schema: FollowSchema }]),
-    UsersModule,
-    CreatorsModule,
+    forwardRef(() => UsersModule),
+    forwardRef(() => CreatorsModule),
   ],
   controllers: [FollowsController],
   providers: [FollowsService],

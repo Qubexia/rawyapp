@@ -3,7 +3,7 @@
  */
 
 import { Tabs, useRouter } from "expo-router";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Platform,
   View,
@@ -26,6 +26,7 @@ import Animated, {
   useSharedValue,
   useAnimatedStyle,
   withTiming,
+  withSpring,
   interpolate,
 } from "react-native-reanimated";
 
@@ -43,7 +44,6 @@ const MINI_PLAYER_HEIGHT = 64;
 const FAB_SIZE = 56;
 
 export default function TabLayout() {
-  const isDark = false;
   const theme = useTheme();
   const router = useRouter();
   const { user } = useAuthContext();
@@ -53,6 +53,15 @@ export default function TabLayout() {
   const creatorUser = isCreator(user);
 
   const progress = useSharedValue(0);
+
+  // MiniPlayer slide-up animation
+  const miniY = useSharedValue(100);
+  useEffect(() => {
+    miniY.value = withSpring(
+      currentEpisode ? 0 : 100,
+      { damping: 18, stiffness: 200, overshootClamping: false }
+    );
+  }, [currentEpisode, miniY]);
 
   const toggleFab = () => {
     const next = !fabOpen;
@@ -102,7 +111,12 @@ export default function TabLayout() {
     ],
   }));
 
-  const bottomOffset = currentEpisode ? MINI_PLAYER_HEIGHT + TAB_BAR_HEIGHT : TAB_BAR_HEIGHT;
+  const bottomOffset = currentEpisode ? MINI_PLAYER_HEIGHT + 16 + TAB_BAR_HEIGHT : TAB_BAR_HEIGHT;
+
+  const miniPlayerStyle = useAnimatedStyle(() => ({
+    transform: [{ translateY: miniY.value }],
+    opacity: interpolate(miniY.value, [0, 60], [1, 0]),
+  }));
 
   return (
     <View style={{ flex: 1 }}>
@@ -112,9 +126,7 @@ export default function TabLayout() {
             headerShown: false,
             tabBarButton: HapticTab,
             tabBarActiveTintColor: theme.colors.primary,
-            tabBarInactiveTintColor: isDark
-              ? Palette.text.darkTertiary
-              : Palette.text.lightTertiary,
+            tabBarInactiveTintColor: Palette.text.lightTertiary,
             tabBarStyle: {
               backgroundColor: "#FFFFFF",
               borderTopWidth: 0.5,
@@ -155,7 +167,13 @@ export default function TabLayout() {
         </Tabs>
       </View>
 
-      <MiniPlayer />
+      {/* Floating MiniPlayer — slides up above tab bar */}
+      <Animated.View
+        pointerEvents={currentEpisode ? 'box-none' : 'none'}
+        style={[styles.miniPlayerWrapper, miniPlayerStyle]}
+      >
+        <MiniPlayer />
+      </Animated.View>
 
       {creatorUser && (
         <>
@@ -238,6 +256,15 @@ const styles = StyleSheet.create({
     position: "absolute",
     alignSelf: "center",
     zIndex: 30,
+  },
+  miniPlayerWrapper: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    bottom: TAB_BAR_HEIGHT,
+    zIndex: 25,
+    paddingHorizontal: 12,
+    paddingBottom: 8,
   },
   backdrop: {
     ...StyleSheet.absoluteFillObject,

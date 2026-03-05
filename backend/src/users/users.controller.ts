@@ -10,7 +10,7 @@ import { CurrentUser } from '../common/decorators/current-user.decorator';
 import type { UserDocument } from './schemas/user.schema';
 import { PublicUserDto } from './dto/public-user.dto';
 import { DeviceTokenDto } from './dto/device-token.dto';
-import { getImageMulterConfig } from '../common/utils/file-upload.util';
+import { getImageMulterConfig, normalizePath } from '../common/utils/file-upload.util';
 
 @ApiTags('users')
 @ApiCommonErrorResponses()
@@ -62,7 +62,7 @@ export class UsersController {
     @CurrentUser() user: UserDocument,
     @UploadedFile() file: Express.Multer.File,
   ) {
-    return this.usersService.updateAvatar(user._id.toString(), file.path);
+    return this.usersService.updateAvatar(user._id.toString(), normalizePath(file.path));
   }
 
   @Post('me/device-token')
