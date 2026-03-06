@@ -4,11 +4,16 @@ import * as ExpoAudio from 'expo-audio';
 import { Episode } from '@/services/episodes.service';
 import { SERVER_URL } from '@/services/axios-client';
 
+import { resolveImageUrl } from '@/utils/url';
+
 // Resolve audio URL — stored as relative path from backend
 function resolveAudioUrl(path?: string): string {
   if (!path) return '';
   if (path.startsWith('http')) return path;
-  return `${SERVER_URL}/${path.replace(/\\/g, '/')}`;
+  
+  // Use the same logic as resolveImageUrl but for audio
+  const normalizedPath = path.replace(/\\/g, '/').replace(/^\//, '');
+  return `${SERVER_URL}/${normalizedPath}`;
 }
 
 interface PlayerContextType {

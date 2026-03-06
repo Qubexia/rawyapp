@@ -25,15 +25,16 @@ import {
 import { FileInterceptor } from '@nestjs/platform-express';
 import { ConfigService } from '@nestjs/config';
 import { CreatorsService } from './creators.service';
-import { BecomeCreatorDto } from './dto/become-creator.dto';
 import { UpdateCreatorProfileDto } from './dto/update-creator-profile.dto';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
 import { Roles } from '../common/decorators/roles.decorator';
 import { Public } from '../common/decorators/public.decorator';
 import { Role } from '../common/constants/roles.enum';
-import { getImageMulterConfig, normalizePath } from '../common/utils/file-upload.util';
+import {
+  getImageMulterConfig,
+  getRelativeUrl,
+} from '../common/utils/file-upload.util';
 import { UsersService } from '../users/users.service';
-import { PaginationQueryDto } from '../common/dto/pagination-query.dto';
 import { ApiCommonErrorResponses } from '../common/decorators/api-error-responses.decorator';
 
 @ApiTags('Creators')
@@ -50,17 +51,21 @@ export class CreatorsController {
   @Roles(Role.USER)
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Become a creator (elevate user role to CREATOR)' })
-  @ApiResponse({ status: 201, description: 'Creator profile created successfully' })
+  @ApiResponse({
+    status: 201,
+    description: 'Creator profile created successfully',
+  })
   @ApiResponse({ status: 400, description: 'User is already a creator' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   @ApiResponse({ status: 403, description: 'Forbidden - User role required' })
   async becomeCreator(
     @CurrentUser('id') userId: string,
     @CurrentUser('name') userName: string,
-    @Body() becomeCreatorDto: BecomeCreatorDto,
   ) {
     // Check if already a creator
-    const isCreator = await this.creatorsService.isCreator(new Types.ObjectId(userId));
+    const isCreator = await this.creatorsService.isCreator(
+      new Types.ObjectId(userId),
+    );
     if (isCreator) {
       throw new BadRequestException('You are already a creator');
     }
@@ -106,9 +111,15 @@ export class CreatorsController {
   @Roles(Role.CREATOR)
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Get current user creator profile' })
-  @ApiResponse({ status: 200, description: 'Creator profile retrieved successfully' })
+  @ApiResponse({
+    status: 200,
+    description: 'Creator profile retrieved successfully',
+  })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
-  @ApiResponse({ status: 403, description: 'Forbidden - Creator role required' })
+  @ApiResponse({
+    status: 403,
+    description: 'Forbidden - Creator role required',
+  })
   @ApiResponse({ status: 404, description: 'Creator profile not found' })
   async getMyProfile(@CurrentUser('id') userId: string) {
     const profile = await this.creatorsService.getProfile(userId, true);
@@ -122,7 +133,10 @@ export class CreatorsController {
   @Get(':id')
   @Public()
   @ApiOperation({ summary: 'Get a creator profile by ID (public)' })
-  @ApiResponse({ status: 200, description: 'Creator profile retrieved successfully' })
+  @ApiResponse({
+    status: 200,
+    description: 'Creator profile retrieved successfully',
+  })
   @ApiResponse({ status: 404, description: 'Creator profile not found' })
   async findById(@Param('id') id: string) {
     const profile = await this.creatorsService.getProfile(id, false);
@@ -137,17 +151,26 @@ export class CreatorsController {
   @Roles(Role.CREATOR)
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Update current user creator profile (owner only)' })
-  @ApiResponse({ status: 200, description: 'Creator profile updated successfully' })
+  @ApiResponse({
+    status: 200,
+    description: 'Creator profile updated successfully',
+  })
   @ApiResponse({ status: 400, description: 'Bad request' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
-  @ApiResponse({ status: 403, description: 'Forbidden - Creator role required' })
+  @ApiResponse({
+    status: 403,
+    description: 'Forbidden - Creator role required',
+  })
   @ApiResponse({ status: 404, description: 'Creator profile not found' })
   @ApiConsumes('multipart/form-data')
   @ApiBody({
     schema: {
       type: 'object',
       properties: {
-        bio: { type: 'string', example: 'I create amazing content about technology and design.' },
+        bio: {
+          type: 'string',
+          example: 'I create amazing content about technology and design.',
+        },
         socialLinks: {
           type: 'object',
           properties: {
@@ -162,10 +185,7 @@ export class CreatorsController {
     },
   })
   @UseInterceptors(
-    FileInterceptor(
-      'avatar',
-      getImageMulterConfig(5 * 1024 * 1024),
-    ),
+    FileInterceptor('avatar', getImageMulterConfig(5 * 1024 * 1024)),
   )
   async updateProfile(
     @CurrentUser('id') userId: string,
@@ -175,7 +195,7 @@ export class CreatorsController {
     let avatarUrl: string | undefined;
 
     if (avatar) {
-      avatarUrl = normalizePath(avatar.path);
+      avatarUrl = getRelativeUrl(avatar.path);
     }
 
     const profile = await this.creatorsService.updateProfile(
@@ -187,6 +207,22 @@ export class CreatorsController {
     return {
       statusCode: 200,
       data: profile,
+    };
+  }
+
+  @Get('top')
+  @Public()
+  @ApiOperation({ summary: 'Get top creators based on follower count and podcast count' })
+  @ApiResponse({ status: 200, description: 'Top creators retrieved successfully' })
+  @ApiQuery({ name: 'limit', required: false, type: Number, example: 10, description: 'Number of top creators to return' })
+  async getTopCreators(
+    @Query('limit', new DefaultValuePipe(10), ParseIntPipe) limit: number,
+  ) {
+    const topCreators = await this.creatorsService.getTopCreators(limit);
+    
+    return {
+      statusCode: 200,
+      data: topCreators,
     };
   }
 }

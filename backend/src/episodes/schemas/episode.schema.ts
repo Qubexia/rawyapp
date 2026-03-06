@@ -31,6 +31,9 @@ export class Episode {
 
   @Prop({ required: true, default: 0, min: 0 })
   commentsCount: number;
+
+  @Prop({ required: false })
+  imageUrl?: string;
 }
 
 export const EpisodeSchema = SchemaFactory.createForClass(Episode);
@@ -39,3 +42,12 @@ export const EpisodeSchema = SchemaFactory.createForClass(Episode);
 EpisodeSchema.index({ podcastId: 1, createdAt: -1 });
 EpisodeSchema.index({ creatorId: 1 });
 EpisodeSchema.index({ createdAt: -1 });
+
+// Virtual for full image URL
+EpisodeSchema.virtual('image').get(function() {
+  if (!this.imageUrl) return null;
+  return `${process.env.APP_URL || 'http://localhost:3000'}${this.imageUrl}`;
+});
+
+EpisodeSchema.set('toJSON', { virtuals: true });
+EpisodeSchema.set('toObject', { virtuals: true });

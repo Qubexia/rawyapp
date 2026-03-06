@@ -7,6 +7,7 @@ import {
   getCreators,
   getCreator,
   getMyCreatorProfile,
+  getTopCreators,
   becomeCreator,
   updateCreatorProfile,
 } from '../../services/creators.service';
@@ -17,6 +18,7 @@ export const creatorKeys = {
   details: () => [...creatorKeys.all, 'detail'] as const,
   detail: (id: string) => [...creatorKeys.details(), id] as const,
   me: () => [...creatorKeys.all, 'me'] as const,
+  top: () => [...creatorKeys.all, 'top'] as const,
 };
 
 export function useCreators(options?: { enabled?: boolean }) {
@@ -56,6 +58,7 @@ export function useBecomeCreator() {
   });
 }
 
+
 export function useUpdateCreatorProfile() {
   const queryClient = useQueryClient();
   return useMutation({
@@ -77,5 +80,12 @@ export function useUpdateCreatorProfile() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: creatorKeys.me() });
     },
+  });
+}
+
+export function useTopCreators(limit = 10) {
+  return useQuery({
+    queryKey: creatorKeys.top(),
+    queryFn: () => getTopCreators(limit),
   });
 }

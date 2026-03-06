@@ -10,12 +10,10 @@ import {
   StyleSheet,
   RefreshControl,
   TouchableOpacity,
-  Dimensions,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import {
   Text,
-  Surface,
   useTheme,
   ActivityIndicator,
 } from 'react-native-paper';
@@ -25,6 +23,7 @@ import {
   Headphones,
   Play,
   Users,
+  Star,
 } from 'lucide-react-native';
 
 import { 
@@ -33,17 +32,17 @@ import {
   EmptyState,
   GuestBanner,
   CreatorChip,
+  CreatorCard,
 } from '@/components/ui';
 import { useAuthContext } from '@/context/auth-context';
 import { usePodcasts } from '@/hooks/queries/use-podcasts';
 import { useEpisodes } from '@/hooks/queries/use-episodes';
 import { useFollowing } from '@/hooks/queries/use-follows';
-import { Palette, Spacing, Radius } from '@/constants/theme';
+import { useTopCreators } from '@/hooks/queries/use-creators';
+import { Spacing, Radius } from '@/constants/theme';
 import type { Podcast } from '@/services/podcasts.service';
 import type { Episode } from '@/services/episodes.service';
 
-const { width: SCREEN_WIDTH } = Dimensions.get('window');
-const PODCAST_CARD_WIDTH = 160;
 
 export default function HomeScreen() {
   const theme = useTheme();
@@ -67,21 +66,28 @@ export default function HomeScreen() {
     refetch: refetchFollowing,
   } = useFollowing({ enabled: !!user });
 
+  const {
+    data: topCreatorsData,
+    isLoading: topCreatorsLoading,
+    refetch: refetchTopCreators,
+  } = useTopCreators();
+
   const [refreshing, setRefreshing] = React.useState(false);
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
-    const promises: Promise<any>[] = [refetchPodcasts(), refetchEpisodes()];
+    const promises: Promise<any>[] = [refetchPodcasts(), refetchEpisodes(), refetchTopCreators()];
     if (user) {
       promises.push(refetchFollowing());
     }
     await Promise.all(promises);
     setRefreshing(false);
-  }, [refetchPodcasts, refetchEpisodes, refetchFollowing, user]);
+  }, [refetchPodcasts, refetchEpisodes, refetchTopCreators, refetchFollowing, user]);
 
   const podcasts = podcastsData?.pages.flatMap((p) => p.data || []) ?? [];
   const episodes = episodesData?.pages.flatMap((p) => p.data || []) ?? [];
   const followedCreators = followingData?.pages.flatMap((p) => p.data || []) ?? [];
+  const topCreators = topCreatorsData ?? [];
 
   const greeting = () => {
     const hour = new Date().getHours();
@@ -100,7 +106,7 @@ export default function HomeScreen() {
     <EpisodeRow episode={item} />
   );
 
-  const isLoading = podcastsLoading || episodesLoading;
+  const isLoading = podcastsLoading || episodesLoading || topCreatorsLoading || followingLoading;
 
   return (
     <SafeAreaView
@@ -187,6 +193,36 @@ export default function HomeScreen() {
               )}
             </View>
 
+            {/* ── Top Creators ── */}
+            {topCreators.length > 0 && (
+              <View style={styles.section}>
+                <View style={styles.sectionHeader}>
+                  <Star size={20} color={theme.colors.primary} />
+                  <Text
+                    variant="titleMedium"
+                    style={[
+                      styles.sectionTitle,
+                      { color: theme.colors.onBackground },
+                    ]}
+                  >
+                    Top Creators
+                  </Text>
+                </View>
+                <FlatList
+                  horizontal
+                  data={topCreators}
+                  keyExtractor={(item) => item._id}
+                  renderItem={({ item }) => (
+                    <View style={{ flexDirection: 'row', marginBottom: Spacing.md }}>
+                      <CreatorCard creator={item} />
+                    </View>
+                  )}
+                  showsHorizontalScrollIndicator={false}
+                  contentContainerStyle={styles.horizontalList}
+                />
+              </View>
+            )}
+
             {/* ── Following Section ── */}
             {user && followedCreators.length > 0 && (
               <View style={styles.section}>
@@ -263,7 +299,6 @@ export default function HomeScreen() {
           </>
         )}
 
-        <View style={{ height: Spacing.xxl }} />
       </ScrollView>
     </SafeAreaView>
   );
@@ -314,6 +349,7 @@ const styles = StyleSheet.create({
   horizontalList: {
     paddingHorizontal: Spacing.lg,
     gap: Spacing.md,
+    marginBottom: Spacing.md,
   },
   episodeList: {
     paddingHorizontal: Spacing.lg,

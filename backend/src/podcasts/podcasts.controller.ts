@@ -32,8 +32,10 @@ import { CurrentUser } from '../common/decorators/current-user.decorator';
 import { Roles } from '../common/decorators/roles.decorator';
 import { Public } from '../common/decorators/public.decorator';
 import { Role } from '../common/constants/roles.enum';
-import { getImageMulterConfig, normalizePath } from '../common/utils/file-upload.util';
-import { PaginationQueryDto } from '../common/dto/pagination-query.dto';
+import {
+  getImageMulterConfig,
+  getRelativeUrl,
+} from '../common/utils/file-upload.util';
 import { ApiCommonErrorResponses } from '../common/decorators/api-error-responses.decorator';
 
 @ApiTags('Podcasts')
@@ -52,23 +54,26 @@ export class PodcastsController {
   @ApiResponse({ status: 201, description: 'Podcast created successfully' })
   @ApiResponse({ status: 400, description: 'Bad request' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
-  @ApiResponse({ status: 403, description: 'Forbidden - Creator role required' })
+  @ApiResponse({
+    status: 403,
+    description: 'Forbidden - Creator role required',
+  })
   @ApiConsumes('multipart/form-data')
   @ApiBody({
     schema: {
       type: 'object',
       properties: {
         title: { type: 'string', example: 'Tech Talk Daily' },
-        description: { type: 'string', example: 'A daily podcast about technology trends' },
+        description: {
+          type: 'string',
+          example: 'A daily podcast about technology trends',
+        },
         coverImage: { type: 'string', format: 'binary' },
       },
     },
   })
   @UseInterceptors(
-    FileInterceptor(
-      'coverImage',
-      getImageMulterConfig(5 * 1024 * 1024),
-    ),
+    FileInterceptor('coverImage', getImageMulterConfig(5 * 1024 * 1024)),
   )
   async create(
     @CurrentUser('id') userId: string,
@@ -79,7 +84,7 @@ export class PodcastsController {
     let coverImageUrl: string | undefined;
 
     if (coverImage) {
-      coverImageUrl = normalizePath(coverImage.path);
+      coverImageUrl = getRelativeUrl(coverImage.path);
     }
 
     const podcast = await this.podcastsService.create(
@@ -100,7 +105,12 @@ export class PodcastsController {
   @ApiResponse({ status: 200, description: 'Podcasts retrieved successfully' })
   @ApiQuery({ name: 'page', required: false, type: Number, example: 1 })
   @ApiQuery({ name: 'limit', required: false, type: Number, example: 20 })
-  @ApiQuery({ name: 'creatorId', required: false, type: String, example: '507f1f77bcf86cd799439011' })
+  @ApiQuery({
+    name: 'creatorId',
+    required: false,
+    type: String,
+    example: '507f1f77bcf86cd799439011',
+  })
   async findAll(
     @Query('page', new DefaultValuePipe(1), ParseIntPipe) page: number,
     @Query('limit', new DefaultValuePipe(20), ParseIntPipe) limit: number,
@@ -124,7 +134,7 @@ export class PodcastsController {
   @ApiResponse({ status: 200, description: 'Podcast retrieved successfully' })
   @ApiResponse({ status: 404, description: 'Podcast not found' })
   async findById(@Param('id') id: string) {
-    const podcast = await this.podcastsService.findById(id);
+    const podcast: unknown = await this.podcastsService.findById(id);
 
     return {
       statusCode: 200,
@@ -147,16 +157,16 @@ export class PodcastsController {
       type: 'object',
       properties: {
         title: { type: 'string', example: 'Tech Talk Daily' },
-        description: { type: 'string', example: 'A daily podcast about technology trends' },
+        description: {
+          type: 'string',
+          example: 'A daily podcast about technology trends',
+        },
         coverImage: { type: 'string', format: 'binary' },
       },
     },
   })
   @UseInterceptors(
-    FileInterceptor(
-      'coverImage',
-      getImageMulterConfig(5 * 1024 * 1024),
-    ),
+    FileInterceptor('coverImage', getImageMulterConfig(5 * 1024 * 1024)),
   )
   async update(
     @Param('id') id: string,
@@ -168,7 +178,7 @@ export class PodcastsController {
     let coverImageUrl: string | undefined;
 
     if (coverImage) {
-      coverImageUrl = normalizePath(coverImage.path);
+      coverImageUrl = getRelativeUrl(coverImage.path);
     }
 
     const podcast = await this.podcastsService.update(
@@ -191,7 +201,10 @@ export class PodcastsController {
   @ApiOperation({ summary: 'Delete a podcast (owner or admin)' })
   @ApiResponse({ status: 200, description: 'Podcast deleted successfully' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
-  @ApiResponse({ status: 403, description: 'Forbidden - Not the owner or admin' })
+  @ApiResponse({
+    status: 403,
+    description: 'Forbidden - Not the owner or admin',
+  })
   @ApiResponse({ status: 404, description: 'Podcast not found' })
   async delete(
     @Param('id') id: string,

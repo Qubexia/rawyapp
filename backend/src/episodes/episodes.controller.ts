@@ -22,7 +22,7 @@ import {
   ApiBody,
   ApiQuery,
 } from '@nestjs/swagger';
-import { FileInterceptor } from '@nestjs/platform-express';
+import { FileInterceptor, FilesInterceptor } from '@nestjs/platform-express';
 import { ConfigService } from '@nestjs/config';
 import { EpisodesService } from './episodes.service';
 import { CreateEpisodeDto } from './dto/create-episode.dto';
@@ -31,7 +31,11 @@ import { CurrentUser } from '../common/decorators/current-user.decorator';
 import { Roles } from '../common/decorators/roles.decorator';
 import { Public } from '../common/decorators/public.decorator';
 import { Role } from '../common/constants/roles.enum';
-import { getAudioMulterConfig, normalizePath } from '../common/utils/file-upload.util';
+import {
+  getAudioMulterConfig,
+  getImageMulterConfig,
+  getRelativeUrl,
+} from '../common/utils/file-upload.util';
 import { Types } from 'mongoose';
 import { ApiCommonErrorResponses } from '../common/decorators/api-error-responses.decorator';
 
@@ -51,42 +55,51 @@ export class EpisodesController {
   @ApiResponse({ status: 201, description: 'Episode created successfully' })
   @ApiResponse({ status: 400, description: 'Bad request' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
-  @ApiResponse({ status: 403, description: 'Forbidden - Creator role required' })
+  @ApiResponse({
+    status: 403,
+    description: 'Forbidden - Creator role required',
+  })
   @ApiConsumes('multipart/form-data')
   @ApiBody({
     schema: {
       type: 'object',
       properties: {
         title: { type: 'string', example: 'Introduction to AI' },
-        description: { type: 'string', example: 'In this episode, we explore the basics of artificial intelligence' },
+        description: {
+          type: 'string',
+          example:
+            'In this episode, we explore the basics of artificial intelligence',
+        },
         podcastId: { type: 'string', example: '507f1f77bcf86cd799439011' },
         duration: { type: 'number', example: 1800 },
         audioFile: { type: 'string', format: 'binary' },
+        imageFile: { type: 'string', format: 'binary' },
       },
     },
   })
   @UseInterceptors(
-    FileInterceptor(
-      'audioFile',
-      getAudioMulterConfig(100 * 1024 * 1024),
-    ),
+    FileInterceptor('audioFile', getAudioMulterConfig(100 * 1024 * 1024)),
+    FileInterceptor('imageFile', getImageMulterConfig(5 * 1024 * 1024)),
   )
   async create(
     @CurrentUser('id') userId: string,
     @CurrentUser('role') userRole: string,
     @Body() createEpisodeDto: CreateEpisodeDto,
     @UploadedFile() audioFile: Express.Multer.File,
+    @UploadedFile() imageFile?: Express.Multer.File,
   ) {
     if (!audioFile) {
       throw new BadRequestException('Audio file is required');
     }
 
-    const audioFileUrl = normalizePath(audioFile.path);
+    const audioFileUrl = getRelativeUrl(audioFile.path);
+    const imageFileUrl = imageFile ? getRelativeUrl(imageFile.path) : undefined;
 
     const episode = await this.episodesService.create(
       new Types.ObjectId(userId),
       createEpisodeDto,
       audioFileUrl,
+      imageFileUrl,
     );
 
     return {
@@ -101,8 +114,18 @@ export class EpisodesController {
   @ApiResponse({ status: 200, description: 'Episodes retrieved successfully' })
   @ApiQuery({ name: 'page', required: false, type: Number, example: 1 })
   @ApiQuery({ name: 'limit', required: false, type: Number, example: 20 })
-  @ApiQuery({ name: 'podcastId', required: false, type: String, example: '507f1f77bcf86cd799439011' })
-  @ApiQuery({ name: 'creatorId', required: false, type: String, example: '507f1f77bcf86cd799439011' })
+  @ApiQuery({
+    name: 'podcastId',
+    required: false,
+    type: String,
+    example: '507f1f77bcf86cd799439011',
+  })
+  @ApiQuery({
+    name: 'creatorId',
+    required: false,
+    type: String,
+    example: '507f1f77bcf86cd799439011',
+  })
   async findAll(
     @Query('page', new DefaultValuePipe(1), ParseIntPipe) page: number,
     @Query('limit', new DefaultValuePipe(20), ParseIntPipe) limit: number,
@@ -113,7 +136,12 @@ export class EpisodesController {
       throw new BadRequestException('Limit cannot exceed 100');
     }
 
-    const result = await this.episodesService.findAll(page, limit, podcastId, creatorId);
+    const result = await this.episodesService.findAll(
+      page,
+      limit,
+      podcastId,
+      creatorId,
+    );
 
     return {
       statusCode: 200,
@@ -127,7 +155,7 @@ export class EpisodesController {
   @ApiResponse({ status: 200, description: 'Episode retrieved successfully' })
   @ApiResponse({ status: 404, description: 'Episode not found' })
   async findById(@Param('id') id: string) {
-    const episode = await this.episodesService.findById(id);
+    const episode: unknown = await this.episodesService.findById(id);
 
     return {
       statusCode: 200,
@@ -149,7 +177,11 @@ export class EpisodesController {
       type: 'object',
       properties: {
         title: { type: 'string', example: 'Introduction to AI' },
-        description: { type: 'string', example: 'In this episode, we explore the basics of artificial intelligence' },
+        description: {
+          type: 'string',
+          example:
+            'In this episode, we explore the basics of artificial intelligence',
+        },
       },
     },
   })
@@ -178,7 +210,10 @@ export class EpisodesController {
   @ApiOperation({ summary: 'Delete an episode (owner or admin)' })
   @ApiResponse({ status: 200, description: 'Episode deleted successfully' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
-  @ApiResponse({ status: 403, description: 'Forbidden - Not the owner or admin' })
+  @ApiResponse({
+    status: 403,
+    description: 'Forbidden - Not the owner or admin',
+  })
   @ApiResponse({ status: 404, description: 'Episode not found' })
   async delete(
     @Param('id') id: string,

@@ -24,8 +24,14 @@ export async function pickImage(): Promise<SelectedImage | null> {
       return null;
     }
 
+    // Prefer the new `MediaType` API when available to avoid deprecation warnings.
+    // Fallback to `MediaTypeOptions` for older versions of expo-image-picker.
+    const mediaTypes = (ImagePicker as any).MediaType
+      ? (ImagePicker as any).MediaType.Images
+      : (ImagePicker as any).MediaTypeOptions?.Images;
+
     const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaType.IMAGE,
+      mediaTypes,
       allowsEditing: true,
       aspect: [1, 1],
       quality: 0.7,

@@ -198,4 +198,19 @@ export class CreatorsService {
       .exec();
     return list.map((p) => ({ userId: p.userId, avatarUrl: p.avatarUrl }));
   }
+
+  /**
+   * Get top creators based on follower count and podcast count
+   */
+  async getTopCreators(limit: number = 10): Promise<CreatorProfile[]> {
+    return this.creatorProfileModel
+      .find()
+      .sort({ 
+        followerCount: -1, 
+        podcastCount: -1,
+        createdAt: -1 
+      })
+      .limit(limit)
+      .exec();
+  }
 }

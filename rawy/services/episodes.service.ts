@@ -58,6 +58,8 @@ export async function createEpisode(
     duration?: number;
   },
   audioFile: { uri: string; name: string; type: string },
+  imageFile?: { uri: string; name: string; type: string } | null,
+  onUploadProgress?: (progressEvent: any) => void
 ): Promise<Episode> {
   const formData = new FormData();
   formData.append('title', payload.title);
@@ -71,9 +73,18 @@ export async function createEpisode(
     type: audioFile.type,
   } as unknown as Blob);
 
+  if (imageFile) {
+    formData.append('imageFile', {
+      uri: imageFile.uri,
+      name: imageFile.name,
+      type: imageFile.type,
+    } as unknown as Blob);
+  }
+
   const { data } = await axiosClient.post<Episode>('/episodes', formData, {
     headers: { 'Content-Type': 'multipart/form-data' },
     timeout: UPLOAD_TIMEOUT,
+    onUploadProgress,
   });
   return data;
 }

@@ -3,12 +3,27 @@ import { ValidationPipe } from '@nestjs/common';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import { NestExpressApplication } from '@nestjs/platform-express';
 import { join } from 'path';
+import { existsSync, mkdirSync } from 'fs';
 import { AppModule } from './app.module';
 import { HttpExceptionFilter } from './common/filters/http-exception.filter';
 import { TransformInterceptor } from './common/interceptors/transform.interceptor';
 import { LoggingInterceptor } from './common/interceptors/logging.interceptor';
 
 async function bootstrap() {
+  // Ensure upload directories exist
+  const uploadDirs = [
+    join(__dirname, '..', 'uploads'),
+    join(__dirname, '..', 'uploads', 'images'),
+    join(__dirname, '..', 'uploads', 'audio'),
+  ];
+
+  uploadDirs.forEach((dir) => {
+    if (!existsSync(dir)) {
+      mkdirSync(dir, { recursive: true });
+      console.log(`Created directory: ${dir}`);
+    }
+  });
+
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
 
   // Global prefix

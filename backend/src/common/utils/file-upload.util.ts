@@ -112,6 +112,20 @@ export const normalizePath = (filePath: string): string =>
   filePath.replace(/\\/g, '/');
 
 /**
+ * Get relative URL path from a file path
+ * Example: "d:\projects\backend\uploads\images\file.jpg" -> "uploads/images/file.jpg"
+ */
+export const getRelativeUrl = (filePath: string): string => {
+  const normalized = normalizePath(filePath);
+  const uploadsIndex = normalized.indexOf('uploads/');
+  if (uploadsIndex !== -1) {
+    return normalized.substring(uploadsIndex);
+  }
+  // If path doesn't contain 'uploads/', return filename only if possible or full path
+  return normalized;
+};
+
+/**
  * Get Multer configuration for image uploads
  */
 export const getImageMulterConfig = (maxFileSize: number) => {

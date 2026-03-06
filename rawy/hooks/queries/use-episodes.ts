@@ -46,6 +46,8 @@ export function useCreateEpisode() {
     mutationFn: ({
       data,
       audioFile,
+      imageFile,
+      onUploadProgress,
     }: {
       data: {
         title: string;
@@ -54,7 +56,9 @@ export function useCreateEpisode() {
         duration?: number;
       };
       audioFile: { uri: string; name: string; type: string };
-    }) => createEpisode(data, audioFile),
+      imageFile?: { uri: string; name: string; type: string } | null;
+      onUploadProgress?: (progressEvent: any) => void;
+    }) => createEpisode(data, audioFile, imageFile, onUploadProgress),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: episodeKeys.lists() });
       queryClient.invalidateQueries({ queryKey: creatorKeys.me() });

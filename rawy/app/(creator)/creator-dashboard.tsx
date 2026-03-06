@@ -149,11 +149,24 @@ export default function CreatorDashboard() {
             </View>
           </Surface>
         )) : (
-          <EmptyState
-            icon={<Headphones size={32} color={theme.colors.onSurfaceVariant} strokeWidth={1} />}
-            message="No podcasts yet. Create your first!"
-            isCard
-          />
+          <View style={{ marginTop: Spacing.xl }}>
+            <EmptyState
+              icon={<Headphones size={48} color={theme.colors.primary} strokeWidth={1} />}
+              title="Start Your Journey"
+              message="You haven't created any podcasts yet. Create your first show to start uploading episodes!"
+              isCard={true}
+              action={
+                <Button 
+                  mode="contained" 
+                  onPress={() => router.push('/(creator)/create-podcast' as any)}
+                  style={{ borderRadius: Radius.md, paddingHorizontal: Spacing.lg }}
+                  icon={() => <Plus size={18} color="#FFF" />}
+                >
+                  Create First Podcast
+                </Button>
+              }
+            />
+          </View>
         )}
       </ScrollView>
     </SafeAreaView>

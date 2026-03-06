@@ -9,8 +9,16 @@ import {
   HttpStatus,
   UseInterceptors,
   UploadedFile,
+
 } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiConsumes, ApiBody } from '@nestjs/swagger';
+import {
+  ApiTags,
+  ApiOperation,
+  ApiResponse,
+  ApiBearerAuth,
+  ApiConsumes,
+  ApiBody,
+} from '@nestjs/swagger';
 import { ApiCommonErrorResponses } from '../common/decorators/api-error-responses.decorator';
 import type { Request, Response } from 'express';
 import { FileInterceptor } from '@nestjs/platform-express';
@@ -23,7 +31,11 @@ import { TokenResponseDto } from './dto/token-response.dto';
 import { Public } from '../common/decorators/public.decorator';
 import { GoogleAuthGuard } from './guards/google-auth.guard';
 import { FacebookAuthGuard } from './guards/facebook-auth.guard';
-import { getImageMulterConfig, normalizePath } from '../common/utils/file-upload.util';
+import {
+  getImageMulterConfig,
+  getRelativeUrl,
+} from '../common/utils/file-upload.util';
+import { UserDocument } from '../users/schemas/user.schema';
 
 @ApiTags('auth')
 @ApiCommonErrorResponses()
@@ -34,8 +46,15 @@ export class AuthController {
   @Public()
   @Post('register')
   @ApiOperation({ summary: 'Register a new user' })
-  @ApiResponse({ status: HttpStatus.CREATED, description: 'User successfully registered', type: TokenResponseDto })
-  @ApiResponse({ status: HttpStatus.CONFLICT, description: 'User with this email already exists' })
+  @ApiResponse({
+    status: HttpStatus.CREATED,
+    description: 'User successfully registered',
+    type: TokenResponseDto,
+  })
+  @ApiResponse({
+    status: HttpStatus.CONFLICT,
+    description: 'User with this email already exists',
+  })
   @ApiResponse({ status: HttpStatus.BAD_REQUEST, description: 'Validation error' })
   async register(@Body() registerDto: RegisterDto): Promise<TokenResponseDto> {
     return this.authService.register(registerDto);
@@ -43,11 +62,20 @@ export class AuthController {
 
   @Public()
   @Post('register-creator')
-  @UseInterceptors(FileInterceptor('avatar', getImageMulterConfig(5 * 1024 * 1024)))
+  @UseInterceptors(
+    FileInterceptor('avatar', getImageMulterConfig(5 * 1024 * 1024)),
+  )
   @ApiConsumes('multipart/form-data')
   @ApiOperation({ summary: 'Register a new creator with show and avatar' })
-  @ApiResponse({ status: HttpStatus.CREATED, description: 'Creator successfully registered', type: TokenResponseDto })
-  @ApiResponse({ status: HttpStatus.CONFLICT, description: 'User with this email already exists' })
+  @ApiResponse({
+    status: HttpStatus.CREATED,
+    description: 'Creator successfully registered',
+    type: TokenResponseDto,
+  })
+  @ApiResponse({
+    status: HttpStatus.CONFLICT,
+    description: 'User with this email already exists',
+  })
   @ApiResponse({ status: HttpStatus.BAD_REQUEST, description: 'Validation error' })
   @ApiBody({
     schema: {
@@ -66,14 +94,18 @@ export class AuthController {
     @Body() registerCreatorDto: RegisterCreatorDto,
     @UploadedFile() avatar?: Express.Multer.File,
   ): Promise<TokenResponseDto> {
-    const avatarPath = avatar ? normalizePath(avatar.path) : undefined;
+    const avatarPath = avatar ? getRelativeUrl(avatar.path) : undefined;
     return this.authService.registerCreator(registerCreatorDto, avatarPath);
   }
 
   @Public()
   @Post('login')
   @ApiOperation({ summary: 'Login with email and password' })
-  @ApiResponse({ status: HttpStatus.OK, description: 'Login successful', type: TokenResponseDto })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'Login successful',
+    type: TokenResponseDto,
+  })
   @ApiResponse({ status: HttpStatus.UNAUTHORIZED, description: 'Invalid credentials' })
   async login(@Body() loginDto: LoginDto): Promise<TokenResponseDto> {
     return this.authService.login(loginDto);
@@ -82,9 +114,18 @@ export class AuthController {
   @Public()
   @Post('refresh')
   @ApiOperation({ summary: 'Refresh access token using refresh token' })
-  @ApiResponse({ status: HttpStatus.OK, description: 'Token refreshed successfully', type: TokenResponseDto })
-  @ApiResponse({ status: HttpStatus.UNAUTHORIZED, description: 'Invalid or expired refresh token' })
-  async refreshTokens(@Body() refreshTokenDto: RefreshTokenDto): Promise<TokenResponseDto> {
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'Token refreshed successfully',
+    type: TokenResponseDto,
+  })
+  @ApiResponse({
+    status: HttpStatus.UNAUTHORIZED,
+    description: 'Invalid or expired refresh token',
+  })
+  async refreshTokens(
+    @Body() refreshTokenDto: RefreshTokenDto,
+  ): Promise<TokenResponseDto> {
     return this.authService.refreshTokens(refreshTokenDto);
   }
 
@@ -94,8 +135,8 @@ export class AuthController {
   @ApiResponse({ status: HttpStatus.OK, description: 'Logout successful' })
   @ApiResponse({ status: HttpStatus.UNAUTHORIZED, description: 'Unauthorized' })
   async logout(@Req() req: Request): Promise<{ message: string }> {
-    const user = req.user as any;
-    await this.authService.logout(user.sub);
+    const user = req.user as UserDocument;
+    await this.authService.logout(user._id.toString());
     return { message: 'Logout successful' };
   }
 
@@ -103,7 +144,10 @@ export class AuthController {
   @Get('google')
   @UseGuards(GoogleAuthGuard)
   @ApiOperation({ summary: 'Initiate Google OAuth login' })
-  @ApiResponse({ status: HttpStatus.FOUND, description: 'Redirect to Google OAuth page' })
+  @ApiResponse({
+    status: HttpStatus.FOUND,
+    description: 'Redirect to Google OAuth page',
+  })
   async googleAuth() {
     // This endpoint is handled by passport-google-oauth20
     // It redirects to Google's OAuth consent page
@@ -112,9 +156,15 @@ export class AuthController {
   @Public()
   @Post('google/mobile')
   @ApiOperation({ summary: 'Login with Google ID Token from mobile client' })
-  @ApiResponse({ status: HttpStatus.OK, description: 'Login successful', type: TokenResponseDto })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'Login successful',
+    type: TokenResponseDto,
+  })
   @ApiResponse({ status: HttpStatus.UNAUTHORIZED, description: 'Invalid Google token' })
-  async googleAuthMobile(@Body('idToken') idToken: string): Promise<TokenResponseDto> {
+  async googleAuthMobile(
+    @Body('idToken') idToken: string,
+  ): Promise<TokenResponseDto> {
     return this.authService.validateGoogleIdToken(idToken);
   }
 
@@ -122,11 +172,16 @@ export class AuthController {
   @Get('google/callback')
   @UseGuards(GoogleAuthGuard)
   @ApiOperation({ summary: 'Google OAuth callback' })
-  @ApiResponse({ status: HttpStatus.OK, description: 'OAuth successful', type: TokenResponseDto })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'OAuth successful',
+    type: TokenResponseDto,
+  })
   @ApiResponse({ status: HttpStatus.UNAUTHORIZED, description: 'OAuth failed' })
   async googleAuthCallback(@Req() req: Request, @Res() res: Response) {
-    const user = req.user as any;
-    const { accessToken, refreshToken } = await this.authService.generateTokens(user);
+    const user = req.user as UserDocument;
+    const { accessToken, refreshToken } =
+      await this.authService.generateTokens(user);
 
     // Redirect to frontend with tokens
     // In production, you might want to use a more secure method like short-lived tokens
@@ -139,7 +194,10 @@ export class AuthController {
   @Get('facebook')
   @UseGuards(FacebookAuthGuard)
   @ApiOperation({ summary: 'Initiate Facebook OAuth login' })
-  @ApiResponse({ status: HttpStatus.FOUND, description: 'Redirect to Facebook OAuth page' })
+  @ApiResponse({
+    status: HttpStatus.FOUND,
+    description: 'Redirect to Facebook OAuth page',
+  })
   async facebookAuth() {
     // This endpoint is handled by passport-facebook
     // It redirects to Facebook's OAuth consent page
@@ -149,11 +207,16 @@ export class AuthController {
   @Get('facebook/callback')
   @UseGuards(FacebookAuthGuard)
   @ApiOperation({ summary: 'Facebook OAuth callback' })
-  @ApiResponse({ status: HttpStatus.OK, description: 'OAuth successful', type: TokenResponseDto })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'OAuth successful',
+    type: TokenResponseDto,
+  })
   @ApiResponse({ status: HttpStatus.UNAUTHORIZED, description: 'OAuth failed' })
   async facebookAuthCallback(@Req() req: Request, @Res() res: Response) {
-    const user = req.user as any;
-    const { accessToken, refreshToken } = await this.authService.generateTokens(user);
+    const user = req.user as UserDocument;
+    const { accessToken, refreshToken } =
+      await this.authService.generateTokens(user);
 
     // Redirect to frontend with tokens
     return res.redirect(

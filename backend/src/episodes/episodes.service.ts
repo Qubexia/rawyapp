@@ -36,6 +36,7 @@ export class EpisodesService {
     creatorId: Types.ObjectId,
     createEpisodeDto: CreateEpisodeDto,
     audioFileUrl: string,
+    imageUrl?: string,
   ): Promise<Episode> {
     const podcastId = new Types.ObjectId(createEpisodeDto.podcastId);
 
@@ -44,6 +45,7 @@ export class EpisodesService {
       podcastId,
       creatorId,
       audioFileUrl,
+      imageUrl,
       viewsCount: 0,
       likesCount: 0,
       commentsCount: 0,
