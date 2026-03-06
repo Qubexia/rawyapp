@@ -30,7 +30,7 @@ import {
   Trash2,
 } from 'lucide-react-native';
 
-import { EpisodeRow, EmptyState } from '@/components/ui';
+import { EpisodeRow, EmptyState, ConfirmDialog } from '@/components/ui';
 import { usePodcast } from '@/hooks/queries/use-podcasts';
 import { resolveImageUrl } from '@/utils/url';
 import { useEpisodes, useDeleteEpisode } from '@/hooks/queries/use-episodes';
@@ -70,6 +70,8 @@ export default function PodcastDetailScreen() {
 
   const episodes = episodesData?.pages.flatMap((p) => p.data) ?? [];
 
+  const [deleteDialog, setDeleteDialog] = useState<{ id: string; title: string } | null>(null);
+
   const [refreshing, setRefreshing] = useState(false);
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
@@ -78,20 +80,14 @@ export default function PodcastDetailScreen() {
   }, [refetchPodcast, refetchEpisodes, refetchFollowStatus]);
 
   const confirmDeleteEpisode = (episodeId: string, title: string) => {
-    import('react-native').then(({ Alert }) => {
-      Alert.alert(
-        'Delete Episode',
-        `Are you sure you want to delete "${title}"? This cannot be undone.`,
-        [
-          { text: 'Cancel', style: 'cancel' },
-          {
-            text: 'Delete',
-            style: 'destructive',
-            onPress: () => deleteEpisode.mutate(episodeId),
-          },
-        ],
-      );
-    });
+    setDeleteDialog({ id: episodeId, title });
+  };
+
+  const handleDeleteEpisode = () => {
+    if (deleteDialog) {
+      deleteEpisode.mutate(deleteDialog.id);
+    }
+    setDeleteDialog(null);
   };
 
   if (podcastLoading) {
@@ -401,6 +397,16 @@ export default function PodcastDetailScreen() {
             </View>
           ) : null
         }
+      />
+
+      <ConfirmDialog
+        visible={!!deleteDialog}
+        title="Delete Episode"
+        message={`Are you sure you want to delete "${deleteDialog?.title}"? This cannot be undone.`}
+        confirmLabel="Delete"
+        variant="destructive"
+        onCancel={() => setDeleteDialog(null)}
+        onConfirm={handleDeleteEpisode}
       />
     </SafeAreaView>
   );

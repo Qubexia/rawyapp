@@ -10,6 +10,7 @@ import {
   StyleSheet,
   RefreshControl,
   TouchableOpacity,
+  Dimensions,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import {
@@ -38,14 +39,12 @@ import { useEpisodes } from '@/hooks/queries/use-episodes';
 import { useFollowing } from '@/hooks/queries/use-follows';
 import { useTopCreators } from '@/hooks/queries/use-creators';
 import { Spacing, Radius } from '@/constants/theme';
-import type { Podcast } from '@/services/podcasts.service';
-import type { Episode } from '@/services/episodes.service';
 
 
 export default function HomeScreen() {
   const theme = useTheme();
   const { user } = useAuthContext();
-
+  const {width} = Dimensions.get('window');
   const {
     data: podcastsData,
     isLoading: podcastsLoading,
@@ -94,13 +93,7 @@ export default function HomeScreen() {
 
   // ── Render helpers ──
 
-  const renderPodcastCard = ({ item }: { item: Podcast }) => (
-    <PodcastCard podcast={item} />
-  );
 
-  const renderEpisodeCard = ({ item }: { item: Episode }) => (
-    <EpisodeRow episode={item} />
-  );
 
   const isLoading = podcastsLoading || episodesLoading || topCreatorsLoading || followingLoading;
 
@@ -170,7 +163,7 @@ export default function HomeScreen() {
                   horizontal
                   data={podcasts}
                   keyExtractor={(item, index) => item?._id ? String(item._id) : String(index)}
-                  renderItem={renderPodcastCard}
+                  renderItem={({ item }) => <PodcastCard podcast={item} />}
                   showsHorizontalScrollIndicator={false}
                   contentContainerStyle={styles.horizontalList}
                 />
@@ -244,7 +237,7 @@ export default function HomeScreen() {
                     if (!episode) return null;
                     return (
                       <View key={episode._id || Math.random().toString()}>
-                        {renderEpisodeCard({ item: episode })}
+                        <EpisodeRow episode={episode} />
                       </View>
                     );
                   })}

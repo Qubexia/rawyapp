@@ -116,7 +116,6 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 38,
-    fontFamily: 'Inter_700Bold',
     color: '#111827',
     fontWeight: 'bold',
     letterSpacing: 1,
@@ -124,8 +123,9 @@ const styles = StyleSheet.create({
   },
   subtitle: {
     fontSize: 15,
-    fontFamily: 'Inter_400Regular',
     color: '#6B7280',
     letterSpacing: 0.5,
+    width:"100%",
+    textAlign: 'center',
   },
 });

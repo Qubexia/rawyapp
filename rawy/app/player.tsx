@@ -102,7 +102,7 @@ export default function PlayerScreen() {
 
   return (
     <View style={s.root}>
-      <StatusBar barStyle="light-content" />
+      <StatusBar barStyle="light-content" backgroundColor="#000000" />
       <LinearGradient
         colors={[gradTop, gradMid, gradBot]}
         style={StyleSheet.absoluteFill}

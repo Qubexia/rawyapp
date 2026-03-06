@@ -11,6 +11,8 @@ import {
   Image,
   RefreshControl,
   Linking,
+  KeyboardAvoidingView,
+  Platform,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import {
@@ -90,7 +92,8 @@ export default function CreatorDetailScreen() {
     );
   }
 
-  const avatarUri = resolveImageUrl(creator?.avatarUrl);
+  // Use the user's personal avatar as the single source of truth for profile images
+  const avatarUri = resolveImageUrl(publicUser?.avatarUrl);
   const isOwner = creator?.userId?.toString() === user?._id?.toString();
   const followerCount =
     followStatus?.followerCount ?? creator?.followerCount ?? 0;
@@ -365,7 +368,12 @@ export default function CreatorDetailScreen() {
         <View style={{ width: 48 }} />
       </View>
 
-      <FlatList
+      <KeyboardAvoidingView
+        style={{ flex: 1 }}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 24}
+      >
+        <FlatList
         data={podcasts}
         keyExtractor={(i, index) => (i?._id ? String(i._id) : String(index))}
         renderItem={renderPodcast}
@@ -392,6 +400,7 @@ export default function CreatorDetailScreen() {
           />
         )}
       />
+      </KeyboardAvoidingView>
     </SafeAreaView>
   );
 }
@@ -401,7 +410,6 @@ const AVATAR_SIZE = 108;
 const s = StyleSheet.create({
   root: { flex: 1 },
   center: { flex: 1, justifyContent: "center", alignItems: "center" },
-
   topBar: {
     flexDirection: "row",
     alignItems: "center",

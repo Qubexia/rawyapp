@@ -68,7 +68,7 @@ export default function RootLayout() {
 
   return (
     <View style={styles.root}>
-      <StatusBar style="dark" />
+      <StatusBar style="dark" backgroundColor="#FFFFFF" />
 
       {/* App tree – only renders once fonts are ready */}
       {fontsReady && (

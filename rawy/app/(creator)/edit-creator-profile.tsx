@@ -3,18 +3,18 @@
  */
 
 import React, { useEffect } from 'react';
-import { View, ScrollView, StyleSheet, KeyboardAvoidingView, Platform, Alert, Image, TouchableOpacity } from 'react-native';
+import { View, ScrollView, StyleSheet, KeyboardAvoidingView, Platform, Image, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Text, Button, IconButton, Surface, useTheme, ActivityIndicator } from 'react-native-paper';
 import { useRouter } from 'expo-router';
 import { useForm } from 'react-hook-form';
-import { ArrowLeft, Mic, Save, Globe, Twitter, Instagram, Youtube, Camera } from 'lucide-react-native';
+import { ArrowLeft, Mic, Save, Globe, Twitter, Instagram, Youtube } from 'lucide-react-native';
 
 import { FormInput } from '@/components/ui';
 import { useMyCreatorProfile, useUpdateCreatorProfile } from '@/hooks/queries/use-creators';
 import { Palette, Spacing, Radius } from '@/constants/theme';
-import { pickImage } from '@/utils/image-picker';
-import { SERVER_URL } from '@/services/axios-client';
+import { useAuthContext } from '@/context/auth-context';
+import { resolveImageUrl } from '@/utils/url';
 
 type EditCreatorFormData = {
   bio: string;
@@ -27,7 +27,8 @@ type EditCreatorFormData = {
 export default function EditCreatorProfileScreen() {
   const theme = useTheme();
   const router = useRouter();
-  
+  const { user } = useAuthContext();
+
   const { data: profile, isLoading } = useMyCreatorProfile();
   const updateProfile = useUpdateCreatorProfile();
 
@@ -46,20 +47,6 @@ export default function EditCreatorProfileScreen() {
       });
     }
   }, [profile, reset]);
-
-  const handlePickAvatar = async () => {
-    const selected = await pickImage();
-    if (selected) {
-      try {
-        await updateProfile.mutateAsync({
-          data: {}, // Just uploading avatar
-          avatar: selected,
-        });
-      } catch (err) {
-        Alert.alert('Error', 'Failed to upload avatar');
-      }
-    }
-  };
 
   const onSubmit = handleSubmit(async (data) => {
     try {
@@ -88,9 +75,7 @@ export default function EditCreatorProfileScreen() {
     );
   }
 
-  const avatarSource = profile?.avatarUrl 
-    ? { uri: `${SERVER_URL}/${profile.avatarUrl.replace(/\\/g, '/')}` } 
-    : null;
+  const avatarUri = resolveImageUrl(user?.avatarUrl);
 
   return (
     <SafeAreaView style={[s.root, { backgroundColor: theme.colors.background }]}>
@@ -99,23 +84,30 @@ export default function EditCreatorProfileScreen() {
         <Text variant="titleMedium" style={{ color: theme.colors.onBackground, fontWeight: '700' }}>Edit Creator Profile</Text>
         <View style={{ width: 48 }} />
       </View>
-      <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-        <ScrollView contentContainerStyle={{ padding: Spacing.lg }} keyboardShouldPersistTaps="handled">
+      <KeyboardAvoidingView
+        style={{ flex: 1 }}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 24}
+      >
+        <ScrollView
+          contentContainerStyle={{ padding: Spacing.lg, paddingBottom: 120 }}
+          keyboardShouldPersistTaps="handled"
+          keyboardDismissMode="on-drag"
+          showsVerticalScrollIndicator={false}
+        >
           
-          <TouchableOpacity onPress={handlePickAvatar} disabled={updateProfile.isPending} style={s.avatarContainer}>
+          <View style={s.avatarContainer}>
             <Surface style={[s.iconBox, { backgroundColor: Palette.primary[50] }]} elevation={2}>
-              {updateProfile.isPending && !isDirty ? (
-                <ActivityIndicator size="small" color={theme.colors.primary} />
-              ) : avatarSource ? (
-                <Image source={avatarSource} style={s.avatarImage} />
+              {avatarUri ? (
+                <Image source={{ uri: avatarUri }} style={s.avatarImage} />
               ) : (
                 <Mic size={48} color={Palette.primary[500]} strokeWidth={1.5} />
               )}
-              <View style={[s.cameraBadge, { backgroundColor: theme.colors.primary }]}>
-                <Camera size={14} color="#FFF" />
-              </View>
             </Surface>
-          </TouchableOpacity>
+            <Text variant="labelSmall" style={{ color: theme.colors.onSurfaceVariant, textAlign: 'center', marginTop: 6 }}>
+              Change your photo from Edit Profile
+            </Text>
+          </View>
 
           <Text variant="titleMedium" style={{ color: theme.colors.onBackground, fontWeight: '700', marginBottom: Spacing.md }}>About You</Text>
           <FormInput name="bio" control={control} label="Bio" placeholder="Tell your audience about yourself..." multiline numberOfLines={4} />
@@ -143,8 +135,7 @@ const s = StyleSheet.create({
   center: { flex: 1, justifyContent: 'center', alignItems: 'center' },
   topBar: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: Spacing.xs },
   avatarContainer: { alignSelf: 'center', marginBottom: Spacing.xl },
-  iconBox: { width: 110, height: 110, borderRadius: Radius.full, alignItems: 'center', justifyContent: 'center', overflow: 'visible', alignSelf: 'center', marginBottom: Spacing.lg },
+  iconBox: { width: 110, height: 110, borderRadius: Radius.full, alignItems: 'center', justifyContent: 'center', overflow: 'hidden', alignSelf: 'center', marginBottom: Spacing.xs },
   avatarImage: { width: '100%', height: '100%', borderRadius: Radius.full },
-  cameraBadge: { position: 'absolute', bottom: 2, right: 2, width: 32, height: 32, borderRadius: 16, alignItems: 'center', justifyContent: 'center', borderWidth: 3, borderColor: '#FFF' },
   submitBtn: { borderRadius: Radius.md, marginTop: Spacing.lg },
 });

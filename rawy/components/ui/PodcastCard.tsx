@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, StyleSheet, TouchableOpacity, StyleProp, ViewStyle, Image } from 'react-native';
+import { View, StyleSheet, TouchableOpacity, StyleProp, ViewStyle, Image, Dimensions } from 'react-native';
 import { Text, Surface, useTheme } from 'react-native-paper';
 import { Headphones } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
@@ -15,18 +15,19 @@ interface PodcastCardProps {
   width?: number;
 }
 
-export function PodcastCard({ podcast, style, width = 160 }: PodcastCardProps) {
+export function PodcastCard({ podcast, style, }: PodcastCardProps) {
   const theme = useTheme();
   const router = useRouter();
 
   const coverUri = resolveImageUrl(podcast.coverImageUrl);
   const [imgError, setImgError] = useState(false);
-
+  const { width } = Dimensions.get('window');
+  const cardWidth = width * 0.8;
   return (
     <TouchableOpacity
       activeOpacity={0.8}
       onPress={() => router.push(`/podcast/${podcast._id}` as any)}
-      style={[{ width }, style]}
+      style={[{ width: cardWidth  }, style]}
     >
       <Surface
         style={[
@@ -40,7 +41,7 @@ export function PodcastCard({ podcast, style, width = 160 }: PodcastCardProps) {
         <View
           style={[
             styles.cover,
-            { height: width - 32 },
+            { height: cardWidth * 0.9 },
             { backgroundColor: Palette.primary[100] },
           ]}
         >

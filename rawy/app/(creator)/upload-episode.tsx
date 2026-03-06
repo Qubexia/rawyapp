@@ -144,8 +144,13 @@ export default function UploadEpisodeScreen() {
 
     setUploadProgress(0);
     try {
+      // expo-document-picker v14 exposes `duration` in ms for audio assets
+      const durationSec = audioFile?.duration
+        ? Math.round(audioFile.duration / 1000)
+        : undefined;
+
       await createEpisode.mutateAsync({
-        data,
+        data: { ...data, duration: durationSec },
         audioFile: {
           uri: audioFile.uri,
           name: audioFile.name,

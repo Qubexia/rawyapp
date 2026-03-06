@@ -67,7 +67,7 @@ export default function OnboardingScreen() {
 
     return (
         <View style={styles.container}>
-            <StatusBar style="dark" />
+            <StatusBar style="dark" backgroundColor="#FFFFFF" />
             <View style={{ flex: 3 }}>
                 <FlatList
                     data={slides}

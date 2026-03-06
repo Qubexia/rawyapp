@@ -1,13 +1,20 @@
-import React, { useState } from 'react';
-import { View, StyleSheet, TouchableOpacity, StyleProp, ViewStyle, Image } from 'react-native';
-import { Text, Surface, useTheme } from 'react-native-paper';
-import { Play, Clock } from 'lucide-react-native';
-import { useRouter } from 'expo-router';
+import React, { useState } from "react";
+import {
+  View,
+  StyleSheet,
+  TouchableOpacity,
+  StyleProp,
+  ViewStyle,
+  Image,
+} from "react-native";
+import { Text, Surface, useTheme } from "react-native-paper";
+import { Play, Clock } from "lucide-react-native";
+import { useRouter } from "expo-router";
 
-import { Palette, Spacing, Radius } from '@/constants/theme';
-import type { Episode } from '@/services/episodes.service';
+import { Palette, Spacing, Radius } from "@/constants/theme";
+import type { Episode } from "@/services/episodes.service";
 
-import { resolveImageUrl } from '@/utils/url';
+import { resolveImageUrl } from "@/utils/url";
 
 interface EpisodeRowProps {
   episode: Episode;
@@ -16,7 +23,12 @@ interface EpisodeRowProps {
   rightAction?: React.ReactNode;
 }
 
-export function EpisodeRow({ episode, style, showPodcastName = true, rightAction }: EpisodeRowProps) {
+export function EpisodeRow({
+  episode,
+  style,
+  showPodcastName = true,
+  rightAction,
+}: EpisodeRowProps) {
   const theme = useTheme();
   const router = useRouter();
 
@@ -41,13 +53,13 @@ export function EpisodeRow({ episode, style, showPodcastName = true, rightAction
         <View
           style={[
             styles.thumb,
-            { backgroundColor: Palette.primary[50], overflow: 'hidden' },
+            { backgroundColor: Palette.primary[50], overflow: "hidden" },
           ]}
         >
           {coverUri && !imgError ? (
             <Image
               source={{ uri: coverUri }}
-              style={{ width: '100%', height: '100%', resizeMode: 'cover' }}
+              style={{ width: "100%", height: "100%", resizeMode: "cover" }}
               onError={() => setImgError(true)}
             />
           ) : (
@@ -72,26 +84,27 @@ export function EpisodeRow({ episode, style, showPodcastName = true, rightAction
               numberOfLines={1}
               style={{ color: theme.colors.onSurfaceVariant }}
             >
-              {episode.podcast?.title || 'Podcast'}
+              {episode.podcast?.title || "Podcast"}
             </Text>
           )}
           <View style={styles.meta}>
             <Clock size={12} color={theme.colors.onSurfaceVariant} />
             <Text
               variant="labelSmall"
-              style={[styles.metaText, { color: theme.colors.onSurfaceVariant }]}
+              style={[
+                styles.metaText,
+                { color: theme.colors.onSurfaceVariant },
+              ]}
             >
-              {episode.duration
-                ? `${Math.floor(episode.duration / 60)} min`
-                : 'Unknown'}
+              {episode.duration && episode.duration > 0
+                ? episode.duration >= 3600
+                  ? `${Math.floor(episode.duration / 3600)}h ${Math.floor((episode.duration % 3600) / 60)}min`
+                  : `${Math.floor(episode.duration / 60)} min`
+                : '—'}
             </Text>
           </View>
         </View>
-        {rightAction && (
-          <View style={styles.rightAction}>
-            {rightAction}
-          </View>
-        )}
+        {rightAction && <View style={styles.rightAction}>{rightAction}</View>}
       </Surface>
     </TouchableOpacity>
   );
@@ -99,7 +112,7 @@ export function EpisodeRow({ episode, style, showPodcastName = true, rightAction
 
 const styles = StyleSheet.create({
   card: {
-    flexDirection: 'row',
+    flexDirection: "row",
     borderRadius: Radius.lg,
     padding: Spacing.md,
   },
@@ -107,27 +120,27 @@ const styles = StyleSheet.create({
     width: 56,
     height: 56,
     borderRadius: Radius.md,
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: "center",
+    justifyContent: "center",
     marginRight: Spacing.md,
   },
   info: {
     flex: 1,
-    justifyContent: 'center',
+    justifyContent: "center",
   },
   title: {
-    fontWeight: '600',
+    fontWeight: "600",
   },
   meta: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     marginTop: 4,
   },
   metaText: {
     marginLeft: 4,
   },
   rightAction: {
-    justifyContent: 'center',
+    justifyContent: "center",
     marginLeft: Spacing.sm,
   },
 });

@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, StyleSheet, Image, ScrollView, TouchableOpacity, Share } from 'react-native';
+import { View, StyleSheet, Image, ScrollView, Share, KeyboardAvoidingView, Platform } from 'react-native';
 import { Text, Surface, IconButton, Button, ActivityIndicator, useTheme } from 'react-native-paper';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { ArrowLeft, Share2, Users, UserCheck, User } from 'lucide-react-native';
@@ -70,10 +70,17 @@ export default function UserProfileScreen() {
         />
       </View>
 
-      <ScrollView
-        contentContainerStyle={s.scrollContent}
-        showsVerticalScrollIndicator={false}
+      <KeyboardAvoidingView
+        style={{ flex: 1 }}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 24}
       >
+        <ScrollView
+          contentContainerStyle={s.scrollContent}
+          showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
+          keyboardDismissMode="on-drag"
+        >
         {/* ── Hero ── */}
         <View style={[s.hero, { backgroundColor: theme.colors.surface }]}>
           {/* Avatar */}
@@ -162,6 +169,7 @@ export default function UserProfileScreen() {
           </Surface>
         </View>
       </ScrollView>
+      </KeyboardAvoidingView>
     </SafeAreaView>
   );
 }

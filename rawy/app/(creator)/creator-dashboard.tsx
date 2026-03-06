@@ -31,7 +31,7 @@ import {
   Trash2,
 } from "lucide-react-native";
 
-import { EmptyState } from "@/components/ui";
+import { EmptyState, ConfirmDialog } from "@/components/ui";
 import { useMyCreatorProfile } from "@/hooks/queries/use-creators";
 import { usePodcasts, useDeletePodcast } from "@/hooks/queries/use-podcasts";
 import { useAuthContext } from "@/context/auth-context";
@@ -43,6 +43,8 @@ export default function CreatorDashboard() {
   const router = useRouter();
   const { user } = useAuthContext();
   const deletePodcast = useDeletePodcast();
+
+  const [deleteDialog, setDeleteDialog] = useState<{ id: string; title: string } | null>(null);
 
   const {
     data: profile,
@@ -74,20 +76,7 @@ export default function CreatorDashboard() {
   }
 
   const confirmDelete = (id: string, title: string) => {
-    import("react-native").then(({ Alert }) => {
-      Alert.alert(
-        "Delete Podcast",
-        `Are you sure you want to delete "${title}" and all its episodes? This cannot be undone.`,
-        [
-          { text: "Cancel", style: "cancel" },
-          {
-            text: "Delete",
-            style: "destructive",
-            onPress: () => deletePodcast.mutate(id),
-          },
-        ],
-      );
-    });
+    setDeleteDialog({ id, title });
   };
 
   if (profileLoading) {
@@ -344,6 +333,20 @@ export default function CreatorDashboard() {
           </View>
         )}
       </ScrollView>
+
+      <ConfirmDialog
+        visible={!!deleteDialog}
+        title="Delete Podcast"
+        message={`Are you sure you want to delete "${deleteDialog?.title}" and all its episodes? This cannot be undone.`}
+        confirmLabel="Delete"
+        cancelLabel="Cancel"
+        variant="destructive"
+        onCancel={() => setDeleteDialog(null)}
+        onConfirm={() => {
+          if (deleteDialog) deletePodcast.mutate(deleteDialog.id);
+          setDeleteDialog(null);
+        }}
+      />
     </SafeAreaView>
   );
 }
