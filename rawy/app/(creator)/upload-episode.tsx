@@ -133,22 +133,43 @@ export default function UploadEpisodeScreen() {
       return;
     }
 
-    await createEpisode.mutateAsync({
-      data,
-      audioFile: {
-        uri: audioFile.uri,
-        name: audioFile.name,
-        type: audioFile.mimeType || "audio/mpeg",
-      },
-      imageFile: imageFile
-        ? { uri: imageFile.uri, name: imageFile.name, type: imageFile.type }
-        : null,
-      onUploadProgress: (progressEvent) => {
-        const progress = progressEvent.loaded / progressEvent.total;
-        setUploadProgress(progress);
-      },
-    });
-    router.back();
+    // Use the actual file sizes as the known total — much more accurate than
+    // progressEvent.total which includes multipart/form-data framing overhead
+    // that can inflate the reported total beyond the real byte count.
+    const knownTotal: number =
+      (audioFile.size ?? 0) + (imageFile ? (imageFile as any).fileSize ?? 0 : 0);
+
+    setUploadProgress(0);
+    try {
+      await createEpisode.mutateAsync({
+        data,
+        audioFile: {
+          uri: audioFile.uri,
+          name: audioFile.name,
+          type: audioFile.mimeType || "audio/mpeg",
+        },
+        imageFile: imageFile
+          ? { uri: imageFile.uri, name: imageFile.name, type: imageFile.type }
+          : null,
+        onUploadProgress: (progressEvent) => {
+          if (knownTotal > 0) {
+            // Clamp to 0.99 — only reach 1.0 after the server responds (below)
+            const ratio = Math.min(progressEvent.loaded / knownTotal, 0.99);
+            setUploadProgress(ratio);
+          } else if (progressEvent.total && progressEvent.total > 0) {
+            // Fallback: use axios-reported total if file size unavailable
+            setUploadProgress(
+              Math.min(progressEvent.loaded / progressEvent.total, 0.99),
+            );
+          }
+        },
+      });
+      // Upload finished — show 100%
+      setUploadProgress(1);
+      router.back();
+    } catch {
+      setUploadProgress(0);
+    }
   });
 
   const isUploading = createEpisode.isPending;

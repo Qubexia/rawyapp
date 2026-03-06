@@ -1,12 +1,19 @@
-import React from 'react';
-import { View, StyleSheet, TouchableOpacity, StyleProp, ViewStyle, Image } from 'react-native';
-import { Text, Surface, useTheme } from 'react-native-paper';
-import { Mic } from 'lucide-react-native';
-import { useRouter } from 'expo-router';
+import React from "react";
+import {
+  View,
+  StyleSheet,
+  TouchableOpacity,
+  StyleProp,
+  ViewStyle,
+  Image,
+} from "react-native";
+import { Text, Surface, useTheme } from "react-native-paper";
+import { Mic } from "lucide-react-native";
+import { useRouter } from "expo-router";
 
-import { Palette, Spacing, Radius } from '@/constants/theme';
+import { Palette, Spacing, Radius } from "@/constants/theme";
 
-import { resolveImageUrl } from '@/utils/url';
+import { resolveImageUrl } from "@/utils/url";
 
 interface CreatorChipProps {
   creator: {
@@ -40,21 +47,15 @@ export function CreatorChip({ creator, style }: CreatorChipProps) {
         elevation={1}
       >
         <View
-          style={[
-            styles.avatar,
-            { backgroundColor: Palette.primary[100] },
-          ]}
+          style={[styles.avatar, { backgroundColor: Palette.primary[100] }]}
         >
           {avatarUri ? (
             <Image
               source={{ uri: avatarUri }}
-              style={{ width: '100%', height: '100%', resizeMode: 'cover' }}
+              style={{ width: "100%", height: "100%", resizeMode: "cover" }}
             />
           ) : (
-            <Mic
-              size={18}
-              color={Palette.primary[500]}
-            />
+            <Mic size={18} color={Palette.primary[500]} />
           )}
         </View>
         <View style={styles.info}>
@@ -82,25 +83,25 @@ export function CreatorChip({ creator, style }: CreatorChipProps) {
 
 const styles = StyleSheet.create({
   card: {
-    flexDirection: 'row',
+    flexDirection: "row",
     borderRadius: Radius.lg,
     padding: Spacing.md,
-    alignItems: 'center',
+    alignItems: "center",
   },
   avatar: {
     width: 44,
     height: 44,
     borderRadius: Radius.full,
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: "center",
+    justifyContent: "center",
     marginRight: Spacing.md,
-    overflow: 'hidden',
+    overflow: "hidden",
   },
   info: {
     flex: 1,
-    justifyContent: 'center',
+    justifyContent: "center",
   },
   title: {
-    fontWeight: '600',
+    fontWeight: "600",
   },
 });

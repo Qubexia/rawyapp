@@ -1,15 +1,14 @@
-import React from 'react';
-import { View, StyleSheet, TouchableOpacity, Image } from 'react-native';
-import { Text, Surface, useTheme } from 'react-native-paper';
-import { Mic, Users } from 'lucide-react-native';
-import { useRouter } from 'expo-router';
-import { Palette, Spacing, Radius } from '@/constants/theme';
-import { resolveImageUrl } from '@/utils/url';
+import React from "react";
+import { View, StyleSheet, TouchableOpacity, Image } from "react-native";
+import { Text, Surface, useTheme } from "react-native-paper";
+import { Mic, Users, Radio } from "lucide-react-native";
+import { useRouter } from "expo-router";
+import { Palette, Spacing, Radius } from "@/constants/theme";
+import { resolveImageUrl } from "@/utils/url";
 
 interface CreatorCardProps {
   creator: {
     _id: string;
-    name: string;
     showName?: string;
     avatarUrl?: string;
     followerCount?: number;
@@ -21,78 +20,129 @@ export function CreatorCard({ creator }: CreatorCardProps) {
   const theme = useTheme();
   const router = useRouter();
   const avatarUri = resolveImageUrl(creator.avatarUrl);
+  const displayName = creator.showName || "Creator";
 
   return (
     <TouchableOpacity
-      activeOpacity={0.8}
+      activeOpacity={0.85}
       onPress={() => router.push(`/creator/${creator._id}` as any)}
     >
-      <Surface style={[styles.card, { backgroundColor: Palette.light.surface }]} elevation={1}>
-        <View style={[styles.avatar, { backgroundColor: Palette.primary[100] }]}>
-          {avatarUri ? (
-            <Image source={{ uri: avatarUri }} style={styles.avatarImage} />
-          ) : (
-            <Mic size={24} color={Palette.primary[500]} />
-          )}
+      <Surface
+        style={[styles.card, { backgroundColor: theme.colors.surface }]}
+        elevation={2}
+      >
+        {/* Avatar with ring */}
+        <View style={styles.avatarWrapper}>
+          <View
+            style={styles.avatarRing}
+          >
+            <View
+              style={[styles.avatar, { backgroundColor: Palette.primary[100] }]}
+            >
+              {avatarUri ? (
+                <Image source={{ uri: avatarUri }} style={styles.avatarImage} />
+              ) : (
+                <Mic size={26} color={Palette.primary[500]} />
+              )}
+            </View>
+          </View>
         </View>
+
+        {/* Name */}
         <Text
           variant="titleSmall"
           numberOfLines={1}
           style={[styles.name, { color: theme.colors.onSurface }]}
         >
-          {creator.name}
+          {displayName}
         </Text>
-        {creator.showName ? (
-          <Text
-            variant="bodySmall"
-            numberOfLines={1}
-            style={{ color: theme.colors.onSurfaceVariant, textAlign: 'center' }}
-          >
-            {creator.showName}
-          </Text>
-        ) : null}
-        {creator.followerCount !== undefined ? (
-          <View style={styles.stats}>
-            <Users size={12} color={theme.colors.onSurfaceVariant} />
-            <Text variant="labelSmall" style={{ color: theme.colors.onSurfaceVariant, marginLeft: 4 }}>
-              {creator.followerCount.toLocaleString()}
-            </Text>
-          </View>
-        ) : null}
+
+        {/* Stats row */}
+        <View style={styles.statsRow}>
+          {creator.followerCount !== undefined && (
+            <View style={styles.statChip}>
+              <Users size={10} color={Palette.primary[500]} />
+              <Text variant="labelSmall" style={styles.statText}>
+                {creator.followerCount >= 1000
+                  ? `${(creator.followerCount / 1000).toFixed(1)}k`
+                  : creator.followerCount.toString()}
+              </Text>
+            </View>
+          )}
+          {creator.podcastCount !== undefined && creator.podcastCount > 0 && (
+            <View style={styles.statChip}>
+              <Radio size={10} color={Palette.primary[500]} />
+              <Text variant="labelSmall" style={styles.statText}>
+                {creator.podcastCount}
+              </Text>
+            </View>
+          )}
+        </View>
       </Surface>
     </TouchableOpacity>
   );
 }
 
+const AVATAR_SIZE = 72;
+
 const styles = StyleSheet.create({
   card: {
-    width: 150,
-    alignItems: 'center',
-    padding: Spacing.md,
-    borderRadius: Radius.lg,
-    gap: 4,
+    width: 140,
+    alignItems: "center",
+    paddingHorizontal: Spacing.md,
+    paddingTop: Spacing.md,
+    paddingBottom: Spacing.sm,
+    borderRadius: Radius.xl,
+    gap: Spacing.xs,
+  },
+  avatarWrapper: {
+    marginBottom: 2,
+  },
+  avatarRing: {
+    width: AVATAR_SIZE + 5,
+    height: AVATAR_SIZE + 5,
+    borderRadius: (AVATAR_SIZE + 5) / 2,
+    borderWidth: 1,
+    borderColor: Palette.primary[200],
+    alignItems: "center",
+    justifyContent: "center",
   },
   avatar: {
-    width: 94,
-    height: 94,
-    borderRadius: 47,
-    alignItems: 'center',
-    justifyContent: 'center',
-    overflow: 'hidden',
-    marginBottom: 4,
+    width: AVATAR_SIZE,
+    height: AVATAR_SIZE,
+    borderRadius: AVATAR_SIZE / 2,
+    alignItems: "center",
+    justifyContent: "center",
+    overflow: "hidden",
   },
   avatarImage: {
-    width: '100%',
-    height: '100%',
-    resizeMode: 'cover',
+    width: "100%",
+    height: "100%",
+    resizeMode: "cover",
   },
   name: {
-    fontWeight: '600',
-    textAlign: 'center',
+    fontWeight: "700",
+    textAlign: "center",
+    paddingHorizontal: 4,
   },
-  stats: {
-    flexDirection: 'row',
-    alignItems: 'center',
+  statsRow: {
+    flexDirection: "row",
+    gap: 6,
+    justifyContent: "center",
+    flexWrap: "wrap",
     marginTop: 2,
+  },
+  statChip: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 3,
+    backgroundColor: Palette.primary[50],
+    paddingHorizontal: 7,
+    paddingVertical: 3,
+    borderRadius: Radius.full,
+  },
+  statText: {
+    color: Palette.primary[500],
+    fontWeight: "600",
   },
 });

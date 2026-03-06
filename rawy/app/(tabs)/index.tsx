@@ -22,7 +22,6 @@ import {
   TrendingUp,
   Headphones,
   Play,
-  Users,
   Star,
 } from 'lucide-react-native';
 
@@ -31,7 +30,6 @@ import {
   EpisodeRow, 
   EmptyState,
   GuestBanner,
-  CreatorChip,
   CreatorCard,
 } from '@/components/ui';
 import { useAuthContext } from '@/context/auth-context';
@@ -61,7 +59,6 @@ export default function HomeScreen() {
   } = useEpisodes();
 
   const {
-    data: followingData,
     isLoading: followingLoading,
     refetch: refetchFollowing,
   } = useFollowing({ enabled: !!user });
@@ -86,8 +83,7 @@ export default function HomeScreen() {
 
   const podcasts = podcastsData?.pages.flatMap((p) => p.data || []) ?? [];
   const episodes = episodesData?.pages.flatMap((p) => p.data || []) ?? [];
-  const followedCreators = followingData?.pages.flatMap((p) => p.data || []) ?? [];
-  const topCreators = topCreatorsData ?? [];
+  const topCreators = (topCreatorsData ?? []).filter(c => c.userId !== user?._id);
 
   const greeting = () => {
     const hour = new Date().getHours();
@@ -213,7 +209,7 @@ export default function HomeScreen() {
                   data={topCreators}
                   keyExtractor={(item) => item._id}
                   renderItem={({ item }) => (
-                    <View style={{ flexDirection: 'row', marginBottom: Spacing.md }}>
+                    <View style={{ flexDirection: 'row',  }}>
                       <CreatorCard creator={item} />
                     </View>
                   )}
@@ -223,35 +219,6 @@ export default function HomeScreen() {
               </View>
             )}
 
-            {/* ── Following Section ── */}
-            {user && followedCreators.length > 0 && (
-              <View style={styles.section}>
-                <View style={styles.sectionHeader}>
-                  <Users size={20} color={theme.colors.primary} />
-                  <Text
-                    variant="titleMedium"
-                    style={[
-                      styles.sectionTitle,
-                      { color: theme.colors.onBackground },
-                    ]}
-                  >
-                    Creators You Follow
-                  </Text>
-                </View>
-                <FlatList
-                  horizontal
-                  data={followedCreators}
-                  renderItem={({ item }) => (
-                    <View style={{ marginRight: Spacing.sm }}>
-                      <CreatorChip creator={item} />
-                    </View>
-                  )}
-                  keyExtractor={(item) => item._id}
-                  showsHorizontalScrollIndicator={false}
-                  contentContainerStyle={{ paddingHorizontal: Spacing.lg }}
-                />
-              </View>
-            )}
 
             {/* ── Recent Episodes ── */}
             <View style={styles.section}>

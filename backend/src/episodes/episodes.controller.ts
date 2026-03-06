@@ -9,6 +9,7 @@ import {
   Query,
   UseInterceptors,
   UploadedFile,
+  UploadedFiles,
   ParseIntPipe,
   DefaultValuePipe,
   BadRequestException,
@@ -22,7 +23,8 @@ import {
   ApiBody,
   ApiQuery,
 } from '@nestjs/swagger';
-import { FileInterceptor, FilesInterceptor } from '@nestjs/platform-express';
+import { FileFieldsInterceptor } from '@nestjs/platform-express';
+import { diskStorage } from 'multer';
 import { ConfigService } from '@nestjs/config';
 import { EpisodesService } from './episodes.service';
 import { CreateEpisodeDto } from './dto/create-episode.dto';
@@ -32,8 +34,9 @@ import { Roles } from '../common/decorators/roles.decorator';
 import { Public } from '../common/decorators/public.decorator';
 import { Role } from '../common/constants/roles.enum';
 import {
-  getAudioMulterConfig,
-  getImageMulterConfig,
+  generateFileName,
+  audioFileFilter,
+  imageFileFilter,
   getRelativeUrl,
 } from '../common/utils/file-upload.util';
 import { Types } from 'mongoose';
@@ -78,16 +81,42 @@ export class EpisodesController {
     },
   })
   @UseInterceptors(
-    FileInterceptor('audioFile', getAudioMulterConfig(100 * 1024 * 1024)),
-    FileInterceptor('imageFile', getImageMulterConfig(5 * 1024 * 1024)),
+    FileFieldsInterceptor(
+      [
+        { name: 'audioFile', maxCount: 1 },
+        { name: 'imageFile', maxCount: 1 },
+      ],
+      {
+        storage: diskStorage({
+          destination: (req, file, cb) => {
+            if (file.fieldname === 'audioFile') {
+              cb(null, './uploads/audio');
+            } else {
+              cb(null, './uploads/images');
+            }
+          },
+          filename: generateFileName,
+        }),
+        fileFilter: (req, file, cb) => {
+          if (file.fieldname === 'audioFile') {
+            audioFileFilter(req, file, cb);
+          } else {
+            imageFileFilter(req, file, cb);
+          }
+        },
+        limits: { fileSize: 100 * 1024 * 1024 },
+      },
+    ),
   )
   async create(
     @CurrentUser('id') userId: string,
     @CurrentUser('role') userRole: string,
     @Body() createEpisodeDto: CreateEpisodeDto,
-    @UploadedFile() audioFile: Express.Multer.File,
-    @UploadedFile() imageFile?: Express.Multer.File,
+    @UploadedFiles() files: { audioFile?: Express.Multer.File[]; imageFile?: Express.Multer.File[] },
   ) {
+    const audioFile = files?.audioFile?.[0];
+    const imageFile = files?.imageFile?.[0];
+
     if (!audioFile) {
       throw new BadRequestException('Audio file is required');
     }

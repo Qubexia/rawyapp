@@ -10,6 +10,7 @@ import {
   getFollowing,
   getFollowers,
 } from '../../services/follows.service';
+import { creatorKeys } from './use-creators';
 
 export const followKeys = {
   all: ['follows'] as const,
@@ -37,33 +38,41 @@ export function useToggleFollow(targetId: string) {
         ? unfollowUser(targetId)
         : followUser(targetId),
     onMutate: async (isCurrentlyFollowing) => {
+      const delta = isCurrentlyFollowing ? -1 : 1;
+
+      // 1. Optimistically update follow-status cache (creator screen counter)
       await queryClient.cancelQueries({
         queryKey: followKeys.status(targetId),
       });
-      const previous = queryClient.getQueryData(
-        followKeys.status(targetId),
-      );
-
+      const previous = queryClient.getQueryData(followKeys.status(targetId));
       queryClient.setQueryData(
         followKeys.status(targetId),
         (old: any) => ({
           isFollowing: !isCurrentlyFollowing,
-          followerCount: old
-            ? old.followerCount + (isCurrentlyFollowing ? -1 : 1)
-            : isCurrentlyFollowing
-              ? 0
-              : 1,
+          followerCount: old ? old.followerCount + delta : isCurrentlyFollowing ? 0 : 1,
         }),
       );
 
-      return { previous };
+      // 2. Optimistically update followerCount in the Top Creators list (Home)
+      await queryClient.cancelQueries({ queryKey: creatorKeys.top() });
+      const previousTop = queryClient.getQueryData(creatorKeys.top());
+      queryClient.setQueryData(creatorKeys.top(), (old: any) => {
+        if (!Array.isArray(old)) return old;
+        return old.map((c: any) =>
+          c.userId === targetId
+            ? { ...c, followerCount: (c.followerCount ?? 0) + delta }
+            : c,
+        );
+      });
+
+      return { previous, previousTop };
     },
     onError: (_err, _vars, context) => {
       if (context?.previous) {
-        queryClient.setQueryData(
-          followKeys.status(targetId),
-          context.previous,
-        );
+        queryClient.setQueryData(followKeys.status(targetId), context.previous);
+      }
+      if (context?.previousTop) {
+        queryClient.setQueryData(creatorKeys.top(), context.previousTop);
       }
     },
     onSettled: () => {
@@ -74,6 +83,8 @@ export function useToggleFollow(targetId: string) {
         queryKey: ['users', targetId, 'public'],
       });
       queryClient.invalidateQueries({ queryKey: followKeys.following() });
+      // Also refresh creators top list so follower counts update in Home
+      queryClient.invalidateQueries({ queryKey: creatorKeys.top() });
     },
   });
 }
