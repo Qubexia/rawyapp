@@ -220,6 +220,13 @@ export class EpisodesController {
     @CurrentUser('role') userRole: string,
     @Body() updateEpisodeDto: UpdateEpisodeDto,
   ) {
+    // Ensure the requester actually owns this episode (unless ADMIN)
+    if (userRole !== 'ADMIN') {
+      const isOwner = await this.episodesService.isOwner(id, new Types.ObjectId(userId));
+      if (!isOwner) {
+        throw new BadRequestException('You do not have permission to update this episode');
+      }
+    }
     const episode = await this.episodesService.update(
       id,
       updateEpisodeDto,
@@ -249,6 +256,14 @@ export class EpisodesController {
     @CurrentUser('id') userId: string,
     @CurrentUser('role') userRole: string,
   ) {
+    // Ensure the requester actually owns this episode (unless ADMIN)
+    if (userRole !== 'ADMIN') {
+      const isOwner = await this.episodesService.isOwner(id, new Types.ObjectId(userId));
+      if (!isOwner) {
+        throw new BadRequestException('You do not have permission to delete this episode');
+      }
+    }
+
     await this.episodesService.delete(id, new Types.ObjectId(userId), userRole);
 
     return {

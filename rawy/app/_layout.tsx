@@ -7,12 +7,12 @@ import {
   DefaultTheme,
   ThemeProvider,
 } from '@react-navigation/native';
-import { Stack } from 'expo-router';
+import { Stack, usePathname } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect, useState, useCallback } from 'react';
-import { View, StyleSheet } from 'react-native';
-import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { View, StyleSheet, Platform } from 'react-native';
+import { SafeAreaProvider, useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
   useFonts,
   Inter_400Regular,
@@ -20,15 +20,21 @@ import {
   Inter_600SemiBold,
   Inter_700Bold,
 } from '@expo-google-fonts/inter';
-import 'react-native-reanimated';
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
+  withSpring,
+  interpolate,
+} from 'react-native-reanimated';
 import { PaperProvider } from 'react-native-paper';
 import { QueryClientProvider } from '@tanstack/react-query';
 
 import { AuthProvider } from '@/context/auth-context';
-import { PlayerProvider } from '@/context/player-context';
+import { PlayerProvider, usePlayer } from '@/context/player-context';
 import { PaperLightTheme } from '@/constants/theme';
 import { queryClient } from '@/services/query-client';
 import SplashScreenAnimated from '@/components/SplashScreenAnimated';
+import MiniPlayer from '@/components/layout/MiniPlayer';
 
 // Prevent native splash from auto-hiding; we control when it goes away
 SplashScreen.preventAutoHideAsync().catch(() => {});
@@ -140,6 +146,9 @@ export default function RootLayout() {
                         }}
                       />
                     </Stack>
+
+                    {/* Global MiniPlayer — visible across all screens when active */}
+                    <GlobalMiniPlayer />
                   </ThemeProvider>
                 </PlayerProvider>
               </AuthProvider>
@@ -161,3 +170,67 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFFFF',
   },
 });
+
+const TAB_BAR_H = Platform.OS === 'ios' ? 88 : 80;
+// Height of the mini-player card (progress bar 3 + content 66 + padding 8)
+const MINI_PLAYER_HEIGHT = 77;
+// Screens that sit above the tab bar
+const TAB_ROUTES = ['/', '/explore', '/library', '/profile'];
+
+function GlobalMiniPlayer() {
+  const { currentEpisode } = usePlayer();
+  const insets = useSafeAreaInsets();
+  const pathname = usePathname();
+
+  // Always call hooks unconditionally
+  const slideY = useSharedValue(currentEpisode ? 0 : 120);
+  useEffect(() => {
+    slideY.value = withSpring(
+      currentEpisode ? 0 : 120,
+      { damping: 18, stiffness: 200, overshootClamping: false },
+    );
+  }, [currentEpisode, slideY]);
+
+  const animStyle = useAnimatedStyle(() => ({
+    transform: [{ translateY: slideY.value }],
+    opacity: interpolate(slideY.value, [0, 80], [1, 0]),
+  }));
+
+  // Hide on the full-screen player
+  if (pathname === '/player') return null;
+
+  const isTabScreen = TAB_ROUTES.includes(pathname);
+
+  // Hide on auth screens (login/register)
+  const isAuthScreen = pathname?.includes('/login') || pathname?.includes('/register');
+  if (isAuthScreen) return null;
+
+  // On tab screens the tabs layout renders its own MiniPlayer (below the FAB).
+  // Rendering here too would place it above the FAB with no way to fix via zIndex.
+  if (isTabScreen) return null;
+  // On tab screens: sit just above the tab bar
+  // On other screens: sit just above the safe-area bottom edge
+  const bottomPos = isTabScreen
+    ? TAB_BAR_H + 8
+    : Math.max(insets.bottom, 16) + 8;
+
+  return (
+    <Animated.View
+      pointerEvents={currentEpisode ? 'box-none' : 'none'}
+      style={[
+        {
+          position: 'absolute',
+          left: 12,
+          right: 12,
+          bottom: bottomPos,
+          zIndex: 999,
+        },
+        animStyle,
+      ]}
+    >
+      <MiniPlayer />
+    </Animated.View>
+  );
+}
+
+export { MINI_PLAYER_HEIGHT };

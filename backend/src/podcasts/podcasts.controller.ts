@@ -175,6 +175,13 @@ export class PodcastsController {
     @Body() updatePodcastDto: UpdatePodcastDto,
     @UploadedFile() coverImage?: Express.Multer.File,
   ) {
+    // Ensure the requester actually owns this podcast (unless ADMIN)
+    if (userRole !== 'ADMIN') {
+      const isOwner = await this.podcastsService.isOwner(id, new Types.ObjectId(userId));
+      if (!isOwner) {
+        throw new BadRequestException('You do not have permission to update this podcast');
+      }
+    }
     let coverImageUrl: string | undefined;
 
     if (coverImage) {
@@ -211,6 +218,14 @@ export class PodcastsController {
     @CurrentUser('id') userId: string,
     @CurrentUser('role') userRole: string,
   ) {
+    // Ensure the requester actually owns this podcast (unless ADMIN)
+    if (userRole !== 'ADMIN') {
+      const isOwner = await this.podcastsService.isOwner(id, new Types.ObjectId(userId));
+      if (!isOwner) {
+        throw new BadRequestException('You do not have permission to delete this podcast');
+      }
+    }
+
     await this.podcastsService.delete(id, new Types.ObjectId(userId), userRole);
 
     return {

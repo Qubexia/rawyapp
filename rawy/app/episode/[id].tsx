@@ -24,6 +24,9 @@ import { resolveImageUrl } from '@/utils/url';
 
 import { usePlayer } from '@/context/player-context';
 
+// Space to reserve at the bottom when the mini-player is visible
+const MINI_PLAYER_CLEARANCE = 92; // 77px card + 15px gap
+
 export default function EpisodeDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const theme = useTheme();
@@ -209,7 +212,11 @@ export default function EpisodeDetailScreen() {
         <View style={{ width: 48 }} />
       </View>
 
-      <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : 'height'} keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}>
+      <KeyboardAvoidingView
+        style={{ flex: 1, marginBottom: currentEpisode ? MINI_PLAYER_CLEARANCE : 0 }}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}
+      >
         <FlatList
           data={comments}
           keyExtractor={(i, idx) => i?._id ? String(i._id) : String(idx)}

@@ -34,13 +34,12 @@ import { HapticTab } from "@/components/layout/haptic-tab";
 import { Palette } from "@/constants/theme";
 import { useAuthContext } from "@/context/auth-context";
 import { isCreator } from "@/utils/roles";
+import { usePlayer } from "@/context/player-context";
 import MiniPlayer from "@/components/layout/MiniPlayer";
 
-
-import { usePlayer } from "@/context/player-context";
-
 const TAB_BAR_HEIGHT = Platform.OS === "ios" ? 88 : 80;
-const MINI_PLAYER_HEIGHT = 64;
+// Actual rendered height of the MiniPlayer card (3px progress + 66px content + 8px paddingBottom)
+const MINI_PLAYER_HEIGHT = 77;
 const FAB_SIZE = 56;
 
 export default function TabLayout() {
@@ -59,9 +58,13 @@ export default function TabLayout() {
   useEffect(() => {
     miniY.value = withSpring(
       currentEpisode ? 0 : 100,
-      { damping: 18, stiffness: 200, overshootClamping: false }
+      { damping: 18, stiffness: 200, overshootClamping: false },
     );
   }, [currentEpisode, miniY]);
+  const miniPlayerStyle = useAnimatedStyle(() => ({
+    transform: [{ translateY: miniY.value }],
+    opacity: interpolate(miniY.value, [0, 60], [1, 0]),
+  }));
 
   const toggleFab = () => {
     const next = !fabOpen;
@@ -111,12 +114,9 @@ export default function TabLayout() {
     ],
   }));
 
-  const bottomOffset = currentEpisode ? MINI_PLAYER_HEIGHT + 16 + TAB_BAR_HEIGHT : TAB_BAR_HEIGHT;
-
-  const miniPlayerStyle = useAnimatedStyle(() => ({
-    transform: [{ translateY: miniY.value }],
-    opacity: interpolate(miniY.value, [0, 60], [1, 0]),
-  }));
+  const bottomOffset = currentEpisode
+    ? TAB_BAR_HEIGHT + 8 + MINI_PLAYER_HEIGHT + FAB_SIZE / 2 + 8
+    : TAB_BAR_HEIGHT;
 
   return (
     <View style={{ flex: 1 }}>
@@ -167,7 +167,7 @@ export default function TabLayout() {
         </Tabs>
       </View>
 
-      {/* Floating MiniPlayer — slides up above tab bar */}
+      {/* Floating MiniPlayer — zIndex 25, always BELOW the FAB (zIndex 999999) */}
       <Animated.View
         pointerEvents={currentEpisode ? 'box-none' : 'none'}
         style={[styles.miniPlayerWrapper, miniPlayerStyle]}
@@ -225,11 +225,12 @@ export default function TabLayout() {
             </TouchableOpacity>
           </Animated.View>
 
-          {/* FAB */}
+          {/* FAB — moves to far right when mini player is active */}
           <View
             style={[
               styles.fabContainer,
               { bottom: bottomOffset - FAB_SIZE / 2 },
+              currentEpisode ? styles.fabRight : styles.fabCenter,
             ]}
           >
             <TouchableOpacity activeOpacity={0.85} onPress={toggleFab}>
@@ -254,8 +255,13 @@ export default function TabLayout() {
 const styles = StyleSheet.create({
   fabContainer: {
     position: "absolute",
+    zIndex: 999999,
+  },
+  fabCenter: {
     alignSelf: "center",
-    zIndex: 30,
+  },
+  fabRight: {
+    right: 20,
   },
   miniPlayerWrapper: {
     position: 'absolute',

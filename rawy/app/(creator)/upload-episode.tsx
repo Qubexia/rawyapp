@@ -62,7 +62,9 @@ export default function UploadEpisodeScreen() {
   }, [user, router]);
 
   const [audioFile, setAudioFile] = React.useState<any>(null);
-  const [imageFile, setImageFile] = React.useState<import('@/utils/image-picker').SelectedImage | null>(null);
+  const [imageFile, setImageFile] = React.useState<
+    import("@/utils/image-picker").SelectedImage | null
+  >(null);
   const [podcastMenuVisible, setPodcastMenuVisible] = React.useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
 
@@ -137,7 +139,8 @@ export default function UploadEpisodeScreen() {
     // progressEvent.total which includes multipart/form-data framing overhead
     // that can inflate the reported total beyond the real byte count.
     const knownTotal: number =
-      (audioFile.size ?? 0) + (imageFile ? (imageFile as any).fileSize ?? 0 : 0);
+      (audioFile.size ?? 0) +
+      (imageFile ? ((imageFile as any).fileSize ?? 0) : 0);
 
     setUploadProgress(0);
     try {

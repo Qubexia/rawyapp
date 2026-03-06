@@ -4,8 +4,6 @@ import * as ExpoAudio from 'expo-audio';
 import { Episode } from '@/services/episodes.service';
 import { SERVER_URL } from '@/services/axios-client';
 
-import { resolveImageUrl } from '@/utils/url';
-
 // Resolve audio URL — stored as relative path from backend
 function resolveAudioUrl(path?: string): string {
   if (!path) return '';
@@ -39,12 +37,14 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
   const [position, setPosition] = useState(0);
   const [duration, setDuration] = useState(0);
 
-  // Configure audio session once on mount
+  // Configure audio session once on mount and enable background playback
   useEffect(() => {
     ExpoAudio.setAudioModeAsync({
       playsInSilentMode: true,
       interruptionMode: 'doNotMix',
-    }).catch(() => {});
+      // Keep audio active when app goes to background
+      staysActiveInBackground: true,
+    } as any).catch(() => {});
   }, []);
 
   // Resolve to full URL for the audio player
