@@ -3,6 +3,7 @@ import { Alert } from 'react-native';
 import * as ExpoAudio from 'expo-audio';
 import { Episode } from '@/services/episodes.service';
 import { SERVER_URL } from '@/services/axios-client';
+import { resolveImageUrl } from '@/utils/url';
 
 // Resolve audio URL — stored as relative path from backend
 function resolveAudioUrl(path?: string): string {
@@ -12,6 +13,28 @@ function resolveAudioUrl(path?: string): string {
   // Use the same logic as resolveImageUrl but for audio
   const normalizedPath = path.replace(/\\/g, '/').replace(/^\//, '');
   return `${SERVER_URL}/${normalizedPath}`;
+}
+
+// Enable lock screen controls — required on Android for sustained background playback
+function enableLockScreen(player: { setActiveForLockScreen?: (active: boolean, metadata?: object) => void }, episode: Episode) {
+  try {
+    if (typeof player.setActiveForLockScreen === 'function') {
+      player.setActiveForLockScreen(true, {
+        title: episode.title,
+        artist: episode.creator?.name ?? 'Rawy',
+        albumTitle: episode.podcast?.title ?? '',
+        artworkUrl: resolveImageUrl(episode.podcast?.coverImageUrl),
+      });
+    }
+  } catch {}
+}
+
+function disableLockScreen(player: { setActiveForLockScreen?: (active: boolean) => void }) {
+  try {
+    if (typeof player.setActiveForLockScreen === 'function') {
+      player.setActiveForLockScreen(false);
+    }
+  } catch {}
 }
 
 interface PlayerContextType {
@@ -42,9 +65,8 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
     ExpoAudio.setAudioModeAsync({
       playsInSilentMode: true,
       interruptionMode: 'doNotMix',
-      // Keep audio active when app goes to background
-      staysActiveInBackground: true,
-    } as any).catch(() => {});
+      shouldPlayInBackground: true,
+    }).catch(() => {});
   }, []);
 
   // Resolve to full URL for the audio player
@@ -70,7 +92,10 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
       prevEpisodeId.current = currentEpisode._id;
       // Small delay to let expo-audio load the new source
       const t = setTimeout(() => {
-        try { player.play(); } catch {}
+        try {
+          enableLockScreen(player, currentEpisode);
+          player.play();
+        } catch {}
       }, 300);
       return () => clearTimeout(t);
     }
@@ -79,7 +104,10 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
   const playEpisode = async (episode: Episode) => {
     try {
       if (currentEpisode?._id === episode._id) {
-        if (!player.playing) player.play();
+        if (!player.playing) {
+          enableLockScreen(player, episode);
+          player.play();
+        }
         return;
       }
       setCurrentEpisode(episode);
@@ -95,6 +123,7 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
       player.pause();
       setIsPlaying(false);
     } else {
+      if (currentEpisode) enableLockScreen(player, currentEpisode);
       player.play();
       setIsPlaying(true);
     }
@@ -118,7 +147,12 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
   };
 
   const dismiss = () => {
-    try { player?.pause(); } catch {}
+    try {
+      if (typeof player?.setActiveForLockScreen === 'function') {
+        player.setActiveForLockScreen(false);
+      }
+      player?.pause();
+    } catch {}
     setCurrentEpisode(null);
     setIsPlaying(false);
     setPosition(0);
