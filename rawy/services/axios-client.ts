@@ -23,7 +23,7 @@ import { getItem, setItem, deleteItem } from './token-storage';
 
 // Use environment variable for API URL or fallback to local IP for development
 // In Expo, variables starting with EXPO_PUBLIC_ are available in the client
-const DEFAULT_LOCAL_IP = '192.168.1.3'; // Fallback for local dev
+const DEFAULT_LOCAL_IP = '192.168.1.4'; // Fallback for local dev
 
 export const SERVER_URL = process.env.EXPO_PUBLIC_API_URL || Platform.select({
   android: `http://${DEFAULT_LOCAL_IP}:3000`,

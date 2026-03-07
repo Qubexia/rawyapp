@@ -38,6 +38,13 @@ import { useAuthContext } from "@/context/auth-context";
 import { Palette, Spacing, Radius } from "@/constants/theme";
 import { isCreator } from "@/utils/roles";
 import { pickImage as pickImageUtil } from "@/utils/image-picker";
+import { extractAudioMetadata } from "@/utils/audio-metadata";
+
+function formatDuration(seconds: number): string {
+  const m = Math.floor(seconds / 60);
+  const s = Math.floor(seconds % 60);
+  return `${m}:${s.toString().padStart(2, "0")}`;
+}
 
 // Lazy import to avoid crash when ExpoDocumentPicker native module is missing (Expo Go)
 let DocumentPicker: typeof import("expo-document-picker") | null = null;
@@ -67,6 +74,11 @@ export default function UploadEpisodeScreen() {
   >(null);
   const [podcastMenuVisible, setPodcastMenuVisible] = React.useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
+  const [extractedDurationSec, setExtractedDurationSec] = React.useState<
+    number | null
+  >(null);
+  const [durationExtractionFailed, setDurationExtractionFailed] =
+    React.useState(false);
 
   const { data: creator } = useMyCreatorProfile({
     enabled: !!user && isCreator(user),
@@ -110,12 +122,31 @@ export default function UploadEpisodeScreen() {
           "audio/x-m4a",
           "audio/mp4",
           "audio/aac",
+          "audio/ogg",
+          "audio/flac",
+          "audio/x-flac",
         ],
         copyToCacheDirectory: true,
       });
 
       if (!result.canceled && result.assets && result.assets.length > 0) {
-        setAudioFile(result.assets[0]);
+        const asset = result.assets[0];
+        const fileSize = asset.size ?? 0;
+        const metadata = await extractAudioMetadata(
+          asset.uri,
+          asset.name,
+          fileSize
+        );
+
+        if (!metadata.isValid) {
+          Alert.alert("File Too Large", metadata.error ?? "Please select a smaller file.");
+          return;
+        }
+
+        setAudioFile(asset);
+        setValue("title", metadata.extractedTitle, { shouldValidate: true });
+        setExtractedDurationSec(metadata.durationSeconds);
+        setDurationExtractionFailed(metadata.durationSeconds === null);
       }
     } catch (err) {
       console.error("Error picking audio file:", err);
@@ -144,10 +175,10 @@ export default function UploadEpisodeScreen() {
 
     setUploadProgress(0);
     try {
-      // expo-document-picker v14 exposes `duration` in ms for audio assets
-      const durationSec = audioFile?.duration
-        ? Math.round(audioFile.duration / 1000)
-        : undefined;
+      // Prefer extracted duration; fallback to document-picker duration
+      const durationSec =
+        extractedDurationSec ??
+        (audioFile?.duration ? Math.round(audioFile.duration / 1000) : undefined);
 
       await createEpisode.mutateAsync({
         data: { ...data, duration: durationSec },
@@ -182,6 +213,12 @@ export default function UploadEpisodeScreen() {
 
   const isUploading = createEpisode.isPending;
   const uploadPercentage = Math.round(uploadProgress * 100);
+
+  const formatDuration = (sec: number) => {
+    const m = Math.floor(sec / 60);
+    const s = sec % 60;
+    return `${m}:${s.toString().padStart(2, "0")}`;
+  };
 
   return (
     <SafeAreaView
@@ -420,7 +457,22 @@ export default function UploadEpisodeScreen() {
                       ? (audioFile.size / (1024 * 1024)).toFixed(2)
                       : 0}{" "}
                     MB
+                    {extractedDurationSec != null && (
+                      <> · {formatDuration(extractedDurationSec)}</>
+                    )}
                   </Text>
+                    {durationExtractionFailed && (
+                    <Text
+                      variant="labelSmall"
+                      style={{
+                        color: theme.colors.onSurfaceVariant,
+                        marginTop: 4,
+                        fontStyle: "italic",
+                      }}
+                    >
+                      Could not extract duration. Duration will be omitted.
+                    </Text>
+                  )}
                 </>
               ) : (
                 <>
@@ -437,7 +489,7 @@ export default function UploadEpisodeScreen() {
                     variant="labelSmall"
                     style={{ color: theme.colors.onSurfaceVariant }}
                   >
-                    MP3, M4A, WAV
+                    MP3, M4A, WAV, OGG, FLAC
                   </Text>
                 </>
               )}

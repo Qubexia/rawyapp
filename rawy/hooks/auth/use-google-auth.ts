@@ -43,6 +43,7 @@ function useGoogleAuthReal() {
 
   const [request, response, promptAsync] = Google.useIdTokenAuthRequest({
     webClientId: '871601943927-ogtg73rhul0bs7mi7mkle0cp1m2t4o3b.apps.googleusercontent.com',
+    iosClientId: '871601943927-ogtg73rhul0bs7mi7mkle0cp1m2t4o3b.apps.googleusercontent.com',
     androidClientId: '871601943927-4gd3qbd1cuarmrs5082486e6tudvnfjv.apps.googleusercontent.com',
   });
 
