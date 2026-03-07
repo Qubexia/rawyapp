@@ -3,6 +3,8 @@ import {
   NotFoundException,
   BadRequestException,
   ConflictException,
+  Inject,
+  forwardRef,
 } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
@@ -17,6 +19,7 @@ export class FollowsService {
   constructor(
     @InjectModel(Follow.name) private followModel: Model<FollowDocument>,
     private creatorsService: CreatorsService,
+    @Inject(forwardRef(() => UsersService))
     private usersService: UsersService,
   ) {}
 
@@ -215,5 +218,36 @@ export class FollowsService {
   async isFollowing(followerId: Types.ObjectId, creatorId: Types.ObjectId): Promise<boolean> {
     const follow = await this.followModel.findOne({ followerId, creatorId }).exec();
     return !!follow;
+  }
+
+  /**
+   * Delete all follow records for a user (both following and followers).
+   * Updates followerCount/followingCount for affected users.
+   * Used in account deletion cascade.
+   */
+  async deleteAllForUser(userId: Types.ObjectId): Promise<void> {
+    // Delete follows where user is the follower (user follows X)
+    const following = await this.followModel.find({ followerId: userId }).exec();
+    for (const f of following) {
+      await this.usersService.decrementFollowerCount(f.creatorId as Types.ObjectId);
+      await this.usersService.decrementFollowingCount(userId);
+    }
+    await this.followModel.deleteMany({ followerId: userId }).exec();
+
+    // Delete follows where user is the creator (X follows user)
+    const followers = await this.followModel.find({ creatorId: userId }).exec();
+    for (const f of followers) {
+      await this.usersService.decrementFollowerCount(userId);
+      await this.usersService.decrementFollowingCount(f.followerId as Types.ObjectId);
+    }
+    await this.followModel.deleteMany({ creatorId: userId }).exec();
+
+    // Sync creator profile counts for creators the user followed
+    for (const f of following) {
+      const creatorProfile = await this.creatorsService.findByUserId(f.creatorId as Types.ObjectId);
+      if (creatorProfile) {
+        await this.creatorsService.decrementFollowerCount(f.creatorId as Types.ObjectId);
+      }
+    }
   }
 }

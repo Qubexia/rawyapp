@@ -2,7 +2,7 @@
  * Explore screen — search podcasts, browse creators.
  */
 
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import {
   View,
   FlatList,
@@ -10,6 +10,7 @@ import {
   StyleSheet,
   TouchableOpacity,
   RefreshControl,
+  Image,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import {
@@ -30,6 +31,7 @@ import {
 
 import { usePodcasts } from '@/hooks/queries/use-podcasts';
 import { useCreators } from '@/hooks/queries/use-creators';
+import { resolveImageUrl } from '@/utils/url';
 import { Palette, Spacing, Radius } from '@/constants/theme';
 import type { Podcast } from '@/services/podcasts.service';
 import type { CreatorProfile } from '@/services/creators.service';
@@ -46,18 +48,31 @@ const CATEGORIES = [
   'Sports',
 ];
 
+const DEBOUNCE_MS = 500;
+
 export default function ExploreScreen() {
   const theme = useTheme();
   const router = useRouter();
 
   const [searchQuery, setSearchQuery] = useState('');
+  const [debouncedSearch, setDebouncedSearch] = useState('');
   const [activeCategory, setActiveCategory] = useState('All');
+
+  useEffect(() => {
+    const t = setTimeout(() => {
+      setDebouncedSearch(searchQuery);
+    }, DEBOUNCE_MS);
+    return () => clearTimeout(t);
+  }, [searchQuery]);
 
   const {
     data: podcastsData,
     isLoading: podcastsLoading,
     refetch: refetchPodcasts,
-  } = usePodcasts();
+  } = usePodcasts({
+    search: debouncedSearch || undefined,
+    category: activeCategory === 'All' ? undefined : activeCategory,
+  });
 
   const {
     data: creatorsData,
@@ -76,113 +91,126 @@ export default function ExploreScreen() {
   const podcasts = podcastsData?.pages.flatMap((p) => p.data) ?? [];
   const creators = creatorsData?.pages.flatMap((p) => p.data) ?? [];
 
-  // Filter by search query
-  const filteredPodcasts = searchQuery
-    ? podcasts.filter(
-        (p) =>
-          p.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          p.description?.toLowerCase().includes(searchQuery.toLowerCase()),
-      )
-    : podcasts;
-
   const isLoading = podcastsLoading || creatorsLoading;
 
-  const renderPodcastRow = ({ item }: { item: Podcast }) => (
-    <TouchableOpacity
-      activeOpacity={0.8}
-      onPress={() => router.push(`/podcast/${item._id}` as any)}
-    >
-      <Surface
-        style={[
-          styles.podcastRow,
-          {
-            backgroundColor: Palette.light.surface,
-          },
-        ]}
-        elevation={1}
+  const renderPodcastRow = ({ item }: { item: Podcast }) => {
+    const coverUri = resolveImageUrl(item.coverImageUrl);
+    return (
+      <TouchableOpacity
+        activeOpacity={0.8}
+        onPress={() => router.push(`/podcast/${item._id}` as any)}
       >
-        <View
+        <Surface
           style={[
-            styles.podcastIcon,
+            styles.podcastRow,
             {
-              backgroundColor: Palette.primary[50],
+              backgroundColor: Palette.light.surface,
             },
           ]}
+          elevation={1}
         >
-          <Headphones
-            size={22}
-            color={Palette.primary[500]}
-            strokeWidth={1.5}
-          />
-        </View>
-        <View style={styles.podcastInfo}>
-          <Text
-            variant="titleSmall"
-            numberOfLines={1}
-            style={{ color: theme.colors.onSurface, fontWeight: '600' }}
+          <View
+            style={[
+              styles.podcastIcon,
+              {
+                backgroundColor: Palette.primary[50],
+              },
+            ]}
           >
-            {item.title}
+            {coverUri ? (
+              <Image
+                source={{ uri: coverUri }}
+                style={styles.podcastCover}
+                resizeMode="cover"
+              />
+            ) : (
+              <Headphones
+                size={22}
+                color={Palette.primary[500]}
+                strokeWidth={1.5}
+              />
+            )}
+          </View>
+          <View style={styles.podcastInfo}>
+            <Text
+              variant="titleSmall"
+              numberOfLines={1}
+              style={{ color: theme.colors.onSurface, fontWeight: '600' }}
+            >
+              {item.title}
+            </Text>
+            <Text
+              variant="bodySmall"
+              numberOfLines={1}
+              style={{ color: theme.colors.onSurfaceVariant }}
+            >
+              {item.creator?.name || 'Unknown'} · {item.episodeCount || 0}{' '}
+              episodes
+            </Text>
+          </View>
+        </Surface>
+      </TouchableOpacity>
+    );
+  };
+
+  const renderCreatorChip = ({ item }: { item: CreatorProfile }) => {
+    const avatarUri = resolveImageUrl(item.avatarUrl);
+    return (
+      <TouchableOpacity
+        activeOpacity={0.8}
+        onPress={() => router.push(`/creator/${item._id}` as any)}
+      >
+        <Surface
+          style={[
+            styles.creatorChip,
+            {
+              backgroundColor: Palette.light.surfaceVariant,
+            },
+          ]}
+          elevation={0}
+        >
+          <View
+            style={[
+              styles.creatorAvatar,
+              {
+                backgroundColor: Palette.primary[100],
+              },
+            ]}
+          >
+            {avatarUri ? (
+              <Image
+                source={{ uri: avatarUri }}
+                style={styles.creatorAvatarImage}
+                resizeMode="cover"
+              />
+            ) : (
+              <Mic
+                size={16}
+                color={Palette.primary[500]}
+              />
+            )}
+          </View>
+          <Text
+            variant="labelMedium"
+            numberOfLines={1}
+            style={{
+              color: theme.colors.onSurface,
+              fontWeight: '600',
+              maxWidth: 80,
+            }}
+          >
+            {item.name}
           </Text>
           <Text
-            variant="bodySmall"
-            numberOfLines={1}
+            variant="labelSmall"
             style={{ color: theme.colors.onSurfaceVariant }}
           >
-            {item.creator?.name || 'Unknown'} · {item.episodeCount || 0}{' '}
-            episodes
+            {item.followerCount || 0} followers
           </Text>
-        </View>
-      </Surface>
-    </TouchableOpacity>
-  );
-
-  const renderCreatorChip = ({ item }: { item: CreatorProfile }) => (
-    <TouchableOpacity
-      activeOpacity={0.8}
-      onPress={() => router.push(`/creator/${item._id}` as any)}
-    >
-      <Surface
-        style={[
-          styles.creatorChip,
-          {
-            backgroundColor: Palette.light.surfaceVariant,
-          },
-        ]}
-        elevation={0}
-      >
-        <View
-          style={[
-            styles.creatorAvatar,
-            {
-              backgroundColor: Palette.primary[100],
-            },
-          ]}
-        >
-          <Mic
-            size={16}
-            color={Palette.primary[500]}
-          />
-        </View>
-        <Text
-          variant="labelMedium"
-          numberOfLines={1}
-          style={{
-            color: theme.colors.onSurface,
-            fontWeight: '600',
-            maxWidth: 80,
-          }}
-        >
-          {item.name}
-        </Text>
-        <Text
-          variant="labelSmall"
-          style={{ color: theme.colors.onSurfaceVariant }}
-        >
-          {item.followerCount || 0} followers
-        </Text>
-      </Surface>
-    </TouchableOpacity>
-  );
+        </Surface>
+      </TouchableOpacity>
+    );
+  };
 
   return (
     <SafeAreaView
@@ -269,7 +297,7 @@ export default function ExploreScreen() {
         ) : (
           <>
             {/* Creators */}
-            {creators.length > 0 && (
+            {creators.length > 0 ? (
               <View style={styles.section}>
                 <View style={styles.sectionHeader}>
                   <Users size={20} color={theme.colors.primary} />
@@ -292,6 +320,45 @@ export default function ExploreScreen() {
                   contentContainerStyle={styles.horizontalList}
                 />
               </View>
+            ) : (
+              <View style={styles.section}>
+                <View style={styles.sectionHeader}>
+                  <Users size={20} color={theme.colors.primary} />
+                  <Text
+                    variant="titleMedium"
+                    style={[
+                      styles.sectionTitle,
+                      { color: theme.colors.onBackground },
+                    ]}
+                  >
+                    Popular Creators
+                  </Text>
+                </View>
+                <Surface
+                  style={[
+                    styles.emptyState,
+                    {
+                      backgroundColor: Palette.light.surfaceVariant,
+                    },
+                  ]}
+                  elevation={0}
+                >
+                  <Users
+                    size={32}
+                    color={theme.colors.onSurfaceVariant}
+                    strokeWidth={1}
+                  />
+                  <Text
+                    variant="bodyMedium"
+                    style={{
+                      color: theme.colors.onSurfaceVariant,
+                      marginTop: Spacing.sm,
+                    }}
+                  >
+                    No creators yet
+                  </Text>
+                </Surface>
+              </View>
             )}
 
             {/* Podcasts */}
@@ -305,12 +372,14 @@ export default function ExploreScreen() {
                     { color: theme.colors.onBackground },
                   ]}
                 >
-                  {searchQuery ? 'Search Results' : 'All Podcasts'}
+                  {debouncedSearch || activeCategory !== 'All'
+                    ? 'Search Results'
+                    : 'All Podcasts'}
                 </Text>
               </View>
-              {filteredPodcasts.length > 0 ? (
+              {podcasts.length > 0 ? (
                 <View style={styles.podcastList}>
-                  {filteredPodcasts.map((podcast, idx) => (
+                  {podcasts.map((podcast, idx) => (
                     <View key={podcast?._id || idx} style={{ width: '48%', marginBottom: Spacing.md }}>
                       {renderPodcastRow({ item: podcast })}
                     </View>
@@ -338,9 +407,7 @@ export default function ExploreScreen() {
                       marginTop: Spacing.sm,
                     }}
                   >
-                    {searchQuery
-                      ? 'No results found'
-                      : 'No podcasts available'}
+                    No podcasts found
                   </Text>
                 </Surface>
               )}
@@ -411,7 +478,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.lg,
     gap: Spacing.md,
   },
-  // ── Creator chip ──
   creatorChip: {
     borderRadius: Radius.lg,
     padding: Spacing.md,
@@ -425,8 +491,12 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: Spacing.sm,
+    overflow: 'hidden',
   },
-  // ── Podcast row ──
+  creatorAvatarImage: {
+    width: '100%',
+    height: '100%',
+  },
   podcastList: {
     paddingHorizontal: Spacing.lg,
     gap: Spacing.sm,
@@ -444,11 +514,15 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: Spacing.md,
+    overflow: 'hidden',
+  },
+  podcastCover: {
+    width: '100%',
+    height: '100%',
   },
   podcastInfo: {
     flex: 1,
   },
-  // ── Empty state ──
   emptyState: {
     marginHorizontal: Spacing.lg,
     borderRadius: Radius.lg,

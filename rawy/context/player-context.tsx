@@ -2,6 +2,8 @@ import React, { createContext, useContext, useState, useEffect, useRef, ReactNod
 import { Alert } from 'react-native';
 import * as ExpoAudio from 'expo-audio';
 import { Episode } from '@/services/episodes.service';
+import { recordView } from '@/services/views.service';
+import { useAuthContext } from '@/context/auth-context';
 import { SERVER_URL } from '@/services/axios-client';
 import { resolveImageUrl } from '@/utils/url';
 
@@ -55,6 +57,7 @@ const PlayerContext = createContext<PlayerContextType | undefined>(undefined);
 const SKIP_MS = 15_000; // 15 seconds
 
 export function PlayerProvider({ children }: { children: ReactNode }) {
+  const { isAuthenticated } = useAuthContext();
   const [currentEpisode, setCurrentEpisode] = useState<Episode | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [position, setPosition] = useState(0);

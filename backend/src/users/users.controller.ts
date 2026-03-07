@@ -10,6 +10,7 @@ import { CurrentUser } from '../common/decorators/current-user.decorator';
 import type { UserDocument } from './schemas/user.schema';
 import { PublicUserDto } from './dto/public-user.dto';
 import { DeviceTokenDto } from './dto/device-token.dto';
+import { DeleteAccountDto } from './dto/delete-account.dto';
 import { getImageMulterConfig, normalizePath } from '../common/utils/file-upload.util';
 
 @ApiTags('users')
@@ -85,6 +86,20 @@ export class UsersController {
   @ApiResponse({ status: HttpStatus.BAD_REQUEST, description: 'Validation error' })
   async removeDeviceToken(@CurrentUser() user: UserDocument, @Body() dto: DeviceTokenDto) {
     await this.usersService.removeDeviceToken(user._id.toString(), dto.token);
+  }
+
+  @Delete('me')
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Delete account (requires password re-entry)' })
+  @ApiResponse({ status: HttpStatus.OK, description: 'Account deleted successfully' })
+  @ApiResponse({ status: HttpStatus.UNAUTHORIZED, description: 'Password is incorrect' })
+  @ApiResponse({ status: HttpStatus.NOT_FOUND, description: 'User not found' })
+  async deleteAccount(
+    @CurrentUser() user: UserDocument,
+    @Body() dto: DeleteAccountDto,
+  ): Promise<{ message: string }> {
+    await this.usersService.deleteAccount(user._id.toString(), dto.password);
+    return { message: 'Account deleted successfully' };
   }
 
   @Get(':id/public')

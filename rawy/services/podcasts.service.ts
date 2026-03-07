@@ -11,9 +11,11 @@ export interface Podcast {
   title: string;
   description?: string;
   coverImageUrl?: string;
+  category?: string;
   creator: {
     _id: string;
     name: string;
+    avatarUrl?: string;
     avatar?: string;
   };
   episodeCount: number;
@@ -36,9 +38,13 @@ export async function getPodcasts(
   page = 1,
   limit = 20,
   creatorId?: string,
+  search?: string,
+  category?: string,
 ): Promise<PaginatedResponse<Podcast>> {
   const params: Record<string, string | number> = { page, limit };
   if (creatorId) params.creatorId = creatorId;
+  if (search?.trim()) params.search = search.trim();
+  if (category?.trim() && category !== 'All') params.category = category.trim();
 
   const { data } = await axiosClient.get<PaginatedResponse<Podcast>>('/podcasts', { params });
   return data;

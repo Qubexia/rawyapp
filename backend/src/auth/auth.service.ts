@@ -10,6 +10,7 @@ import { RegisterCreatorDto } from './dto/register-creator.dto';
 import { LoginDto } from './dto/login.dto';
 import { RefreshTokenDto } from './dto/refresh-token.dto';
 import { TokenResponseDto } from './dto/token-response.dto';
+import { ChangePasswordDto } from './dto/change-password.dto';
 import { Role } from '../common/constants/roles.enum';
 import { Types } from 'mongoose';
 import { OAuth2Client } from 'google-auth-library';
@@ -188,6 +189,23 @@ export class AuthService {
 
   async logout(userId: string): Promise<void> {
     await this.usersService.clearRefreshToken(userId);
+  }
+
+  async changePassword(
+    userId: string,
+    currentPassword: string,
+    newPassword: string,
+  ): Promise<void> {
+    const user = await this.usersService.findByIdWithPassword(userId);
+    if (!user || !user.passwordHash) {
+      throw new UnauthorizedException('User not found or password not set');
+    }
+    const isPasswordValid = await bcrypt.compare(currentPassword, user.passwordHash);
+    if (!isPasswordValid) {
+      throw new UnauthorizedException('Current password is incorrect');
+    }
+    const newPasswordHash = await bcrypt.hash(newPassword, 10);
+    await this.usersService.update(userId, { passwordHash: newPasswordHash });
   }
 
   async generateTokens(user: UserDocument): Promise<{ accessToken: string; refreshToken: string }> {

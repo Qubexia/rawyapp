@@ -111,16 +111,31 @@ export class PodcastsController {
     type: String,
     example: '507f1f77bcf86cd799439011',
   })
+  @ApiQuery({
+    name: 'search',
+    required: false,
+    type: String,
+    description: 'Keyword search across title and description',
+  })
+  @ApiQuery({
+    name: 'category',
+    required: false,
+    type: String,
+    description: 'Filter by category',
+    enum: ['Technology', 'Business', 'Comedy', 'Education', 'Health', 'Science', 'Culture', 'Sports'],
+  })
   async findAll(
     @Query('page', new DefaultValuePipe(1), ParseIntPipe) page: number,
     @Query('limit', new DefaultValuePipe(20), ParseIntPipe) limit: number,
     @Query('creatorId') creatorId?: string,
+    @Query('search') search?: string,
+    @Query('category') category?: string,
   ) {
     if (limit > 100) {
       throw new BadRequestException('Limit cannot exceed 100');
     }
 
-    const result = await this.podcastsService.findAll(page, limit, creatorId);
+    const result = await this.podcastsService.findAll(page, limit, creatorId, search, category);
 
     return {
       statusCode: 200,

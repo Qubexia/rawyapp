@@ -10,7 +10,7 @@ import { EpisodesModule } from '../episodes/episodes.module';
 @Module({
   imports: [
     MongooseModule.forFeature([{ name: Podcast.name, schema: PodcastSchema }]),
-    UsersModule,
+    forwardRef(() => UsersModule),
     CreatorsModule,
     forwardRef(() => EpisodesModule),
   ],

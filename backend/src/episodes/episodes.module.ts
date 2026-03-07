@@ -18,7 +18,7 @@ import { NotificationsModule } from '../notifications/notifications.module';
     forwardRef(() => CommentsModule),
     forwardRef(() => ViewsModule),
     forwardRef(() => NotificationsModule),
-    UsersModule,
+    forwardRef(() => UsersModule),
   ],
   controllers: [EpisodesController],
   providers: [EpisodesService],

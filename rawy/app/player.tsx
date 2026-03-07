@@ -47,6 +47,13 @@ function formatMs(ms: number) {
   return `${m}:${s < 10 ? "0" : ""}${s}`;
 }
 
+function formatViews(count: number | undefined): string {
+  if (!count || count <= 0) return "0 views";
+  if (count < 1000) return `${count} views`;
+  if (count < 1_000_000) return `${(count / 1000).toFixed(1).replace(/\.0$/, "")}K views`;
+  return `${(count / 1_000_000).toFixed(1).replace(/\.0$/, "")}M views`;
+}
+
 export default function PlayerScreen() {
   const router = useRouter();
   const { user } = useAuthContext();
@@ -171,6 +178,9 @@ export default function PlayerScreen() {
                 {currentEpisode.podcast?.title}
               </Text>
             </TouchableOpacity>
+            <Text style={[s.podcastLink, { marginTop: 2, fontSize: 12 }]}>
+              {formatViews(currentEpisode.viewsCount)}
+            </Text>
           </View>
           <TouchableOpacity
             style={s.likeBtn}

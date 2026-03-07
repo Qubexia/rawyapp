@@ -13,8 +13,8 @@ import { useRouter } from "expo-router";
 
 import { Palette, Spacing, Radius } from "@/constants/theme";
 import type { Episode } from "@/services/episodes.service";
-
 import { resolveImageUrl } from "@/utils/url";
+import { formatCount } from "@/utils/format";
 
 interface EpisodeRowProps {
   episode: Episode;
@@ -102,6 +102,17 @@ export function EpisodeRow({
                   : `${Math.floor(episode.duration / 60)} min`
                 : '—'}
             </Text>
+            {episode.viewsCount != null && episode.viewsCount > 0 && (
+              <Text
+                variant="labelSmall"
+                style={[
+                  styles.metaText,
+                  { color: theme.colors.onSurfaceVariant, marginLeft: 8 },
+                ]}
+              >
+                {formatCount(episode.viewsCount)} views
+              </Text>
+            )}
           </View>
         </View>
         {rightAction && <View style={styles.rightAction}>{rightAction}</View>}

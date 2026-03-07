@@ -2,6 +2,7 @@ import {
   Controller,
   Post,
   Get,
+  Patch,
   Body,
   UseGuards,
   Req,
@@ -9,8 +10,8 @@ import {
   HttpStatus,
   UseInterceptors,
   UploadedFile,
-
 } from '@nestjs/common';
+import { CurrentUser } from '../common/decorators/current-user.decorator';
 import {
   ApiTags,
   ApiOperation,
@@ -28,6 +29,7 @@ import { RegisterCreatorDto } from './dto/register-creator.dto';
 import { LoginDto } from './dto/login.dto';
 import { RefreshTokenDto } from './dto/refresh-token.dto';
 import { TokenResponseDto } from './dto/token-response.dto';
+import { ChangePasswordDto } from './dto/change-password.dto';
 import { Public } from '../common/decorators/public.decorator';
 import { GoogleAuthGuard } from './guards/google-auth.guard';
 import { FacebookAuthGuard } from './guards/facebook-auth.guard';
@@ -35,7 +37,7 @@ import {
   getImageMulterConfig,
   getRelativeUrl,
 } from '../common/utils/file-upload.util';
-import { UserDocument } from '../users/schemas/user.schema';
+import type { UserDocument } from '../users/schemas/user.schema';
 
 @ApiTags('auth')
 @ApiCommonErrorResponses()
@@ -127,6 +129,24 @@ export class AuthController {
     @Body() refreshTokenDto: RefreshTokenDto,
   ): Promise<TokenResponseDto> {
     return this.authService.refreshTokens(refreshTokenDto);
+  }
+
+  @Patch('change-password')
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Change password (requires current password)' })
+  @ApiResponse({ status: HttpStatus.OK, description: 'Password changed successfully' })
+  @ApiResponse({ status: HttpStatus.UNAUTHORIZED, description: 'Current password is incorrect' })
+  @ApiResponse({ status: HttpStatus.BAD_REQUEST, description: 'Validation error' })
+  async changePassword(
+    @CurrentUser('id') userId: string,
+    @Body() dto: ChangePasswordDto,
+  ): Promise<{ message: string }> {
+    await this.authService.changePassword(
+      userId,
+      dto.currentPassword,
+      dto.newPassword,
+    );
+    return { message: 'Password changed successfully' };
   }
 
   @Post('logout')

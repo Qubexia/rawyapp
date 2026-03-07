@@ -200,6 +200,22 @@ export class CreatorsService {
   }
 
   /**
+   * Delete creator profile by user ID (used in account deletion cascade)
+   */
+  async deleteByUserId(userId: Types.ObjectId): Promise<void> {
+    const profile = await this.creatorProfileModel.findOne({ userId }).exec();
+    if (profile?.avatarUrl) {
+      try {
+        const oldPath = join(process.cwd(), profile.avatarUrl);
+        await unlink(oldPath).catch(() => {});
+      } catch {
+        // Ignore file deletion errors
+      }
+    }
+    await this.creatorProfileModel.deleteOne({ userId }).exec();
+  }
+
+  /**
    * Get top creators based on follower count and podcast count
    */
   async getTopCreators(limit: number = 10): Promise<CreatorProfile[]> {

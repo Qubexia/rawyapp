@@ -19,6 +19,21 @@ export class Podcast {
 
   @Prop({ required: true, default: 0, min: 0 })
   episodeCount: number;
+
+  @Prop({
+    required: false,
+    enum: [
+      'Technology',
+      'Business',
+      'Comedy',
+      'Education',
+      'Health',
+      'Science',
+      'Culture',
+      'Sports',
+    ],
+  })
+  category?: string;
 }
 
 export const PodcastSchema = SchemaFactory.createForClass(Podcast);
@@ -26,3 +41,5 @@ export const PodcastSchema = SchemaFactory.createForClass(Podcast);
 // Indexes
 PodcastSchema.index({ creatorId: 1 });
 PodcastSchema.index({ createdAt: -1 });
+PodcastSchema.index({ category: 1 });
+PodcastSchema.index({ title: 'text', description: 'text' });

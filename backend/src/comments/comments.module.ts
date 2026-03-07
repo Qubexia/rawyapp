@@ -10,7 +10,7 @@ import { UsersModule } from '../users/users.module';
   imports: [
     MongooseModule.forFeature([{ name: Comment.name, schema: CommentSchema }]),
     forwardRef(() => EpisodesModule),
-    UsersModule,
+    forwardRef(() => UsersModule),
   ],
   controllers: [CommentsController],
   providers: [CommentsService],

@@ -83,7 +83,7 @@ export default function UploadEpisodeScreen() {
   const { data: creator } = useMyCreatorProfile({
     enabled: !!user && isCreator(user),
   });
-  const { data: podcastsData } = usePodcasts(creator?._id, {
+  const { data: podcastsData } = usePodcasts({ creatorId: creator?._id }, {
     enabled: !!creator?._id,
   });
   const podcasts = podcastsData?.pages.flatMap((p) => p.data) || [];

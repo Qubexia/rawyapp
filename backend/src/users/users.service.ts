@@ -1,22 +1,36 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, UnauthorizedException, Inject, forwardRef } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
+import * as bcrypt from 'bcrypt';
 import { User, UserDocument } from './schemas/user.schema';
 import { Role } from '../common/constants/roles.enum';
 import { PaginatedResponseDto } from '../common/dto/paginated-response.dto';
 import { unlink } from 'fs/promises';
 import { join } from 'path';
+import { PodcastsService } from '../podcasts/podcasts.service';
+import { CreatorsService } from '../creators/creators.service';
+import { FollowsService } from '../follows/follows.service';
 
 @Injectable()
 export class UsersService {
   constructor(
     @InjectModel(User.name) private userModel: Model<UserDocument>,
+    @Inject(forwardRef(() => PodcastsService)) private podcastsService: PodcastsService,
+    @Inject(forwardRef(() => CreatorsService)) private creatorsService: CreatorsService,
+    @Inject(forwardRef(() => FollowsService)) private followsService: FollowsService,
   ) {}
 
   async findById(id: string): Promise<UserDocument | null> {
     return this.userModel
       .findById(id)
       .select('+refreshToken +refreshTokenExpiresAt')
+      .exec();
+  }
+
+  async findByIdWithPassword(id: string): Promise<UserDocument | null> {
+    return this.userModel
+      .findById(id)
+      .select('+passwordHash +refreshToken +refreshTokenExpiresAt')
       .exec();
   }
 
@@ -210,5 +224,46 @@ export class UsersService {
         userId: (u._id as Types.ObjectId).toString(),
         tokens: u.deviceTokens || [],
       }));
+  }
+
+  /**
+   * Delete user account with cascade. Verifies password, then deletes:
+   * podcasts (and episodes), creator profile, all follows, and user record.
+   */
+  async deleteAccount(userId: string, password: string): Promise<void> {
+    const user = await this.findByIdWithPassword(userId);
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+    if (!user.passwordHash) {
+      throw new UnauthorizedException('Password verification not available for this account');
+    }
+    const isPasswordValid = await bcrypt.compare(password, user.passwordHash);
+    if (!isPasswordValid) {
+      throw new UnauthorizedException('Password is incorrect');
+    }
+
+    const userIdObj = new Types.ObjectId(userId);
+
+    // 1. Delete all podcasts (cascades to episodes, likes, comments, views, files)
+    if (this.podcastsService) {
+      const podcastIds = await this.podcastsService.findPodcastIdsByCreatorId(userIdObj);
+      for (const podcastId of podcastIds) {
+        await this.podcastsService.delete(podcastId.toString(), userIdObj, user.role);
+      }
+    }
+
+    // 2. Delete creator profile (if exists)
+    if (this.creatorsService) {
+      await this.creatorsService.deleteByUserId(userIdObj);
+    }
+
+    // 3. Delete all follows (both directions) and update counts
+    if (this.followsService) {
+      await this.followsService.deleteAllForUser(userIdObj);
+    }
+
+    // 4. Delete user record
+    await this.userModel.findByIdAndDelete(userId).exec();
   }
 }

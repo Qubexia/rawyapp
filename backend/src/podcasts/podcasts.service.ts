@@ -43,18 +43,28 @@ export class PodcastsService {
   }
 
   /**
-   * Find all podcasts with pagination and optional creator filter
+   * Find all podcasts with pagination and optional creator, search, and category filters
    */
   async findAll(
     page: number = 1,
     limit: number = 20,
     creatorId?: string,
+    search?: string,
+    category?: string,
   ): Promise<PaginatedResponseDto<Podcast>> {
     const skip = (page - 1) * limit;
     const filter: any = {};
 
     if (creatorId) {
       filter.creatorId = new Types.ObjectId(creatorId);
+    }
+
+    if (search && search.trim()) {
+      filter.$text = { $search: search.trim() };
+    }
+
+    if (category && category.trim() && category !== 'All') {
+      filter.category = category.trim();
     }
 
     const [rawData, total] = await Promise.all([
@@ -194,6 +204,18 @@ export class PodcastsService {
     await this.podcastModel
       .updateOne({ _id: podcastId }, { $inc: { episodeCount: -1 } })
       .exec();
+  }
+
+  /**
+   * Find all podcast IDs for a creator (used for cascade delete)
+   */
+  async findPodcastIdsByCreatorId(creatorId: Types.ObjectId): Promise<Types.ObjectId[]> {
+    const podcasts = await this.podcastModel
+      .find({ creatorId })
+      .select('_id')
+      .lean()
+      .exec();
+    return podcasts.map((p) => p._id as Types.ObjectId);
   }
 
   /**
