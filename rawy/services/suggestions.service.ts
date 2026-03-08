@@ -10,6 +10,7 @@ export interface SuggestedUser {
     avatarUrl?: string;
     followerCount: number;
     city?: string;
+    role?: string;
 }
 
 /**

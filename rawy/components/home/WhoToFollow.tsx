@@ -6,12 +6,14 @@ import React from 'react';
 import { View, FlatList, StyleSheet } from 'react-native';
 import { Text, useTheme } from 'react-native-paper';
 import { UserPlus } from 'lucide-react-native';
+import { useRouter } from 'expo-router';
 import { CreatorCard } from '../ui';
 import { useSuggestions } from '@/hooks/queries/use-suggestions';
 import { Spacing } from '@/constants/theme';
 
 export function WhoToFollow() {
     const theme = useTheme();
+    const router = useRouter();
     const { data: suggestions, isLoading } = useSuggestions(10);
 
     if (isLoading || !suggestions || suggestions.length === 0) {
@@ -37,7 +39,9 @@ export function WhoToFollow() {
                             showName: item.name,
                             avatarUrl: item.avatarUrl,
                             followerCount: item.followerCount,
+                            role: item.role,
                         }}
+                        onPress={() => router.push(`/user/${item.id}` as any)}
                     />
                 )}
                 showsHorizontalScrollIndicator={false}

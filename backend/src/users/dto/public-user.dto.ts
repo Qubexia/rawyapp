@@ -22,4 +22,7 @@ export class PublicUserDto {
 
   @ApiProperty({ required: false })
   isFollowing?: boolean;
+
+  @ApiProperty({ required: false })
+  city?: string;
 }

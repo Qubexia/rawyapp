@@ -6,7 +6,7 @@ import { ArrowLeft, Share2, Users, UserCheck, User } from 'lucide-react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { usePublicProfile } from '@/hooks/queries/use-users';
-import { useToggleFollow } from '@/hooks/queries/use-follows';
+import { useFollowStatus, useToggleFollow } from '@/hooks/queries/use-follows';
 import { useAuthContext } from '@/context/auth-context';
 import { resolveImageUrl } from '@/utils/url';
 import { Palette, Spacing, Radius } from '@/constants/theme';
@@ -18,12 +18,16 @@ export default function UserProfileScreen() {
   const { user: currentUser } = useAuthContext();
 
   const { data: profile, isLoading, error } = usePublicProfile(id);
+  const { data: followStatus } = useFollowStatus(id, { enabled: !!id && !isMe });
   const toggleFollow = useToggleFollow(id);
 
   const isMe = currentUser?._id === id;
 
+  const isFollowing = followStatus?.isFollowing ?? false;
+  const followerCount = followStatus?.followerCount ?? profile?.followerCount ?? 0;
+
   const handleToggleFollow = () => {
-    if (profile?.isFollowing) {
+    if (isFollowing) {
       Alert.alert('Unfollow', `Are you sure you want to unfollow ${profile?.name}?`, [
         { text: 'Cancel', style: 'cancel' },
         { text: 'Unfollow', style: 'destructive', onPress: () => toggleFollow.mutate(true) },
@@ -130,7 +134,7 @@ export default function UserProfileScreen() {
                 onPress={() => router.push(`/followers?userId=${id}` as any)}
               >
                 <Text variant="titleLarge" style={[s.statValue, { color: theme.colors.onSurface }]}>
-                  {profile.followerCount}
+                  {followerCount}
                 </Text>
                 <Text variant="labelSmall" style={{ color: theme.colors.onSurfaceVariant }}>
                   Followers
@@ -153,11 +157,11 @@ export default function UserProfileScreen() {
             {/* Follow button */}
             {!isMe && (
               <Button
-                mode={profile.isFollowing ? 'outlined' : 'contained'}
+                mode={isFollowing ? 'outlined' : 'contained'}
                 onPress={handleToggleFollow}
                 loading={toggleFollow.isPending}
                 icon={() =>
-                  profile.isFollowing ? (
+                  isFollowing ? (
                     <UserCheck size={18} color={theme.colors.primary} />
                   ) : (
                     <Users size={18} color="#FFF" />
@@ -166,7 +170,7 @@ export default function UserProfileScreen() {
                 style={s.followBtn}
                 contentStyle={{ height: 46 }}
               >
-                {profile.isFollowing ? 'Following' : 'Follow'}
+                {isFollowing ? 'Following' : 'Follow'}
               </Button>
             )}
           </View>
@@ -180,9 +184,16 @@ export default function UserProfileScreen() {
               <View style={[s.aboutIcon, { backgroundColor: Palette.primary[50] }]}>
                 <User size={20} color={Palette.primary[500]} />
               </View>
-              <Text variant="bodyMedium" style={{ color: theme.colors.onSurfaceVariant, flex: 1, lineHeight: 22 }}>
-                {profile.name} is a {roleLabel} on Rawy. Explore their world of stories and podcasts.
-              </Text>
+              <View style={{ flex: 1, gap: 4 }}>
+                {profile.city ? (
+                  <Text variant="bodySmall" style={{ color: theme.colors.onSurfaceVariant, fontWeight: '600' }}>
+                    📍 {profile.city}
+                  </Text>
+                ) : null}
+                <Text variant="bodyMedium" style={{ color: theme.colors.onSurfaceVariant, lineHeight: 22 }}>
+                  {profile.name} is a {roleLabel} on Rawy{profile.city ? ` from ${profile.city}` : ''}.
+                </Text>
+              </View>
             </Surface>
           </View>
         </ScrollView>

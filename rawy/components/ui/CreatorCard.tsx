@@ -1,7 +1,7 @@
 import React from "react";
 import { View, StyleSheet, Image } from "react-native";
 import { Text, Surface, useTheme } from "react-native-paper";
-import { Mic, Users, Radio } from "lucide-react-native";
+import { Mic, Users, Radio, BadgeCheck } from "lucide-react-native";
 import { useRouter } from "expo-router";
 import { Palette, Spacing, Radius } from "@/constants/theme";
 import { Interactive } from "./Interactive";
@@ -14,10 +14,12 @@ interface CreatorCardProps {
     avatarUrl?: string;
     followerCount?: number;
     podcastCount?: number;
+    role?: string;
   };
+  onPress?: () => void;
 }
 
-export function CreatorCard({ creator }: CreatorCardProps) {
+export function CreatorCard({ creator, onPress }: CreatorCardProps) {
   const theme = useTheme();
   const router = useRouter();
   const avatarUri = resolveImageUrl(creator.avatarUrl);
@@ -25,7 +27,7 @@ export function CreatorCard({ creator }: CreatorCardProps) {
 
   return (
     <Interactive
-      onPress={() => router.push(`/creator/${creator._id}` as any)}
+      onPress={onPress ?? (() => router.push(`/creator/${creator._id}` as any))}
     >
       <Surface
         style={[styles.card, { backgroundColor: theme.colors.surface }]}
@@ -56,6 +58,33 @@ export function CreatorCard({ creator }: CreatorCardProps) {
         >
           {displayName}
         </Text>
+
+        {/* Role badge */}
+        {creator.role && (
+          <View
+            style={[
+              styles.roleBadge,
+              creator.role === 'CREATOR'
+                ? { backgroundColor: Palette.primary[50] }
+                : { backgroundColor: '#F3F4F6' },
+            ]}
+          >
+            {creator.role === 'CREATOR' ? (
+              <BadgeCheck size={10} color={Palette.primary[500]} />
+            ) : null}
+            <Text
+              variant="labelSmall"
+              style={[
+                styles.roleText,
+                creator.role === 'CREATOR'
+                  ? { color: Palette.primary[500] }
+                  : { color: '#6B7280' },
+              ]}
+            >
+              {creator.role === 'CREATOR' ? 'Creator' : 'User'}
+            </Text>
+          </View>
+        )}
 
         {/* Stats row */}
         <View style={styles.statsRow}>
@@ -144,5 +173,18 @@ const styles = StyleSheet.create({
   statText: {
     color: Palette.primary[500],
     fontWeight: "600",
+  },
+  roleBadge: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 3,
+    paddingHorizontal: 7,
+    paddingVertical: 3,
+    borderRadius: Radius.full,
+    marginTop: 2,
+  },
+  roleText: {
+    fontWeight: "600",
+    fontSize: 10,
   },
 });

@@ -209,6 +209,7 @@ export class UsersService {
       role: user.role,
       followerCount: user.followerCount,
       followingCount: user.followingCount,
+      city: user.location?.city,
     };
   }
 

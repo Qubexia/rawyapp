@@ -76,6 +76,7 @@ export class SuggestionsService {
             avatarUrl: u.avatarUrl,
             followerCount: u.followerCount,
             city: u.location?.city,
+            role: u.role,
         }));
     }
 }

@@ -54,6 +54,7 @@ export interface PublicUser {
   followerCount: number;
   followingCount: number;
   isFollowing?: boolean;
+  city?: string;
 }
 
 export async function getPublicProfile(id: string): Promise<PublicUser> {
