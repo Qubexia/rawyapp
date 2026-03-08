@@ -19,8 +19,10 @@ export interface FollowStatus {
 
 export interface FollowedCreator {
   _id: string;
+  userId?: string;
   name: string;
   avatar?: string;
+  avatarUrl?: string;
   showName?: string;
 }
 

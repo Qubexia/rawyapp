@@ -88,11 +88,11 @@
 
 ### Implementation for User Story 3
 
-- [ ] T024 [US3] Refactor the "Following" segment in `library.tsx` — replace minimal creator chip with a rich list item component showing: creator avatar (via `resolveImageUrl`), creator name, podcast name, and an unfollow icon-button on the right side in `rawy/app/(tabs)/library.tsx`
-- [ ] T025 [US3] Add unfollow action with confirmation — when unfollow button is tapped, show an `Alert.alert` confirmation dialog. On confirm, call `useToggleFollow` mutation (already in `use-follows.ts`). On success, the React Query cache invalidation should automatically remove the creator from the list in `rawy/app/(tabs)/library.tsx`
-- [ ] T026 [US3] Add navigation to creator profile — when a creator row (not the unfollow button) is tapped, navigate to the creator's public profile page using `router.push(\`/(profile)/\${creatorId}/public\`)` in `rawy/app/(tabs)/library.tsx`
-- [ ] T027 [US3] Add empty state for Following segment — when user follows no creators, display an illustration with "You're not following anyone yet" message and a button/link to the Explore tab in `rawy/app/(tabs)/library.tsx`
-- [ ] T028 [US3] Add sign-in prompt for unauthenticated users — when user is not logged in and selects Following, show a prompt to sign in with a button navigating to the login screen in `rawy/app/(tabs)/library.tsx`
+- [X] T024 [US3] Refactor the "Following" segment in `library.tsx` — replace minimal creator chip with a rich list item component showing: creator avatar (via `resolveImageUrl`), creator name, podcast name, and an unfollow icon-button on the right side in `rawy/app/(tabs)/library.tsx`
+- [X] T025 [US3] Add unfollow action with confirmation — when unfollow button is tapped, show an `Alert.alert` confirmation dialog. On confirm, call `useToggleFollow` mutation (already in `use-follows.ts`). On success, the React Query cache invalidation should automatically remove the creator from the list in `rawy/app/(tabs)/library.tsx`
+- [X] T026 [US3] Add navigation to creator profile — when a creator row (not the unfollow button) is tapped, navigate to the creator's public profile page using `router.push(\`/(profile)/\${creatorId}/public\`)` in `rawy/app/(tabs)/library.tsx`
+- [X] T027 [US3] Add empty state for Following segment — when user follows no creators, display an illustration with "You're not following anyone yet" message and a button/link to the Explore tab in `rawy/app/(tabs)/library.tsx`
+- [X] T028 [US3] Add sign-in prompt for unauthenticated users — when user is not logged in and selects Following, show a prompt to sign in with a button navigating to the login screen in `rawy/app/(tabs)/library.tsx`
 
 **Checkpoint**: Library Following section fully functional — rich creator cards, unfollow, navigation, empty states.
 
@@ -106,11 +106,11 @@
 
 ### Implementation for User Story 4
 
-- [ ] T029 [P] [US4] Modify onboarding final navigation — change the "Get Started" button's `router.replace()` target from `/(auth)/register` to `/(auth)/login` in `rawy/app/(auth)/onboarding.tsx`
-- [ ] T030 [P] [US4] Add password visibility toggle to login screen — add state `showPassword` (boolean), toggle eye/eye-off icon from `lucide-react-native`, set `secureTextEntry={!showPassword}` on the password `TextInput` in `rawy/app/(auth)/login.tsx`
-- [ ] T031 [P] [US4] Add password visibility toggle to register screen — same implementation as T030, apply to the password field in `rawy/app/(auth)/register.tsx`
-- [ ] T032 [US4] Add "Terms & Conditions" link to login screen — add a `TouchableOpacity` or `Pressable` below the form with text "By continuing, you agree to our Terms & Conditions", navigating to `/(legal)/terms` on tap in `rawy/app/(auth)/login.tsx`
-- [ ] T033 [US4] Add "Terms & Conditions" link to register screen — same T&C link as T032 in `rawy/app/(auth)/register.tsx`
+- [X] T029 [P] [US4] Modify onboarding final navigation — change the "Get Started" button's `router.replace()` target from `/(auth)/register` to `/(auth)/login` in `rawy/app/(auth)/onboarding.tsx`
+- [X] T030 [P] [US4] Add password visibility toggle to login screen — add state `showPassword` (boolean), toggle eye/eye-off icon from `lucide-react-native`, set `secureTextEntry={!showPassword}` on the password `TextInput` in `rawy/app/(auth)/login.tsx`
+- [X] T031 [P] [US4] Add password visibility toggle to register screen — same implementation as T030, apply to the password field in `rawy/app/(auth)/register.tsx`
+- [X] T032 [US4] Add "Terms & Conditions" link to login screen — add a `TouchableOpacity` or `Pressable` below the form with text "By continuing, you agree to our Terms & Conditions", navigating to `/(legal)/terms` on tap in `rawy/app/(auth)/login.tsx`
+- [X] T033 [US4] Add "Terms & Conditions" link to register screen — same T&C link as T032 in `rawy/app/(auth)/register.tsx`
 
 **Checkpoint**: Auth flow streamlined — onboarding→login, password toggles, T&C links. Testable independently.
 
@@ -124,13 +124,13 @@
 
 ### Implementation for User Story 5
 
-- [ ] T034 [US5] Create frontend auth service function `changePassword(currentPassword, newPassword)` that calls `PATCH /auth/change-password` in `rawy/services/auth.service.ts`
-- [ ] T035 [US5] Create frontend users service function `deleteAccount(password)` that calls `DELETE /users/me` with `{password}` in body in `rawy/services/users.service.ts`
-- [ ] T036 [US5] Create Change Password screen with form: current password field, new password field, confirm new password field, all with visibility toggles. Client-side validation (newPassword === confirmPassword, min 8 chars). On submit call `changePassword()`, show success toast or error in `rawy/app/(profile)/change-password.tsx`
-- [ ] T037 [US5] Refactor Settings screen — redesign with sections: (1) Notifications section with functional push notification `Switch` toggle reading/writing `@rawy:push_notifications_enabled` from AsyncStorage, (2) Account section with "Change Password" row → navigates to change-password screen, "Delete Account" row → triggers delete flow in `rawy/app/(profile)/settings.tsx`
-- [ ] T038 [US5] Implement Delete Account flow in Settings — on tap show `Alert.alert` with warning message (for creators: "All your podcasts, episodes, and data will be permanently deleted"), include a password `TextInput` in the alert (or navigate to a confirmation screen), on confirm call `deleteAccount(password)`, on success clear tokens and navigate to login in `rawy/app/(profile)/settings.tsx`
-- [ ] T039 [US5] Add navigation rows to Settings — "Terms & Conditions" → `/(legal)/terms`, "Privacy Policy" → `/(legal)/privacy` (placeholder), "Help & Support" → `Linking.openURL('mailto:support@rawy.app')` or in-app help page in `rawy/app/(profile)/settings.tsx`
-- [ ] T040 [US5] Display app version number in Settings — read version from `expo-constants` or `app.json` and display at the bottom of the settings list in `rawy/app/(profile)/settings.tsx`
+- [X] T034 [US5] Create frontend auth service function `changePassword(currentPassword, newPassword)` that calls `PATCH /auth/change-password` in `rawy/services/auth.service.ts`
+- [X] T035 [US5] Create frontend users service function `deleteAccount(password)` that calls `DELETE /users/me` with `{password}` in body in `rawy/services/users.service.ts`
+- [X] T036 [US5] Create Change Password screen with form: current password field, new password field, confirm new password field, all with visibility toggles. Client-side validation (newPassword === confirmPassword, min 8 chars). On submit call `changePassword()`, show success toast or error in `rawy/app/(profile)/change-password.tsx`
+- [X] T037 [US5] Refactor Settings screen — redesign with sections: (1) Notifications section with functional push notification `Switch` toggle reading/writing `@rawy:push_notifications_enabled` from AsyncStorage, (2) Account section with "Change Password" row → navigates to change-password screen, "Delete Account" row → triggers delete flow in `rawy/app/(profile)/settings.tsx`
+- [X] T038 [US5] Implement Delete Account flow in Settings — on tap show `Alert.alert` with warning message (for creators: "All your podcasts, episodes, and data will be permanently deleted"), include a password `TextInput` in the alert (or navigate to a confirmation screen), on confirm call `deleteAccount(password)`, on success clear tokens and navigate to login in `rawy/app/(profile)/settings.tsx`
+- [X] T039 [US5] Add navigation rows to Settings — "Terms & Conditions" → `/(legal)/terms`, "Privacy Policy" → `/(legal)/privacy` (placeholder), "Help & Support" → `Linking.openURL('mailto:support@rawy.app')` or in-app help page in `rawy/app/(profile)/settings.tsx`
+- [X] T040 [US5] Display app version number in Settings — read version from `expo-constants` or `app.json` and display at the bottom of the settings list in `rawy/app/(profile)/settings.tsx`
 
 **Checkpoint**: Settings fully functional — notifications persist, password change works, account deletion cascades, legal links work.
 
@@ -144,8 +144,8 @@
 
 ### Implementation for User Story 6
 
-- [ ] T041 [US6] Create `(legal)` route group layout file (if needed by expo-router) with a back button header in `rawy/app/(legal)/_layout.tsx`
-- [ ] T042 [US6] Create Terms & Conditions screen — import terms text from `rawy/constants/terms.ts`, render in a `ScrollView` with proper heading styles (`<Text>` with heading sizes), readable paragraph formatting, and adequate padding in `rawy/app/(legal)/terms.tsx`
+- [X] T041 [US6] Create `(legal)` route group layout file (if needed by expo-router) with a back button header in `rawy/app/(legal)/_layout.tsx`
+- [X] T042 [US6] Create Terms & Conditions screen — import terms text from `rawy/constants/terms.ts`, render in a `ScrollView` with proper heading styles (`<Text>` with heading sizes), readable paragraph formatting, and adequate padding in `rawy/app/(legal)/terms.tsx`
 
 **Checkpoint**: T&C page accessible from all entry points — auth screens and settings.
 

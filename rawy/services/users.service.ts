@@ -55,3 +55,10 @@ export async function getPublicProfile(id: string): Promise<PublicUser> {
   const { data } = await axiosClient.get<PublicUser>(`/users/${id}/public`);
   return data;
 }
+
+export async function deleteAccount(password: string): Promise<{ message: string }> {
+  const { data } = await axiosClient.delete<{ message: string }>('/users/me', {
+    data: { password },
+  });
+  return data;
+}

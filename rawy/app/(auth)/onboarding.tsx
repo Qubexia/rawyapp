@@ -60,8 +60,8 @@ export default function OnboardingScreen() {
             } catch (error) {
                 // Ignore error saving state
             }
-            // Navigate to the register app screen
-            router.replace('/(auth)/register' as any);
+            // Navigate to the login screen
+            router.replace('/(auth)/login' as any);
         }
     };
 

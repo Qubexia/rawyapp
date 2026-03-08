@@ -9,6 +9,7 @@ import {
   Platform,
   ScrollView,
   StyleSheet,
+  TouchableOpacity,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import {
@@ -132,6 +133,19 @@ export default function LoginScreen() {
                   >
                     Sign In
                   </Button>
+
+                  <TouchableOpacity
+                    onPress={() => router.push('/(legal)/terms')}
+                    style={styles.termsLink}
+                    activeOpacity={0.7}
+                  >
+                    <Text variant="bodySmall" style={styles.termsText}>
+                      By continuing, you agree to our{' '}
+                      <Text variant="bodySmall" style={styles.termsLinkText}>
+                        Terms & Conditions
+                      </Text>
+                    </Text>
+                  </TouchableOpacity>
                 </View>
 
                 {/* Divider */}
@@ -310,5 +324,13 @@ const styles = StyleSheet.create({
   },
   footerLink: {
     fontWeight: '600',
+  },
+  termsLink: {
+    alignSelf: 'center',
+    paddingVertical: Spacing.xs,
+  },
+  termsText: {
+    color: Palette.text.lightSecondary,
+    textDecorationLine: 'underline',
   },
 });

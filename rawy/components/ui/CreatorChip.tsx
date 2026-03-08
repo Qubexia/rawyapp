@@ -21,6 +21,7 @@ interface CreatorChipProps {
     name: string;
     showName?: string;
     avatar?: string;
+    avatarUrl?: string;
   };
   style?: StyleProp<ViewStyle>;
 }
@@ -29,7 +30,7 @@ export function CreatorChip({ creator, style }: CreatorChipProps) {
   const theme = useTheme();
   const router = useRouter();
 
-  const avatarUri = resolveImageUrl(creator.avatar);
+  const avatarUri = resolveImageUrl(creator.avatarUrl ?? creator.avatar);
 
   return (
     <TouchableOpacity

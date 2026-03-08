@@ -320,6 +320,20 @@ export default function RegisterScreen() {
                 Continue with Google
               </Button>
 
+              {/* Terms & Conditions */}
+              <TouchableOpacity
+                onPress={() => router.push('/(legal)/terms')}
+                style={styles.termsLink}
+                activeOpacity={0.7}
+              >
+                <Text variant="bodySmall" style={styles.termsText}>
+                  By continuing, you agree to our{' '}
+                  <Text variant="bodySmall" style={styles.termsLinkText}>
+                    Terms & Conditions
+                  </Text>
+                </Text>
+              </TouchableOpacity>
+
               <View style={{ height: Spacing.lg }} />
 
               {/* Footer */}
@@ -509,6 +523,17 @@ const styles = StyleSheet.create({
     color: Palette.text.lightSecondary,
   },
   footerLink: {
+    fontWeight: '600',
+  },
+  termsLink: {
+    alignSelf: 'center',
+    paddingVertical: Spacing.xs,
+  },
+  termsText: {
+    color: Palette.text.lightSecondary,
+  },
+  termsLinkText: {
+    textDecorationLine: 'underline',
     fontWeight: '600',
   },
 });

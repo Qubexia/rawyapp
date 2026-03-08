@@ -136,6 +136,19 @@ export default function RootLayout() {
                         name="(profile)/settings"
                         options={{ headerShown: false, animation: 'slide_from_right' }}
                       />
+                      <Stack.Screen
+                        name="(profile)/change-password"
+                        options={{ headerShown: false, animation: 'slide_from_right' }}
+                      />
+                      <Stack.Screen
+                        name="(profile)/delete-account"
+                        options={{ headerShown: false, animation: 'slide_from_right' }}
+                      />
+                      {/* Legal screens */}
+                      <Stack.Screen
+                        name="(legal)/terms"
+                        options={{ headerShown: false, animation: 'slide_from_right' }}
+                      />
                       {/* Full-screen player modal */}
                       <Stack.Screen
                         name="player"

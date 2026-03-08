@@ -142,3 +142,14 @@ export async function logoutUser(): Promise<void> {
     await clearTokens();
   }
 }
+
+export async function changePassword(
+  currentPassword: string,
+  newPassword: string,
+): Promise<{ message: string }> {
+  const { data } = await axiosClient.patch<{ message: string }>(
+    '/auth/change-password',
+    { currentPassword, newPassword },
+  );
+  return data;
+}

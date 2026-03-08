@@ -114,13 +114,13 @@ export class FollowsService {
   }
 
   /**
-   * Paginated list of creators the user follows (CreatorProfile).
+   * Paginated list of creators the user follows (CreatorProfile enriched with user name).
    */
   async getFollowing(
     followerId: Types.ObjectId,
     page: number = 1,
     limit: number = 20,
-  ): Promise<PaginatedResponseDto<CreatorProfile>> {
+  ): Promise<PaginatedResponseDto<CreatorProfile & { name?: string }>> {
     const skip = (page - 1) * limit;
 
     const followDocs = await this.followModel
@@ -134,14 +134,23 @@ export class FollowsService {
     const total = await this.followModel.countDocuments({ followerId }).exec();
     const creatorIds = followDocs.map((f) => f.creatorId);
 
-    const creators = await this.creatorsService.getProfilesByUserIds(creatorIds);
+    const [creators, users] = await Promise.all([
+      this.creatorsService.getProfilesByUserIds(creatorIds),
+      this.usersService.findByIds(creatorIds, 'name'),
+    ]);
+
+    const userMap = new Map(users.map((u) => [u._id.toString(), (u as any).name]));
+    const enriched = creators.map((c) => ({
+      ...c.toObject ? c.toObject() : c,
+      name: userMap.get(c.userId.toString()) ?? c.showName ?? 'Creator',
+    }));
 
     const orderMap = new Map(creatorIds.map((id, i) => [id.toString(), i]));
-    creators.sort((a, b) => orderMap.get(a.userId.toString())! - orderMap.get(b.userId.toString())!);
+    enriched.sort((a, b) => orderMap.get(a.userId.toString())! - orderMap.get(b.userId.toString())!);
 
     const totalPages = Math.ceil(total / limit);
     return {
-      data: creators,
+      data: enriched,
       total,
       page,
       limit,
