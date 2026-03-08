@@ -25,7 +25,7 @@ import {
 import { useRouter } from "expo-router";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { ArrowLeft, Upload, Music, ChevronDown } from "lucide-react-native";
+import { ArrowLeft, Upload, Music, ChevronDown, Sparkles, CheckCircle2, FileAudio } from "lucide-react-native";
 import { FormInput } from "@/components/ui";
 import {
   createEpisodeSchema,
@@ -69,6 +69,7 @@ export default function UploadEpisodeScreen() {
   }, [user, router]);
 
   const [audioFile, setAudioFile] = React.useState<any>(null);
+  const [titleAutoFilled, setTitleAutoFilled] = React.useState(false);
   const [imageFile, setImageFile] = React.useState<
     import("@/utils/image-picker").SelectedImage | null
   >(null);
@@ -105,6 +106,15 @@ export default function UploadEpisodeScreen() {
 
   const selectedPodcastId = watch("podcastId");
   const selectedPodcast = podcasts.find((p) => p._id === selectedPodcastId);
+  const watchedTitle = watch("title");
+  const autoFilledValue = React.useRef<string>('');
+
+  // Clear the auto-filled badge as soon as the user edits the title manually
+  React.useEffect(() => {
+    if (titleAutoFilled && watchedTitle !== autoFilledValue.current) {
+      setTitleAutoFilled(false);
+    }
+  }, [watchedTitle, titleAutoFilled]);
 
   const pickAudio = async () => {
     if (!DocumentPicker) {
@@ -144,7 +154,13 @@ export default function UploadEpisodeScreen() {
         }
 
         setAudioFile(asset);
-        setValue("title", metadata.extractedTitle, { shouldValidate: true });
+        if (metadata.extractedTitle) {
+          setValue("title", metadata.extractedTitle, { shouldValidate: true });
+          autoFilledValue.current = metadata.extractedTitle;
+          setTitleAutoFilled(true);
+        } else {
+          setTitleAutoFilled(false);
+        }
         setExtractedDurationSec(metadata.durationSeconds);
         setDurationExtractionFailed(metadata.durationSeconds === null);
       }
@@ -246,6 +262,105 @@ export default function UploadEpisodeScreen() {
           contentContainerStyle={{ padding: Spacing.lg }}
           keyboardShouldPersistTaps="handled"
         >
+          {/* ── Step 1: Audio file picker ── */}
+          <View style={s.stepHeader}>
+            <View style={[s.stepBadge, { backgroundColor: theme.colors.primary }]}>
+              <Text style={{ color: '#FFF', fontWeight: '800', fontSize: 13 }}>1</Text>
+            </View>
+            <Text variant="titleSmall" style={{ color: theme.colors.onBackground, fontWeight: '700' }}>
+              Choose Audio File
+            </Text>
+          </View>
+          <TouchableOpacity
+            onPress={pickAudio}
+            activeOpacity={0.8}
+            disabled={isUploading}
+          >
+            <Surface
+              style={[
+                s.uploadArea,
+                {
+                  backgroundColor: audioFile ? Palette.primary[50] : Palette.light.surfaceVariant,
+                  borderColor: audioFile ? theme.colors.primary : Palette.light.border,
+                  borderStyle: audioFile ? 'solid' : 'dashed',
+                  opacity: isUploading ? 0.7 : 1,
+                },
+              ]}
+              elevation={0}
+            >
+              {audioFile ? (
+                <>
+                  <View style={[s.audioIconBox, { backgroundColor: theme.colors.primary }]}>
+                    <FileAudio size={28} color="#FFF" />
+                  </View>
+                  <Text
+                    variant="bodyMedium"
+                    style={{
+                      color: theme.colors.primary,
+                      marginTop: Spacing.sm,
+                      fontWeight: '700',
+                      textAlign: 'center',
+                    }}
+                  >
+                    {audioFile.name}
+                  </Text>
+                  <Text
+                    variant="labelSmall"
+                    style={{ color: theme.colors.onSurfaceVariant, marginTop: 4 }}
+                  >
+                    {audioFile.size ? (audioFile.size / (1024 * 1024)).toFixed(2) : 0} MB
+                    {extractedDurationSec != null && <> · {formatDuration(extractedDurationSec)}</>}
+                  </Text>
+                  {durationExtractionFailed && (
+                    <Text
+                      variant="labelSmall"
+                      style={{ color: theme.colors.onSurfaceVariant, marginTop: 4, fontStyle: 'italic' }}
+                    >
+                      Could not extract duration. Duration will be omitted.
+                    </Text>
+                  )}
+                  <Text variant="labelSmall" style={{ color: theme.colors.primary, marginTop: Spacing.sm, fontWeight: '600' }}>
+                    Tap to change
+                  </Text>
+                </>
+              ) : (
+                <>
+                  <View style={[s.audioIconBox, { backgroundColor: Palette.primary[100] }]}>
+                    <Upload size={28} color={Palette.primary[500]} />
+                  </View>
+                  <Text
+                    variant="bodyMedium"
+                    style={{ color: theme.colors.onSurface, marginTop: Spacing.sm, fontWeight: '600' }}
+                  >
+                    Tap to select audio file
+                  </Text>
+                  <Text
+                    variant="labelSmall"
+                    style={{ color: theme.colors.onSurfaceVariant, marginTop: 4 }}
+                  >
+                    MP3, M4A, WAV, OGG, FLAC
+                  </Text>
+                  <View style={[s.autoFillHint, { backgroundColor: Palette.primary[50], borderColor: Palette.primary[200] }]}>
+                    <Sparkles size={13} color={Palette.primary[500]} />
+                    <Text variant="labelSmall" style={{ color: Palette.primary[600], marginLeft: 6, fontWeight: '600', flex: 1 }}>
+                      Episode title will be filled automatically from the file metadata
+                    </Text>
+                  </View>
+                </>
+              )}
+            </Surface>
+          </TouchableOpacity>
+
+          {/* ── Step 2: Episode Info ── */}
+          <View style={[s.stepHeader, { marginTop: Spacing.lg }]}>
+            <View style={[s.stepBadge, { backgroundColor: theme.colors.primary }]}>
+              <Text style={{ color: '#FFF', fontWeight: '800', fontSize: 13 }}>2</Text>
+            </View>
+            <Text variant="titleSmall" style={{ color: theme.colors.onBackground, fontWeight: '700' }}>
+              Episode Info
+            </Text>
+          </View>
+
           {/* Image file picker */}
           <TouchableOpacity
             onPress={pickImage}
@@ -313,14 +428,33 @@ export default function UploadEpisodeScreen() {
             </Surface>
           </TouchableOpacity>
 
-          <FormInput
-            name="title"
-            control={control}
-            label="Episode Title"
-            placeholder="e.g. Episode 1: Introduction"
-            autoCapitalize="words"
-            icon={<Music size={20} color={theme.colors.onSurfaceVariant} />}
-          />
+          {/* Title with auto-fill indicator */}
+          <View>
+            <FormInput
+              name="title"
+              control={control}
+              label="Episode Title"
+              placeholder={audioFile ? 'Title extracted from file...' : 'Upload audio file first for auto-fill'}
+              autoCapitalize="words"
+              icon={
+                titleAutoFilled
+                  ? <CheckCircle2 size={20} color={theme.colors.primary} />
+                  : <Music size={20} color={theme.colors.onSurfaceVariant} />
+              }
+            />
+            {titleAutoFilled ? (
+              <View style={s.autoFilledBadge}>
+                <Sparkles size={12} color={Palette.primary[500]} />
+                <Text variant="labelSmall" style={{ color: Palette.primary[600], marginLeft: 5, fontWeight: '600' }}>
+                  Auto-filled from audio file — you can edit it
+                </Text>
+              </View>
+            ) : !audioFile ? (
+              <Text variant="labelSmall" style={[s.hintText, { color: theme.colors.onSurfaceVariant }]}>
+                ✨ Title will be filled automatically after selecting the audio file
+              </Text>
+            ) : null}
+          </View>
 
           <View style={{ marginBottom: Spacing.md }}>
             <Text
@@ -415,87 +549,6 @@ export default function UploadEpisodeScreen() {
             numberOfLines={4}
           />
 
-          {/* Audio file picker */}
-          <TouchableOpacity
-            onPress={pickAudio}
-            activeOpacity={0.8}
-            disabled={isUploading}
-          >
-            <Surface
-              style={[
-                s.uploadArea,
-                {
-                  backgroundColor: Palette.light.surfaceVariant,
-                  borderColor: Palette.light.border,
-                  opacity: isUploading ? 0.7 : 1,
-                },
-              ]}
-              elevation={0}
-            >
-              <Upload size={28} color={theme.colors.primary} />
-              {audioFile ? (
-                <>
-                  <Text
-                    variant="bodyMedium"
-                    style={{
-                      color: theme.colors.primary,
-                      marginTop: 8,
-                      fontWeight: "600",
-                      textAlign: "center",
-                    }}
-                  >
-                    {audioFile.name}
-                  </Text>
-                  <Text
-                    variant="labelSmall"
-                    style={{
-                      color: theme.colors.onSurfaceVariant,
-                      marginTop: 4,
-                    }}
-                  >
-                    {audioFile.size
-                      ? (audioFile.size / (1024 * 1024)).toFixed(2)
-                      : 0}{" "}
-                    MB
-                    {extractedDurationSec != null && (
-                      <> · {formatDuration(extractedDurationSec)}</>
-                    )}
-                  </Text>
-                    {durationExtractionFailed && (
-                    <Text
-                      variant="labelSmall"
-                      style={{
-                        color: theme.colors.onSurfaceVariant,
-                        marginTop: 4,
-                        fontStyle: "italic",
-                      }}
-                    >
-                      Could not extract duration. Duration will be omitted.
-                    </Text>
-                  )}
-                </>
-              ) : (
-                <>
-                  <Text
-                    variant="bodyMedium"
-                    style={{
-                      color: theme.colors.onSurfaceVariant,
-                      marginTop: 8,
-                    }}
-                  >
-                    Tap to select audio file
-                  </Text>
-                  <Text
-                    variant="labelSmall"
-                    style={{ color: theme.colors.onSurfaceVariant }}
-                  >
-                    MP3, M4A, WAV, OGG, FLAC
-                  </Text>
-                </>
-              )}
-            </Surface>
-          </TouchableOpacity>
-
           {/* Upload progress */}
           {isUploading && (
             <View style={{ marginTop: Spacing.lg }}>
@@ -580,10 +633,53 @@ const s = StyleSheet.create({
   },
   uploadArea: {
     borderWidth: 1.5,
-    borderStyle: "dashed",
+    borderStyle: 'dashed',
     borderRadius: Radius.lg,
     padding: Spacing.xl,
-    alignItems: "center",
+    alignItems: 'center',
+    marginBottom: Spacing.sm,
   },
   submitBtn: { borderRadius: Radius.md, marginTop: Spacing.lg },
+  stepHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.sm,
+    marginBottom: Spacing.sm,
+    marginTop: Spacing.xs,
+  },
+  stepBadge: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  audioIconBox: {
+    width: 60,
+    height: 60,
+    borderRadius: Radius.xl,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  autoFillHint: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: Spacing.md,
+    paddingHorizontal: Spacing.md,
+    paddingVertical: Spacing.sm,
+    borderRadius: Radius.lg,
+    borderWidth: 1,
+  },
+  autoFilledBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: -Spacing.xs,
+    marginBottom: Spacing.sm,
+    marginLeft: 4,
+  },
+  hintText: {
+    marginTop: -Spacing.xs,
+    marginBottom: Spacing.sm,
+    marginLeft: 4,
+  },
 });

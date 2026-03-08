@@ -1,11 +1,5 @@
 import React, { useState } from "react";
-import {
-  View,
-  StyleSheet,
-  Image,
-  StyleProp,
-  ViewStyle,
-} from "react-native";
+import { View, StyleSheet, Image, StyleProp, ViewStyle } from "react-native";
 import { Text, Surface, useTheme } from "react-native-paper";
 import { Play, Clock } from "lucide-react-native";
 import { useRouter } from "expo-router";
@@ -99,7 +93,7 @@ export function EpisodeRow({
                 ? episode.duration >= 3600
                   ? `${Math.floor(episode.duration / 3600)}h ${Math.floor((episode.duration % 3600) / 60)}min`
                   : `${Math.floor(episode.duration / 60)} min`
-                : '—'}
+                : "—"}
             </Text>
             {episode.viewsCount != null && episode.viewsCount > 0 && (
               <Text

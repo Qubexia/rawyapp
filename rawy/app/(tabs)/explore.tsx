@@ -383,7 +383,7 @@ export default function ExploreScreen() {
               {podcasts.length > 0 ? (
                 <View style={styles.podcastList}>
                   {podcasts.map((podcast, idx) => (
-                    <View key={podcast?._id || idx} style={{ width: '48%', marginBottom: Spacing.md }}>
+                    <View key={podcast?._id || idx} style={{ width: '100%', marginBottom: Spacing.md }}>
                       {renderPodcastRow({ item: podcast })}
                     </View>
                   ))}

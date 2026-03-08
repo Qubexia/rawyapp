@@ -32,13 +32,10 @@ export function useLikeComment() {
 
             return { previousStatus, commentId };
         },
-        onError: (err, commentId, context) => {
+        onError: (_err, _commentId, context) => {
             if (context?.previousStatus) {
                 queryClient.setQueryData(['commentLikeStatus', context.commentId], context.previousStatus);
             }
-        },
-        onSettled: (data, error, commentId) => {
-            queryClient.invalidateQueries({ queryKey: ['commentLikeStatus', commentId] });
         },
     });
 }
@@ -63,13 +60,10 @@ export function useUnlikeComment() {
 
             return { previousStatus, commentId };
         },
-        onError: (err, commentId, context) => {
+        onError: (_err, _commentId, context) => {
             if (context?.previousStatus) {
                 queryClient.setQueryData(['commentLikeStatus', context.commentId], context.previousStatus);
             }
-        },
-        onSettled: (data, error, commentId) => {
-            queryClient.invalidateQueries({ queryKey: ['commentLikeStatus', commentId] });
         },
     });
 }

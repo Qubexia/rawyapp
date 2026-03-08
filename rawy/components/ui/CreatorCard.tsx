@@ -35,9 +35,7 @@ export function CreatorCard({ creator, onPress }: CreatorCardProps) {
       >
         {/* Avatar with ring */}
         <View style={styles.avatarWrapper}>
-          <View
-            style={styles.avatarRing}
-          >
+          <View style={styles.avatarRing}>
             <View
               style={[styles.avatar, { backgroundColor: Palette.primary[100] }]}
             >
@@ -64,24 +62,24 @@ export function CreatorCard({ creator, onPress }: CreatorCardProps) {
           <View
             style={[
               styles.roleBadge,
-              creator.role === 'CREATOR'
+              creator.role === "CREATOR"
                 ? { backgroundColor: Palette.primary[50] }
-                : { backgroundColor: '#F3F4F6' },
+                : { backgroundColor: "#F3F4F6" },
             ]}
           >
-            {creator.role === 'CREATOR' ? (
+            {creator.role === "CREATOR" ? (
               <BadgeCheck size={10} color={Palette.primary[500]} />
             ) : null}
             <Text
               variant="labelSmall"
               style={[
                 styles.roleText,
-                creator.role === 'CREATOR'
+                creator.role === "CREATOR"
                   ? { color: Palette.primary[500] }
-                  : { color: '#6B7280' },
+                  : { color: "#6B7280" },
               ]}
             >
-              {creator.role === 'CREATOR' ? 'Creator' : 'User'}
+              {creator.role === "CREATOR" ? "Creator" : "User"}
             </Text>
           </View>
         )}
@@ -122,6 +120,7 @@ const styles = StyleSheet.create({
     paddingTop: Spacing.md,
     paddingBottom: Spacing.sm,
     borderRadius: Radius.xl,
+    marginBottom: Spacing.md,
     gap: Spacing.xs,
   },
   avatarWrapper: {

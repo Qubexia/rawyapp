@@ -3,10 +3,11 @@
  * Player controls live in the separate /player screen.
  */
 
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect, useRef } from 'react';
 import {
-  View, FlatList, StyleSheet, TouchableOpacity,
-  TextInput, KeyboardAvoidingView, Platform, Share, RefreshControl, Image, ActivityIndicator
+  View, FlatList, StyleSheet, TouchableOpacity, Modal,
+  TextInput, Platform, Share, RefreshControl, Image, ActivityIndicator, Keyboard,
+  Animated as RNAnimated,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Text, Surface, IconButton, useTheme, Chip } from 'react-native-paper';
@@ -42,6 +43,32 @@ export default function EpisodeDetailScreen() {
   const [refreshing, setRefreshing] = useState(false);
   const [replyTo, setReplyTo] = useState<{ id: string; name: string } | null>(null);
   const [isDescExpanded, setIsDescExpanded] = useState(false);
+  const [showCommentInput, setShowCommentInput] = useState(false);
+  const sheetTranslateY = useRef(new RNAnimated.Value(0)).current;
+
+  useEffect(() => {
+    const showSub = Keyboard.addListener(
+      Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow',
+      (e) => {
+        RNAnimated.timing(sheetTranslateY, {
+          toValue: -e.endCoordinates.height,
+          duration: Platform.OS === 'ios' ? e.duration || 250 : 200,
+          useNativeDriver: true,
+        }).start();
+      },
+    );
+    const hideSub = Keyboard.addListener(
+      Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide',
+      (e) => {
+        RNAnimated.timing(sheetTranslateY, {
+          toValue: 0,
+          duration: Platform.OS === 'ios' ? e.duration || 250 : 200,
+          useNativeDriver: true,
+        }).start();
+      },
+    );
+    return () => { showSub.remove(); hideSub.remove(); };
+  }, [sheetTranslateY]);
 
   // Animation state
   const playBtnScale = useSharedValue(1);
@@ -104,6 +131,8 @@ export default function EpisodeDetailScreen() {
       await createComment.mutateAsync(t);
     }
     setCommentText('');
+    setShowCommentInput(false);
+    Keyboard.dismiss();
   };
 
   if (isLoading) {
@@ -123,7 +152,7 @@ export default function EpisodeDetailScreen() {
       key={item._id}
       episodeId={id}
       comment={item}
-      onReply={(commentId, name) => setReplyTo({ id: commentId, name })}
+      onReply={(commentId, name) => { setReplyTo({ id: commentId, name }); setShowCommentInput(true); }}
       creatorId={episode?.creator?._id}
     />
   );
@@ -197,10 +226,15 @@ export default function EpisodeDetailScreen() {
           </Text>
         </TouchableOpacity>
 
-        <View style={s.interactionItem}>
-          <MessageCircle size={20} color={theme.colors.onSurfaceVariant} />
-          <Text variant="labelSmall" style={s.interactionLabel}>{episode?.commentsCount ?? comments.length}</Text>
-        </View>
+        <TouchableOpacity style={s.interactionItem} onPress={() => {
+          if (!user) { router.push('/(auth)/login' as any); return; }
+          setShowCommentInput(true);
+        }}>
+          <MessageCircle size={20} color={showCommentInput ? theme.colors.primary : theme.colors.onSurfaceVariant} />
+          <Text variant="labelSmall" style={[s.interactionLabel, showCommentInput && { color: theme.colors.primary }]}>
+            {episode?.commentsCount ?? comments.length}
+          </Text>
+        </TouchableOpacity>
 
         <TouchableOpacity style={s.interactionItem} onPress={handleShare}>
           <Share2 size={20} color={theme.colors.onSurfaceVariant} />
@@ -271,6 +305,20 @@ export default function EpisodeDetailScreen() {
           </Chip>
         )}
       </View>
+
+      {/* ── Comment prompt ── */}
+      {user ? (
+        <TouchableOpacity
+          style={[s.commentPrompt, { backgroundColor: theme.colors.surface, borderColor: theme.colors.surfaceVariant }]}
+          onPress={() => setShowCommentInput(true)}
+          activeOpacity={0.7}
+        >
+          <Text variant="bodyMedium" style={{ color: theme.colors.onSurfaceVariant, flex: 1 }}>
+            Write a comment...
+          </Text>
+          <MessageCircle size={18} color={theme.colors.onSurfaceVariant} />
+        </TouchableOpacity>
+      ) : null}
     </View>
   );
 
@@ -286,11 +334,7 @@ export default function EpisodeDetailScreen() {
           <View style={{ width: 48 }} />
         </View>
 
-        <KeyboardAvoidingView
-          style={{ flex: 1, marginBottom: currentEpisode ? MINI_PLAYER_CLEARANCE : 0 }}
-          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-          keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}
-        >
+        <View style={{ flex: 1, marginBottom: currentEpisode ? MINI_PLAYER_CLEARANCE : 0 }}>
           <FlatList
             data={comments}
             keyExtractor={(i, idx) => i?._id ? String(i._id) : String(idx)}
@@ -311,49 +355,91 @@ export default function EpisodeDetailScreen() {
             }
             ListEmptyComponent={() =>
               !commentsLoading ? (
-                <View style={s.emptyC}>
-                  <MessageCircle size={28} color={theme.colors.onSurfaceVariant} strokeWidth={1} />
-                  <Text variant="bodySmall" style={{ color: theme.colors.onSurfaceVariant, marginTop: 8 }}>
+                <TouchableOpacity
+                  style={s.emptyC}
+                  onPress={() => { if (!user) { router.push('/(auth)/login' as any); return; } setShowCommentInput(true); }}
+                >
+                  <MessageCircle size={28} color={theme.colors.primary} strokeWidth={1} />
+                  <Text variant="bodySmall" style={{ color: theme.colors.primary, marginTop: 8, fontWeight: '700' }}>
                     Be the first to comment!
                   </Text>
-                </View>
+                </TouchableOpacity>
               ) : null
             }
           />
-          {user && (
-            <Surface style={[s.inputBarContainer, { backgroundColor: '#FFF', borderTopColor: Palette.light.border }]} elevation={2}>
-              {replyTo && (
-                <View style={s.replyingToBar}>
-                  <Text variant="labelSmall" style={{ color: theme.colors.primary, flex: 1 }}>
-                    Replying to {replyTo.name}
-                  </Text>
-                  <TouchableOpacity onPress={() => setReplyTo(null)}>
-                    <X size={16} color={theme.colors.onSurfaceVariant} />
-                  </TouchableOpacity>
-                </View>
-              )}
-              <View style={s.inputBar}>
-                <TextInput
-                  style={[s.input, { color: theme.colors.onSurface }]}
-                  placeholder={replyTo ? 'Write a reply...' : 'Write a comment...'}
-                  placeholderTextColor={theme.colors.onSurfaceVariant}
-                  value={commentText}
-                  onChangeText={setCommentText}
-                  multiline
-                />
-                <IconButton
-                  icon={() =>
-                    (createComment.isPending || createReply.isPending)
-                      ? <ActivityIndicator size={20} color={theme.colors.primary} />
-                      : <Send size={20} color={commentText.trim() ? theme.colors.primary : theme.colors.onSurfaceVariant} />
-                  }
-                  onPress={handleSend}
-                  disabled={!commentText.trim() || createComment.isPending || createReply.isPending}
-                />
-              </View>
-            </Surface>
-          )}
-        </KeyboardAvoidingView>
+          <Modal
+            visible={showCommentInput}
+            transparent
+            animationType="slide"
+            onRequestClose={() => { setShowCommentInput(false); setReplyTo(null); Keyboard.dismiss(); }}
+          >
+            <TouchableOpacity
+              style={s.modalBackdrop}
+              activeOpacity={1}
+              onPress={() => { setShowCommentInput(false); setReplyTo(null); Keyboard.dismiss(); }}
+            >
+              <TouchableOpacity activeOpacity={1} onPress={() => {}}>
+                <RNAnimated.View style={{ transform: [{ translateY: sheetTranslateY }] }}>
+                  <Surface style={[s.commentSheet, { backgroundColor: theme.colors.surface }]} elevation={8}>
+                    {/* Handle bar */}
+                    <View style={[s.sheetHandle, { backgroundColor: theme.colors.surfaceVariant }]} />
+
+                    {/* Header */}
+                    <View style={s.sheetHeader}>
+                      <Text variant="titleMedium" style={{ fontWeight: '700', color: theme.colors.onSurface }}>
+                        {replyTo ? `Reply to ${replyTo.name}` : 'Add a comment'}
+                      </Text>
+                      <TouchableOpacity onPress={() => { setShowCommentInput(false); setReplyTo(null); setCommentText(''); }}>
+                        <X size={22} color={theme.colors.onSurfaceVariant} />
+                      </TouchableOpacity>
+                    </View>
+
+                    {/* Input */}
+                    <TextInput
+                      autoFocus
+                      style={[s.modalInput, { color: theme.colors.onSurface, backgroundColor: theme.colors.background, borderColor: theme.colors.surfaceVariant }]}
+                      placeholder={replyTo ? `Reply to ${replyTo.name}...` : 'Share your thoughts...'}
+                      placeholderTextColor={theme.colors.onSurfaceVariant}
+                      value={commentText}
+                      onChangeText={setCommentText}
+                      multiline
+                      maxLength={500}
+                      textAlignVertical="top"
+                    />
+                    <Text variant="labelSmall" style={{ color: theme.colors.onSurfaceVariant, textAlign: 'right', marginTop: 4 }}>
+                      {commentText.length}/500
+                    </Text>
+
+                    {/* Actions */}
+                    <View style={s.sheetActions}>
+                      <TouchableOpacity
+                        style={s.cancelBtn}
+                        onPress={() => { setShowCommentInput(false); setReplyTo(null); setCommentText(''); }}
+                      >
+                        <Text style={{ color: theme.colors.onSurfaceVariant, fontWeight: '600', fontSize: 15 }}>Cancel</Text>
+                      </TouchableOpacity>
+                      <TouchableOpacity
+                        style={[s.postBtn, { backgroundColor: commentText.trim() ? theme.colors.primary : theme.colors.surfaceVariant }]}
+                        onPress={handleSend}
+                        disabled={!commentText.trim() || createComment.isPending || createReply.isPending}
+                      >
+                        {(createComment.isPending || createReply.isPending)
+                          ? <ActivityIndicator size={18} color="#FFF" />
+                          : <>
+                              <Send size={16} color={commentText.trim() ? '#FFF' : theme.colors.onSurfaceVariant} />
+                              <Text style={{ color: commentText.trim() ? '#FFF' : theme.colors.onSurfaceVariant, fontWeight: '700', fontSize: 15, marginLeft: 6 }}>
+                                {replyTo ? 'Reply' : 'Post'}
+                              </Text>
+                            </>
+                        }
+                      </TouchableOpacity>
+                    </View>
+                  </Surface>
+                </RNAnimated.View>
+              </TouchableOpacity>
+            </TouchableOpacity>
+          </Modal>
+        </View>
       </ErrorBoundary>
     </SafeAreaView >
   );
@@ -456,23 +542,74 @@ const s = StyleSheet.create({
     marginBottom: Spacing.md,
   },
 
-  // Input
-  inputBarContainer: {
-    borderTopWidth: 0.5,
-  },
-  replyingToBar: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: Spacing.lg,
-    paddingVertical: Spacing.xs,
-    backgroundColor: Palette.primary[50],
-  },
-  inputBar: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: Spacing.md,
-    paddingVertical: Spacing.xs,
-  },
-  input: { flex: 1, fontSize: 15, maxHeight: 80, paddingVertical: Spacing.sm },
   emptyC: { alignItems: 'center', paddingVertical: Spacing.xl },
+
+  // Comment prompt (inside list header)
+  commentPrompt: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginHorizontal: Spacing.lg,
+    marginBottom: Spacing.md,
+    paddingHorizontal: Spacing.md,
+    paddingVertical: Spacing.sm,
+    borderRadius: Radius.xl,
+    borderWidth: 1,
+    gap: Spacing.sm,
+  },
+
+  // Modal bottom sheet
+  modalBackdrop: {
+    flex: 1,
+    justifyContent: 'flex-end',
+    backgroundColor: 'rgba(0,0,0,0.45)',
+  },
+  commentSheet: {
+    borderTopLeftRadius: Radius.xxl,
+    borderTopRightRadius: Radius.xxl,
+    paddingHorizontal: Spacing.lg,
+    paddingTop: Spacing.sm,
+    paddingBottom: Spacing.xxl,
+  },
+  sheetHandle: {
+    width: 40,
+    height: 4,
+    borderRadius: 2,
+    alignSelf: 'center',
+    marginBottom: Spacing.md,
+  },
+  sheetHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: Spacing.md,
+  },
+  modalInput: {
+    borderWidth: 1,
+    borderRadius: Radius.lg,
+    padding: Spacing.md,
+    fontSize: 15,
+    minHeight: 100,
+    maxHeight: 160,
+    lineHeight: 22,
+  },
+  sheetActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'flex-end',
+    marginTop: Spacing.md,
+    gap: Spacing.md,
+  },
+  cancelBtn: {
+    paddingVertical: Spacing.sm,
+    paddingHorizontal: Spacing.md,
+  },
+  postBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: Spacing.sm,
+    paddingHorizontal: Spacing.lg,
+    borderRadius: Radius.xl,
+    minWidth: 90,
+    justifyContent: 'center',
+  },
 });
