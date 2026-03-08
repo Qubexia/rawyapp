@@ -1,0 +1,13 @@
+{
+    "applinks": {
+        "apps": [],
+        "details": [
+            {
+                "appID": "KAHLA_TEAM_ID.com.kahlaafaq.rawy",
+                "paths": [
+                    "/episode/*"
+                ]
+            }
+        ]
+    }
+}

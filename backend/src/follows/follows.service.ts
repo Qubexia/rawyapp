@@ -13,6 +13,7 @@ import { CreatorsService } from '../creators/creators.service';
 import { UsersService } from '../users/users.service';
 import { CreatorProfile } from '../creators/schemas/creator-profile.schema';
 import { PaginatedResponseDto } from '../common/dto/paginated-response.dto';
+import { NotificationsService } from '../notifications/notifications.service';
 
 @Injectable()
 export class FollowsService {
@@ -21,7 +22,9 @@ export class FollowsService {
     private creatorsService: CreatorsService,
     @Inject(forwardRef(() => UsersService))
     private usersService: UsersService,
-  ) {}
+    @Inject(forwardRef(() => NotificationsService))
+    private notificationsService: NotificationsService,
+  ) { }
 
   /**
    * Follow a user/creator. Prevents self-follow and duplicate follows.
@@ -57,6 +60,15 @@ export class FollowsService {
     if (creatorProfile) {
       await this.creatorsService.incrementFollowerCount(creatorId);
     }
+
+    // Trigger notification
+    await this.notificationsService.createOrAggregateNotification(
+      creatorId,
+      'new_follower',
+      followerId,
+      followerId,
+      'User'
+    );
 
     const updatedUser = await this.usersService.getPublicProfile(creatorId.toString());
     return { followerCount: updatedUser.followerCount };
@@ -106,7 +118,7 @@ export class FollowsService {
 
     // Prefer User.followerCount, but check CreatorProfile for fallback/sync if needed
     let followerCount = user.followerCount;
-    
+
     return {
       isFollowing: !!follow,
       followerCount,
@@ -114,13 +126,14 @@ export class FollowsService {
   }
 
   /**
-   * Paginated list of creators the user follows (CreatorProfile enriched with user name).
+   * Paginated list of users the user follows.
+   * Returns UserSummaryDto shape: id, name, avatarUrl.
    */
   async getFollowing(
     followerId: Types.ObjectId,
     page: number = 1,
     limit: number = 20,
-  ): Promise<PaginatedResponseDto<CreatorProfile & { name?: string }>> {
+  ): Promise<PaginatedResponseDto<{ id: string; name: string; avatarUrl?: string; followerCount: number }>> {
     const skip = (page - 1) * limit;
 
     const followDocs = await this.followModel
@@ -134,28 +147,42 @@ export class FollowsService {
     const total = await this.followModel.countDocuments({ followerId }).exec();
     const creatorIds = followDocs.map((f) => f.creatorId);
 
-    const [creators, users] = await Promise.all([
-      this.creatorsService.getProfilesByUserIds(creatorIds),
-      this.usersService.findByIds(creatorIds, 'name'),
-    ]);
+    const users = await this.usersService.findByIds(creatorIds, 'name avatarUrl followerCount');
 
-    const userMap = new Map(users.map((u) => [u._id.toString(), (u as any).name]));
-    const enriched = creators.map((c) => ({
-      ...c.toObject ? c.toObject() : c,
-      name: userMap.get(c.userId.toString()) ?? c.showName ?? 'Creator',
-    }));
+    const creatorProfiles = await this.creatorsService.getProfilesWithAvatarByUserIds(creatorIds);
+    const creatorAvatarByUserId = new Map(
+      creatorProfiles.map((p) => [p.userId.toString(), p.avatarUrl]),
+    );
 
     const orderMap = new Map(creatorIds.map((id, i) => [id.toString(), i]));
-    enriched.sort((a, b) => orderMap.get(a.userId.toString())! - orderMap.get(b.userId.toString())!);
+    const data = users.map((u) => ({
+      id: u._id.toString(),
+      name: (u as any).name,
+      avatarUrl: creatorAvatarByUserId.get(u._id.toString()) || (u as any).avatarUrl,
+      followerCount: (u as any).followerCount || 0,
+    }));
+    data.sort((a, b) => orderMap.get(a.id)! - orderMap.get(b.id)!);
 
     const totalPages = Math.ceil(total / limit);
     return {
-      data: enriched,
+      data,
       total,
       page,
       limit,
       totalPages,
     };
+  }
+
+  /**
+   * Get all creator IDs the user follows.
+   */
+  async getAllFollowingIds(followerId: Types.ObjectId): Promise<Types.ObjectId[]> {
+    const docs = await this.followModel
+      .find({ followerId })
+      .select('creatorId')
+      .lean()
+      .exec();
+    return docs.map((d) => d.creatorId as Types.ObjectId);
   }
 
   /**
@@ -178,7 +205,7 @@ export class FollowsService {
     targetId: Types.ObjectId,
     page: number = 1,
     limit: number = 20,
-  ): Promise<PaginatedResponseDto<{ id: string; name: string; avatarUrl?: string }>> {
+  ): Promise<PaginatedResponseDto<{ id: string; name: string; avatarUrl?: string; followerCount: number }>> {
     const user = await this.usersService.findById(targetId.toString());
     if (!user) {
       throw new NotFoundException('User not found');
@@ -197,8 +224,8 @@ export class FollowsService {
     const total = await this.followModel.countDocuments({ creatorId: targetId }).exec();
     const followerIds = followDocs.map((f) => f.followerId);
 
-    const users = await this.usersService.findByIds(followerIds, 'name avatarUrl');
-    
+    const users = await this.usersService.findByIds(followerIds, 'name avatarUrl followerCount');
+
     // Attempt to get creator profiles for potentially higher quality or specific avatars
     // though now avatars are also on User model.
     const creatorProfiles = await this.creatorsService.getProfilesWithAvatarByUserIds(followerIds);
@@ -211,6 +238,7 @@ export class FollowsService {
       id: u._id.toString(),
       name: u.name,
       avatarUrl: creatorAvatarByUserId.get(u._id.toString()) || (u as any).avatarUrl,
+      followerCount: (u as any).followerCount || 0,
     }));
     data.sort((a, b) => orderMap.get(a.id)! - orderMap.get(b.id)!);
 

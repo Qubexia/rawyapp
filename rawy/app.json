@@ -8,22 +8,48 @@
     "scheme": "rawy",
     "userInterfaceStyle": "light",
     "newArchEnabled": true,
-    "ios": {
-      "supportsTablet": true,
-      "icon": "./assets/images/home-icon.jpg",
-      "infoPlist": {
-        "UIBackgroundModes": ["audio"]
-      }
-    },
     "android": {
       "package": "com.kahlaafaq.rawy",
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/home-icon.jpg",
         "backgroundColor": "#ffffff"
       },
+      "intentFilters": [
+        {
+          "action": "VIEW",
+          "autoVerify": true,
+          "data": [
+            {
+              "scheme": "https",
+              "host": "rawy.app",
+              "pathPrefix": "/episode"
+            }
+          ],
+          "category": [
+            "BROWSABLE",
+            "DEFAULT"
+          ]
+        }
+      ],
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false,
-      "permissions": ["FOREGROUND_SERVICE", "FOREGROUND_SERVICE_MEDIA_PLAYBACK"]
+      "permissions": [
+        "FOREGROUND_SERVICE",
+        "FOREGROUND_SERVICE_MEDIA_PLAYBACK"
+      ]
+    },
+    "ios": {
+      "supportsTablet": true,
+      "icon": "./assets/images/home-icon.jpg",
+      "bundleIdentifier": "com.kahlaafaq.rawy",
+      "associatedDomains": [
+        "applinks:rawy.app"
+      ],
+      "infoPlist": {
+        "UIBackgroundModes": [
+          "audio"
+        ]
+      }
     },
     "web": {
       "output": "static",
@@ -46,7 +72,12 @@
       "expo-secure-store",
       "expo-web-browser",
       "expo-font",
-      ["expo-audio", { "enableBackgroundPlayback": true }]
+      [
+        "expo-audio",
+        {
+          "enableBackgroundPlayback": true
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true,

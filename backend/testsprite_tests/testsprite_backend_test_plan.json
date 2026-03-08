@@ -17,7 +17,7 @@
   {
     "id": "TC004",
     "title": "post_auth_refresh_with_valid_token",
-    "description": "Verify that POST /api/v1/auth/refresh with a valid refresh token returns 200 with new TokenResponse containing new access and refresh tokens."
+    "description": "Verify that POST /api/v1/auth/refresh with a valid refresh token returns 200 with new access and refresh tokens in TokenResponse."
   },
   {
     "id": "TC005",
@@ -26,27 +26,22 @@
   },
   {
     "id": "TC006",
-    "title": "get_users_me_with_valid_access_token",
-    "description": "Verify that GET /api/v1/users/me with a valid Authorization Bearer access token returns 200 with the current User profile."
+    "title": "get_auth_google_redirect",
+    "description": "Verify that GET /api/v1/auth/google returns 302 redirect to Google OAuth consent page."
   },
   {
     "id": "TC007",
-    "title": "post_podcasts_create_with_valid_data",
-    "description": "Verify that POST /api/v1/podcasts with valid Authorization Bearer access token and valid podcast data returns 201 with the created Podcast object."
+    "title": "get_auth_google_callback_with_provider_code",
+    "description": "Verify that GET /api/v1/auth/google/callback with a valid provider code returns 200 with TokenResponse containing access and refresh tokens."
   },
   {
     "id": "TC008",
-    "title": "post_episodes_create_with_valid_data_and_audio",
-    "description": "Verify that POST /api/v1/episodes with valid Authorization Bearer access token and valid episode data including audio file returns 201 with the created Episode and triggers push notifications to followers."
+    "title": "get_auth_facebook_redirect",
+    "description": "Verify that GET /api/v1/auth/facebook returns 302 redirect to Facebook OAuth consent page."
   },
   {
     "id": "TC009",
-    "title": "post_creators_become_with_valid_data",
-    "description": "Verify that POST /api/v1/creators/become with valid Authorization Bearer access token and valid creator data returns 201 with the created Creator profile."
-  },
-  {
-    "id": "TC010",
-    "title": "post_follows_creators_creatorid_with_valid_access_token",
-    "description": "Verify that POST /api/v1/follows/creators/:creatorId with valid Authorization Bearer access token returns 201 with Follow object indicating the user is now following the creator."
+    "title": "get_auth_facebook_callback_with_provider_code",
+    "description": "Verify that GET /api/v1/auth/facebook/callback with a valid provider code returns 200 with TokenResponse containing access and refresh tokens."
   }
 ]

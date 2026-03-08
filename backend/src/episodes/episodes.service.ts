@@ -27,7 +27,7 @@ export class EpisodesService {
     private commentsService?: CommentsService,
     @Inject(forwardRef(() => require('../views/views.service').ViewsService))
     private viewsService?: ViewsService,
-  ) {}
+  ) { }
 
   /**
    * Create a new episode
@@ -65,6 +65,7 @@ export class EpisodesService {
         if (podcast) {
           await this.notificationsService.sendNewEpisodeNotification(
             creatorId,
+            savedEpisode._id,
             savedEpisode.title,
             podcast.title,
           );
@@ -201,7 +202,7 @@ export class EpisodesService {
     if (episode.audioFileUrl) {
       try {
         const audioPath = join(process.cwd(), episode.audioFileUrl);
-        await unlink(audioPath).catch(() => {});
+        await unlink(audioPath).catch(() => { });
       } catch (error) {
         // Ignore file deletion errors
       }
@@ -339,6 +340,91 @@ export class EpisodesService {
   }
 
   /**
+   * Find episodes by multiple creator IDs (for feed).
+   */
+  async findByCreators(
+    creatorIds: Types.ObjectId[],
+    page: number = 1,
+    limit: number = 20,
+    excludeIds: Types.ObjectId[] = [],
+  ): Promise<PaginatedResponseDto<Episode>> {
+    const skip = (page - 1) * limit;
+    const filter: any = { creatorId: { $in: creatorIds } };
+    if (excludeIds.length > 0) {
+      filter._id = { $nin: excludeIds };
+    }
+
+    const [rawData, total] = await Promise.all([
+      this.episodeModel
+        .find(filter)
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(limit)
+        .populate('podcastId', 'title coverImageUrl')
+        .populate('creatorId', 'name avatarUrl')
+        .lean()
+        .exec(),
+      this.episodeModel.countDocuments(filter).exec(),
+    ]);
+
+    const data = rawData.map(({ podcastId, creatorId, ...rest }: any) => ({
+      ...rest,
+      podcast: podcastId,
+      creator: creatorId,
+    })) as any;
+
+    return {
+      data,
+      total,
+      page,
+      limit,
+      totalPages: Math.ceil(total / limit),
+    };
+  }
+
+  /**
+   * Find recommended episodes.
+   */
+  async findRecommended(
+    page: number = 1,
+    limit: number = 20,
+    excludeCreatorIds: Types.ObjectId[] = [],
+  ): Promise<PaginatedResponseDto<Episode>> {
+    const skip = (page - 1) * limit;
+    const filter: any = {};
+    if (excludeCreatorIds.length > 0) {
+      filter.creatorId = { $nin: excludeCreatorIds };
+    }
+
+    const [rawData, total] = await Promise.all([
+      this.episodeModel
+        .find(filter)
+        .sort({ viewsCount: -1, createdAt: -1 })
+        .skip(skip)
+        .limit(limit)
+        .populate('podcastId', 'title coverImageUrl')
+        .populate('creatorId', 'name avatarUrl')
+        .lean()
+        .exec(),
+      this.episodeModel.countDocuments(filter).exec(),
+    ]);
+
+    const data = rawData.map(({ podcastId, creatorId, ...rest }: any) => ({
+      ...rest,
+      podcast: podcastId,
+      creator: creatorId,
+    })) as any;
+
+    return {
+      data,
+      total,
+      page,
+      limit,
+      totalPages: Math.ceil(total / limit),
+    };
+  }
+
+  /**
    * Delete all episodes of a podcast (cascade: likes, comments, views, files). Used when deleting a podcast.
    */
   async deleteAllByPodcastId(podcastId: Types.ObjectId): Promise<void> {
@@ -349,7 +435,7 @@ export class EpisodesService {
       if (this.viewsService) await this.viewsService.deleteViewsForEpisode(ep._id as Types.ObjectId);
       if (ep.audioFileUrl) {
         try {
-          await unlink(join(process.cwd(), ep.audioFileUrl)).catch(() => {});
+          await unlink(join(process.cwd(), ep.audioFileUrl)).catch(() => { });
         } catch {
           // ignore
         }

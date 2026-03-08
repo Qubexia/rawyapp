@@ -29,7 +29,7 @@ import { ApiCommonErrorResponses } from '../common/decorators/api-error-response
 @ApiCommonErrorResponses()
 @Controller('comments')
 export class CommentsController {
-  constructor(private readonly commentsService: CommentsService) {}
+  constructor(private readonly commentsService: CommentsService) { }
 
   @Post('episodes/:episodeId')
   @ApiBearerAuth()
@@ -73,6 +73,29 @@ export class CommentsController {
     const limit = query.limit ?? 20;
     const result = await this.commentsService.getCommentsByEpisode(
       new Types.ObjectId(episodeId),
+      page,
+      limit,
+    );
+    return { statusCode: 200, data: result };
+  }
+
+  @Get(':commentId/replies')
+  @Public()
+  @ApiOperation({ summary: 'Get replies for a comment (paginated, oldest first)' })
+  @ApiParam({ name: 'commentId', description: 'Comment ID' })
+  @ApiResponse({ status: 200, description: 'Paginated replies' })
+  @ApiResponse({ status: 400, description: 'Invalid comment ID' })
+  async getReplies(
+    @Param('commentId') commentId: string,
+    @Query() query: PaginationQueryDto,
+  ) {
+    if (!Types.ObjectId.isValid(commentId)) {
+      throw new BadRequestException('Invalid comment ID');
+    }
+    const page = query.page ?? 1;
+    const limit = query.limit ?? 20;
+    const result = await this.commentsService.getReplies(
+      new Types.ObjectId(commentId),
       page,
       limit,
     );

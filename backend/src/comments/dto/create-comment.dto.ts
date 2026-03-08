@@ -1,4 +1,4 @@
-import { IsString, MinLength, MaxLength } from 'class-validator';
+import { IsString, MinLength, MaxLength, IsMongoId, IsOptional } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 
 export class CreateCommentDto {
@@ -12,4 +12,12 @@ export class CreateCommentDto {
   @MinLength(1, { message: 'Comment text must be at least 1 character' })
   @MaxLength(1000, { message: 'Comment text must not exceed 1000 characters' })
   text: string;
+
+  @ApiProperty({
+    description: 'Optional ID of the parent comment being replied to',
+    required: false,
+  })
+  @IsMongoId()
+  @IsOptional()
+  parentCommentId?: string;
 }

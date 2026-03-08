@@ -4,6 +4,8 @@ import * as ExpoAudio from 'expo-audio';
 import { Episode } from '@/services/episodes.service';
 import { recordView } from '@/services/views.service';
 import { useAuthContext } from '@/context/auth-context';
+import { useQueryClient } from '@tanstack/react-query';
+import { episodeKeys } from '@/hooks/queries/use-episodes';
 import { SERVER_URL } from '@/services/axios-client';
 import { resolveImageUrl } from '@/utils/url';
 
@@ -11,7 +13,7 @@ import { resolveImageUrl } from '@/utils/url';
 function resolveAudioUrl(path?: string): string {
   if (!path) return '';
   if (path.startsWith('http')) return path;
-  
+
   // Use the same logic as resolveImageUrl but for audio
   const normalizedPath = path.replace(/\\/g, '/').replace(/^\//, '');
   return `${SERVER_URL}/${normalizedPath}`;
@@ -28,7 +30,7 @@ function enableLockScreen(player: { setActiveForLockScreen?: (active: boolean, m
         artworkUrl: resolveImageUrl(episode.podcast?.coverImageUrl),
       });
     }
-  } catch {}
+  } catch { }
 }
 
 function disableLockScreen(player: { setActiveForLockScreen?: (active: boolean) => void }) {
@@ -36,7 +38,7 @@ function disableLockScreen(player: { setActiveForLockScreen?: (active: boolean) 
     if (typeof player.setActiveForLockScreen === 'function') {
       player.setActiveForLockScreen(false);
     }
-  } catch {}
+  } catch { }
 }
 
 interface PlayerContextType {
@@ -50,6 +52,7 @@ interface PlayerContextType {
   skipForward: () => Promise<void>;
   skipBackward: () => Promise<void>;
   dismiss: () => void;
+  trackView: (episodeId: string) => Promise<void>;
 }
 
 const PlayerContext = createContext<PlayerContextType | undefined>(undefined);
@@ -58,10 +61,24 @@ const SKIP_MS = 15_000; // 15 seconds
 
 export function PlayerProvider({ children }: { children: ReactNode }) {
   const { isAuthenticated } = useAuthContext();
+  const queryClient = useQueryClient();
   const [currentEpisode, setCurrentEpisode] = useState<Episode | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [position, setPosition] = useState(0);
   const [duration, setDuration] = useState(0);
+  const viewedEpisodeIds = useRef(new Set<string>());
+
+  const trackView = async (episodeId: string) => {
+    if (!isAuthenticated || viewedEpisodeIds.current.has(episodeId)) return;
+    try {
+      await recordView(episodeId);
+      viewedEpisodeIds.current.add(episodeId);
+      // Refresh episode details to reflect new view count
+      queryClient.invalidateQueries({ queryKey: episodeKeys.detail(episodeId) });
+    } catch (err) {
+      console.error('[PlayerContext] trackView error:', err);
+    }
+  };
 
   // Configure audio session once on mount and enable background playback
   useEffect(() => {
@@ -69,7 +86,7 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
       playsInSilentMode: true,
       interruptionMode: 'doNotMix',
       shouldPlayInBackground: true,
-    }).catch(() => {});
+    }).catch(() => { });
   }, []);
 
   // Resolve to full URL for the audio player
@@ -98,7 +115,7 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
         try {
           enableLockScreen(player, currentEpisode);
           player.play();
-        } catch {}
+        } catch { }
       }, 300);
       return () => clearTimeout(t);
     }
@@ -114,6 +131,7 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
         return;
       }
       setCurrentEpisode(episode);
+      trackView(episode._id).catch(() => { });
     } catch (error) {
       console.error('[PlayerContext] playEpisode error:', error);
       Alert.alert('Error', 'Failed to play episode');
@@ -155,7 +173,7 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
         player.setActiveForLockScreen(false);
       }
       player?.pause();
-    } catch {}
+    } catch { }
     setCurrentEpisode(null);
     setIsPlaying(false);
     setPosition(0);
@@ -176,6 +194,7 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
         skipForward,
         skipBackward,
         dismiss,
+        trackView,
       }}
     >
       {children}

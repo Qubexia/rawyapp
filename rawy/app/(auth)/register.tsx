@@ -47,7 +47,7 @@ export default function RegisterScreen() {
     serverError,
     handleSubmit,
   } = useRegister();
-  
+
   const { signInWithGoogle, googleLoading, googleError, isReady } = useGoogleAuth();
 
   // Animation values
@@ -322,7 +322,7 @@ export default function RegisterScreen() {
 
               {/* Terms & Conditions */}
               <TouchableOpacity
-                onPress={() => router.push('/(legal)/terms')}
+                onPress={() => router.push('/(legal)/terms' as any)}
                 style={styles.termsLink}
                 activeOpacity={0.7}
               >
@@ -344,7 +344,7 @@ export default function RegisterScreen() {
                 <Button
                   mode="text"
                   compact
-                  onPress={() => router.push('/(auth)/login')}
+                  onPress={() => router.push('/(auth)/login' as any)}
                   labelStyle={styles.footerLink}
                 >
                   Sign In

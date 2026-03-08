@@ -7,8 +7,9 @@ import {
   DefaultTheme,
   ThemeProvider,
 } from '@react-navigation/native';
-import { Stack, usePathname } from 'expo-router';
+import { Stack, usePathname, useRouter } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
+import * as Notifications from 'expo-notifications';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect, useState, useCallback } from 'react';
 import { View, StyleSheet, Platform } from 'react-native';
@@ -35,15 +36,17 @@ import { PaperLightTheme } from '@/constants/theme';
 import { queryClient } from '@/services/query-client';
 import SplashScreenAnimated from '@/components/SplashScreenAnimated';
 import MiniPlayer from '@/components/layout/MiniPlayer';
+import { LocationSync } from '@/components/LocationSync';
 
 // Prevent native splash from auto-hiding; we control when it goes away
-SplashScreen.preventAutoHideAsync().catch(() => {});
+SplashScreen.preventAutoHideAsync().catch(() => { });
 
 export const unstable_settings = {
   anchor: '(tabs)',
 };
 
 export default function RootLayout() {
+  const router = useRouter();
   const [animationDone, setAnimationDone] = useState(false);
   const [fontsLoaded, fontError] = useFonts({
     Inter_400Regular,
@@ -56,8 +59,45 @@ export default function RootLayout() {
 
   // Hide the native splash screen immediately – our animated splash is on top
   useEffect(() => {
-    SplashScreen.hideAsync().catch(() => {});
+    SplashScreen.hideAsync().catch(() => { });
   }, []);
+
+  // T045: Handle notification interactions
+  useEffect(() => {
+    // Listener for when a notification is received in the foreground
+    const subReceived = Notifications.addNotificationReceivedListener(notification => {
+      console.debug('[Push] Notification received in foreground:', notification);
+    });
+
+    // Listener for when a user TAPS on a notification
+    const subResponse = Notifications.addNotificationResponseReceivedListener(response => {
+      const data = response.notification.request.content.data;
+      console.debug('[Push] Notification response received:', data);
+
+      if (!data) return;
+
+      const { type, targetId, episodeId } = data;
+
+      switch (type) {
+        case 'new_episode':
+          if (targetId) router.push(`/episode/${targetId}`);
+          break;
+        case 'comment_reply':
+        case 'comment_like':
+          // Navigate to episode screen where the comment was made
+          if (episodeId) router.push(`/episode/${episodeId}`);
+          break;
+        case 'new_follower':
+          if (targetId) router.push(`/user/${targetId}` as any);
+          break;
+      }
+    });
+
+    return () => {
+      subReceived.remove();
+      subResponse.remove();
+    };
+  }, [router]);
 
   const handleSplashFinish = useCallback(() => {
     setAnimationDone(true);
@@ -77,6 +117,7 @@ export default function RootLayout() {
             <PaperProvider theme={PaperLightTheme}>
               <AuthProvider>
                 <PlayerProvider>
+                  <LocationSync />
                   <ThemeProvider value={DefaultTheme}>
                     <Stack screenOptions={{ headerShown: false }}>
                       {/* Auth screens */}

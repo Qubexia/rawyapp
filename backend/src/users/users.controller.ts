@@ -10,7 +10,10 @@ import { CurrentUser } from '../common/decorators/current-user.decorator';
 import type { UserDocument } from './schemas/user.schema';
 import { PublicUserDto } from './dto/public-user.dto';
 import { DeviceTokenDto } from './dto/device-token.dto';
+import { PushPreferenceDto } from './dto/push-preference.dto';
 import { DeleteAccountDto } from './dto/delete-account.dto';
+import { UpdateUserDto } from './dto/update-user.dto';
+import { UpdateLocationDto } from './dto/update-location.dto';
 import { getImageMulterConfig, normalizePath } from '../common/utils/file-upload.util';
 
 @ApiTags('users')
@@ -20,7 +23,7 @@ export class UsersController {
   constructor(
     private usersService: UsersService,
     private followsService: FollowsService,
-  ) {}
+  ) { }
 
   @Get('me')
   @ApiBearerAuth()
@@ -39,7 +42,7 @@ export class UsersController {
   @ApiResponse({ status: HttpStatus.BAD_REQUEST, description: 'Validation error' })
   async updateCurrentUser(
     @CurrentUser() user: UserDocument,
-    @Body() updateData: Partial<{ name: string }>,
+    @Body() updateData: UpdateUserDto,
   ) {
     return this.usersService.update(user._id.toString(), updateData);
   }
@@ -88,6 +91,32 @@ export class UsersController {
     await this.usersService.removeDeviceToken(user._id.toString(), dto.token);
   }
 
+  @Patch('me/push-preference')
+  @ApiBearerAuth()
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Update push notification preference' })
+  @ApiResponse({ status: HttpStatus.OK, description: 'Push preference updated' })
+  @ApiResponse({ status: HttpStatus.UNAUTHORIZED, description: 'Unauthorized' })
+  async updatePushPreference(
+    @CurrentUser() user: UserDocument,
+    @Body() dto: PushPreferenceDto,
+  ) {
+    await this.usersService.updatePushPreference(user._id.toString(), dto.enabled);
+    return { enabled: dto.enabled };
+  }
+
+  @Patch('me/location')
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Update current user location' })
+  @ApiResponse({ status: HttpStatus.OK, description: 'Location updated successfully' })
+  @ApiResponse({ status: HttpStatus.UNAUTHORIZED, description: 'Unauthorized' })
+  async updateLocation(
+    @CurrentUser() user: UserDocument,
+    @Body() dto: UpdateLocationDto,
+  ) {
+    return this.usersService.updateLocation(user._id.toString(), dto);
+  }
+
   @Delete('me')
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Delete account (requires password re-entry)' })
@@ -111,7 +140,7 @@ export class UsersController {
     @Req() req: Request & { user: { sub: string } },
   ) {
     const profile = await this.usersService.getPublicProfile(id);
-    
+
     // Check if current user follows this user
     if (req.user?.sub) {
       profile.isFollowing = await this.followsService.isFollowing(

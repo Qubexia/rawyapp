@@ -1,9 +1,10 @@
 import React from "react";
-import { View, StyleSheet, TouchableOpacity, Image } from "react-native";
+import { View, StyleSheet, Image } from "react-native";
 import { Text, Surface, useTheme } from "react-native-paper";
 import { Mic, Users, Radio } from "lucide-react-native";
 import { useRouter } from "expo-router";
 import { Palette, Spacing, Radius } from "@/constants/theme";
+import { Interactive } from "./Interactive";
 import { resolveImageUrl } from "@/utils/url";
 
 interface CreatorCardProps {
@@ -23,8 +24,7 @@ export function CreatorCard({ creator }: CreatorCardProps) {
   const displayName = creator.showName || "Creator";
 
   return (
-    <TouchableOpacity
-      activeOpacity={0.85}
+    <Interactive
       onPress={() => router.push(`/creator/${creator._id}` as any)}
     >
       <Surface
@@ -79,7 +79,7 @@ export function CreatorCard({ creator }: CreatorCardProps) {
           )}
         </View>
       </Surface>
-    </TouchableOpacity>
+    </Interactive>
   );
 }
 

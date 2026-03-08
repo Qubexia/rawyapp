@@ -36,6 +36,7 @@ import { useAuthContext } from "@/context/auth-context";
 import { isCreator } from "@/utils/roles";
 import { usePlayer } from "@/context/player-context";
 import MiniPlayer from "@/components/layout/MiniPlayer";
+import { useUnreadCount } from "@/hooks/queries/use-notifications";
 
 const TAB_BAR_HEIGHT = Platform.OS === "ios" ? 88 : 80;
 // Actual rendered height of the MiniPlayer card (3px progress + 66px content + 8px paddingBottom)
@@ -47,6 +48,9 @@ export default function TabLayout() {
   const router = useRouter();
   const { user } = useAuthContext();
   const { currentEpisode } = usePlayer();
+  const { data: unreadData } = useUnreadCount({ enabled: !!user });
+
+  const unreadCount = unreadData?.unreadCount || 0;
 
   const [fabOpen, setFabOpen] = useState(false);
   const creatorUser = isCreator(user);
@@ -161,7 +165,39 @@ export default function TabLayout() {
             name="profile"
             options={{
               title: "Profile",
-              tabBarIcon: ({ color }) => <User size={24} color={color} />,
+              tabBarIcon: ({ color }) => (
+                <View style={{ position: 'relative' }}>
+                  <User size={24} color={color} />
+                  {unreadCount > 0 && (
+                    <View
+                      style={{
+                        position: 'absolute',
+                        right: -6,
+                        top: -2,
+                        backgroundColor: theme.colors.error,
+                        borderRadius: 8,
+                        width: 16,
+                        height: 16,
+                        justifyContent: 'center',
+                        alignItems: 'center',
+                        borderWidth: 1.5,
+                        borderColor: '#FFF',
+                      }}
+                    >
+                      <Text
+                        style={{
+                          color: '#FFF',
+                          fontSize: 8,
+                          fontWeight: '800',
+                          lineHeight: 10,
+                        }}
+                      >
+                        {unreadCount > 9 ? '9+' : unreadCount}
+                      </Text>
+                    </View>
+                  )}
+                </View>
+              ),
             }}
           />
         </Tabs>

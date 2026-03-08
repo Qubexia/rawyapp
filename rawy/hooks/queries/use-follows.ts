@@ -16,7 +16,7 @@ export const followKeys = {
   all: ['follows'] as const,
   status: (targetId: string) =>
     [...followKeys.all, 'status', targetId] as const,
-  following: () => [...followKeys.all, 'following'] as const,
+  following: (targetId: string) => [...followKeys.all, 'following', targetId] as const,
   followers: (targetId: string) =>
     [...followKeys.all, 'followers', targetId] as const,
 };
@@ -82,20 +82,21 @@ export function useToggleFollow(targetId: string) {
       queryClient.invalidateQueries({
         queryKey: ['users', targetId, 'public'],
       });
-      queryClient.invalidateQueries({ queryKey: followKeys.following() });
+      queryClient.invalidateQueries({ queryKey: followKeys.following(targetId) });
       // Also refresh creators top list so follower counts update in Home
       queryClient.invalidateQueries({ queryKey: creatorKeys.top() });
     },
   });
 }
 
-export function useFollowing(options?: { enabled?: boolean }) {
+export function useFollowing(targetId: string, options?: { enabled?: boolean }) {
   return useInfiniteQuery({
-    queryKey: followKeys.following(),
-    queryFn: ({ pageParam = 1 }) => getFollowing(pageParam, 20),
+    queryKey: followKeys.following(targetId),
+    queryFn: ({ pageParam = 1 }) => getFollowing(targetId, pageParam, 20),
     getNextPageParam: (lastPage) =>
       lastPage.page < lastPage.totalPages ? lastPage.page + 1 : undefined,
     initialPageParam: 1,
+    enabled: !!targetId && options?.enabled !== false,
     ...options,
   });
 }

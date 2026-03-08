@@ -8,14 +8,14 @@
   "backendPassword": "AdminPassword123!",
   "executionArgs": {
     "projectName": "backend",
-    "projectPath": "d:/rawy/backend",
+    "projectPath": "c:\\Users\\HP\\Desktop\\rawyapp\\backend",
     "testIds": [],
-    "additionalInstruction": "",
+    "additionalInstruction": "Perform an end-to-end smoke test: register user, follow a creator, post a comment, like that comment, check notifications for the recipient, and verify feed response. Focus on the new engagement modules: Notifications, Follows, Comment-Likes, and Feed.",
     "serverMode": "development",
     "envs": {
-      "API_KEY": "sk-user-EaH59dY6pZ12rOY59C5u-jsrskpQXae1Q3BTOcQjPlhVUxOiLCIGX7NsM5S7D5-rXvlsxxChTZUkCNxNC6xadTB9y_za5QC77P9ggLqtRBzgJ46_EFGYYz83wRqP82mVkz8"
+      "API_KEY": "sk-user-RHzkovIYoZ1sbrmkURlrdcPEGejZUpMxg0QPZuHEqDktRV4vlwfnBsUUrr4MgrH0gCB7_i7sNmTWF_ntCmP0k-g9Jy3Zsi2g73GfHPFk96FIsG23RnA5yUPe1U6xAcMsg-k"
     }
   },
-  "serverPort": 49882,
-  "proxy": "http://58add3c9-bef7-49c3-9ad2-4bb295ea1619:iGSM1NGe0u3AHfpPu4TmgNRW1NJO0kqr@tun.testsprite.com:8080"
+  "serverPort": 55958,
+  "proxy": "http://9b95cf41-ac50-4db8-81fd-656fb039be61:sClQy7aSCd4NW8SL7FsLNVMTtmfmWiZo@tun.testsprite.com:8080"
 }

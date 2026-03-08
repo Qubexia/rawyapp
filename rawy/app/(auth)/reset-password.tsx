@@ -150,7 +150,7 @@ export default function ResetPasswordScreen() {
 
                   <Button
                     mode="text"
-                    onPress={() => router.push("/(auth)/forgot-password")}
+                    onPress={() => router.push("/(auth)/forgot-password" as any)}
                     style={{ marginTop: Spacing.xs }}
                     labelStyle={{
                       color: theme.colors.onSurfaceVariant,

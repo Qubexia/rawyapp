@@ -11,3 +11,5 @@ export { CreatorCard } from './CreatorCard';
 export { SkeletonLoader } from './SkeletonLoader';
 export { GuestBanner } from './GuestBanner';
 export { ConfirmDialog } from './ConfirmDialog';
+export { Interactive } from './Interactive';
+export { ErrorBoundary } from './ErrorBoundary';

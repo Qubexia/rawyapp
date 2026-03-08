@@ -30,6 +30,18 @@ export class User {
   @Prop({ default: true })
   isActive: boolean;
 
+  @Prop({ default: true })
+  pushEnabled: boolean;
+
+  @Prop({
+    type: {
+      city: { type: String },
+      coordinates: { type: [Number] },
+    },
+    _id: false
+  })
+  location?: { city?: string; coordinates?: number[] };
+
   @Prop()
   googleId?: string;
 
@@ -72,3 +84,4 @@ UserSchema.index({ facebookId: 1 }, { unique: true, sparse: true });
 UserSchema.index({ role: 1 });
 UserSchema.index({ isActive: 1 });
 UserSchema.index({ createdAt: -1 });
+UserSchema.index({ 'location.coordinates': '2dsphere' }, { sparse: true });

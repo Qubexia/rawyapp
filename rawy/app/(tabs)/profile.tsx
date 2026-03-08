@@ -27,6 +27,7 @@ import {
 } from "lucide-react-native";
 
 import { useAuthContext } from "@/context/auth-context";
+import { usePublicProfile } from "@/hooks/queries/use-users";
 import { Palette, Spacing, Radius } from "@/constants/theme";
 import { isCreator, isAdmin } from "@/utils/roles";
 import { resolveImageUrl } from "@/utils/url";
@@ -35,6 +36,7 @@ export default function ProfileScreen() {
   const theme = useTheme();
   const router = useRouter();
   const { user, isAuthenticated, logout } = useAuthContext();
+  const { data: profile } = usePublicProfile(user?._id || '');
   const avatarUri = resolveImageUrl(user?.avatarUrl);
 
   if (!isAuthenticated) {
@@ -84,27 +86,27 @@ export default function ProfileScreen() {
   const menuItems = [
     ...(isCreator(user)
       ? [
-          {
-            icon: LayoutDashboard,
-            label: "Creator Dashboard",
-            subtitle: "Manage your podcasts",
-            onPress: () => router.push("/(creator)/creator-dashboard" as any),
-          },
-          {
-            icon: Mic,
-            label: "Creator Profile",
-            subtitle: "Edit your public creator info",
-            onPress: () => router.push("/(creator)/edit-creator-profile" as any),
-          },
-        ]
+        {
+          icon: LayoutDashboard,
+          label: "Creator Dashboard",
+          subtitle: "Manage your podcasts",
+          onPress: () => router.push("/(creator)/creator-dashboard" as any),
+        },
+        {
+          icon: Mic,
+          label: "Creator Profile",
+          subtitle: "Edit your public creator info",
+          onPress: () => router.push("/(creator)/edit-creator-profile" as any),
+        },
+      ]
       : [
-          {
-            icon: Mic,
-            label: "Become a Creator",
-            subtitle: "Start your podcast journey",
-            onPress: () => router.push("/(creator)/become-creator" as any),
-          },
-        ]),
+        {
+          icon: Mic,
+          label: "Become a Creator",
+          subtitle: "Start your podcast journey",
+          onPress: () => router.push("/(creator)/become-creator" as any),
+        },
+      ]),
     {
       icon: Settings,
       label: "Settings",
@@ -115,7 +117,7 @@ export default function ProfileScreen() {
       icon: Shield,
       label: "Privacy & Security",
       subtitle: "Account protection",
-      onPress: () => {},
+      onPress: () => { },
     },
   ];
 
@@ -219,6 +221,33 @@ export default function ProfileScreen() {
                     : "🎧 Listener"}
               </Text>
             </View>
+            {profile && (
+              <View style={styles.statsRow}>
+                <TouchableOpacity
+                  style={styles.statItem}
+                  onPress={() => router.push(`/followers?userId=${user?._id}` as any)}
+                >
+                  <Text variant="titleMedium" style={[styles.statValue, { color: theme.colors.onSurface }]}>
+                    {profile.followerCount || 0}
+                  </Text>
+                  <Text variant="labelSmall" style={styles.statLabel}>
+                    Followers
+                  </Text>
+                </TouchableOpacity>
+                <View style={[styles.statDivider, { backgroundColor: Palette.light.border }]} />
+                <TouchableOpacity
+                  style={styles.statItem}
+                  onPress={() => router.push(`/following?userId=${user?._id}` as any)}
+                >
+                  <Text variant="titleMedium" style={[styles.statValue, { color: theme.colors.onSurface }]}>
+                    {profile.followingCount || 0}
+                  </Text>
+                  <Text variant="labelSmall" style={styles.statLabel}>
+                    Following
+                  </Text>
+                </TouchableOpacity>
+              </View>
+            )}
           </View>
         </Surface>
 
@@ -345,6 +374,25 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: "600",
     color: Palette.primary[700],
+  },
+  statsRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: Spacing.md,
+  },
+  statItem: {
+    flex: 1,
+  },
+  statValue: {
+    fontWeight: '800',
+  },
+  statLabel: {
+    color: '#64748B', // Same as hex for light/dark generic
+  },
+  statDivider: {
+    width: StyleSheet.hairlineWidth,
+    height: 24,
+    marginHorizontal: Spacing.md,
   },
   // ── Menu ──
   menuCard: {

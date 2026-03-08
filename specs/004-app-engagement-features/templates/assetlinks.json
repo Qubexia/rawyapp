@@ -1,0 +1,14 @@
+[
+    {
+        "relation": [
+            "delegate_permission/common.handle_all_urls"
+        ],
+        "target": {
+            "namespace": "android_app",
+            "package_name": "com.kahlaafaq.rawy",
+            "sha256_cert_fingerprints": [
+                "14:6D:E9:83:C5:73:06:03:19:39:07:08:03:00:01:00:EE:01:00:00:00:00:00:00:00:00:00:00:00:00:00:00"
+            ]
+        }
+    }
+]

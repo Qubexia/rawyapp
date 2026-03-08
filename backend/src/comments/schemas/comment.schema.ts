@@ -13,8 +13,15 @@ export class Comment {
 
   @Prop({ type: Types.ObjectId, ref: 'Episode', required: true, index: true })
   episodeId: Types.ObjectId;
+
+  @Prop({ type: Types.ObjectId, ref: 'Comment' })
+  parentCommentId?: Types.ObjectId;
+
+  @Prop({ default: 0, min: 0 })
+  likesCount: number;
 }
 
 export const CommentSchema = SchemaFactory.createForClass(Comment);
 
 CommentSchema.index({ episodeId: 1, createdAt: 1 });
+CommentSchema.index({ parentCommentId: 1, createdAt: 1 });

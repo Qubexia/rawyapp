@@ -13,6 +13,7 @@ export interface UserProfile {
   email: string;
   role: 'user' | 'creator' | 'admin' | 'USER' | 'CREATOR' | 'ADMIN';
   isActive: boolean;
+  pushEnabled: boolean;
   googleId?: string;
   facebookId?: string;
   deviceTokens: string[];

@@ -4,12 +4,16 @@
 
 import React from 'react';
 import { ScrollView, View, StyleSheet } from 'react-native';
-import { Text, useTheme } from 'react-native-paper';
+import { Text, useTheme, IconButton } from 'react-native-paper';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { ArrowLeft } from 'lucide-react-native';
+import { useRouter } from 'expo-router';
 import { TERMS_AND_CONDITIONS } from '@/constants/terms';
 import { Spacing } from '@/constants/theme';
 
 export default function TermsScreen() {
   const theme = useTheme();
+  const router = useRouter();
 
   // Parse markdown-style content: split by ## for sections
   const sections = TERMS_AND_CONDITIONS.split(/\n## /);
@@ -88,18 +92,35 @@ export default function TermsScreen() {
   });
 
   return (
-    <ScrollView
-      style={[styles.scroll, { backgroundColor: theme.colors.background }]}
-      contentContainerStyle={styles.content}
-      showsVerticalScrollIndicator={true}
-    >
-      {elements}
-    </ScrollView>
+    <SafeAreaView style={{ flex: 1, backgroundColor: theme.colors.background }}>
+      <View style={styles.header}>
+        <IconButton
+          icon={() => <ArrowLeft size={24} color={theme.colors.onBackground} />}
+          onPress={() => router.back()}
+        />
+        <Text variant="titleLarge" style={{ color: theme.colors.onBackground, fontWeight: '700' }}>
+          Terms & Conditions
+        </Text>
+      </View>
+      <ScrollView
+        style={[styles.scroll, { backgroundColor: theme.colors.background }]}
+        contentContainerStyle={styles.content}
+        showsVerticalScrollIndicator={true}
+      >
+        {elements}
+      </ScrollView>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
   scroll: { flex: 1 },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: Spacing.sm,
+    paddingTop: Spacing.md,
+  },
   content: {
     padding: Spacing.lg,
     paddingBottom: Spacing.xxl,
@@ -118,6 +139,11 @@ const styles = StyleSheet.create({
   },
   body: {
     lineHeight: 24,
+  },
+  listItem: {
+    marginLeft: Spacing.md,
+    marginBottom: Spacing.xs,
+    lineHeight: 22,
   },
   bold: {
     fontWeight: '700',

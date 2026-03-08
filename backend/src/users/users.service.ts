@@ -18,7 +18,7 @@ export class UsersService {
     @Inject(forwardRef(() => PodcastsService)) private podcastsService: PodcastsService,
     @Inject(forwardRef(() => CreatorsService)) private creatorsService: CreatorsService,
     @Inject(forwardRef(() => FollowsService)) private followsService: FollowsService,
-  ) {}
+  ) { }
 
   async findById(id: string): Promise<UserDocument | null> {
     return this.userModel
@@ -91,7 +91,7 @@ export class UsersService {
     if (user.avatarUrl) {
       try {
         const oldPath = join(process.cwd(), user.avatarUrl);
-        await unlink(oldPath).catch(() => {});
+        await unlink(oldPath).catch(() => { });
       } catch (err) {
         // Ignore deletion errors
       }
@@ -148,6 +148,12 @@ export class UsersService {
         { $pull: { deviceTokens: token } },
         { new: true },
       )
+      .exec();
+  }
+
+  async updatePushPreference(userId: string, enabled: boolean): Promise<void> {
+    await this.userModel
+      .findByIdAndUpdate(userId, { pushEnabled: enabled })
       .exec();
   }
 
@@ -298,6 +304,12 @@ export class UsersService {
   async updatePassword(userId: string, passwordHash: string): Promise<void> {
     await this.userModel
       .findByIdAndUpdate(userId, { passwordHash })
+      .exec();
+  }
+
+  async updateLocation(userId: string, location: { city?: string; coordinates?: number[] }): Promise<UserDocument | null> {
+    return this.userModel
+      .findByIdAndUpdate(userId, { location }, { new: true })
       .exec();
   }
 }

@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, StyleSheet, Image, ScrollView, Share, KeyboardAvoidingView, Platform } from 'react-native';
+import { View, StyleSheet, Image, ScrollView, Share, KeyboardAvoidingView, Platform, Alert, TouchableOpacity } from 'react-native';
 import { Text, Surface, IconButton, Button, ActivityIndicator, useTheme } from 'react-native-paper';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { ArrowLeft, Share2, Users, UserCheck, User } from 'lucide-react-native';
@@ -21,6 +21,17 @@ export default function UserProfileScreen() {
   const toggleFollow = useToggleFollow(id);
 
   const isMe = currentUser?._id === id;
+
+  const handleToggleFollow = () => {
+    if (profile?.isFollowing) {
+      Alert.alert('Unfollow', `Are you sure you want to unfollow ${profile?.name}?`, [
+        { text: 'Cancel', style: 'cancel' },
+        { text: 'Unfollow', style: 'destructive', onPress: () => toggleFollow.mutate(true) },
+      ]);
+    } else {
+      toggleFollow.mutate(false);
+    }
+  };
 
   const handleShare = async () => {
     try {
@@ -81,94 +92,100 @@ export default function UserProfileScreen() {
           keyboardShouldPersistTaps="handled"
           keyboardDismissMode="on-drag"
         >
-        {/* ── Hero ── */}
-        <View style={[s.hero, { backgroundColor: theme.colors.surface }]}>
-          {/* Avatar */}
-          <View style={s.avatarWrapper}>
-            <View style={[s.avatarRing, { borderColor: theme.colors.primary }]}>
-              {avatarUri ? (
-                <Image source={{ uri: avatarUri }} style={s.avatarImg} />
-              ) : (
-                <View style={[s.avatarPlaceholder, { backgroundColor: Palette.primary[100] }]}>
-                  <Text style={[s.avatarInitial, { color: Palette.primary[500] }]}>
-                    {initials}
-                  </Text>
-                </View>
-              )}
-            </View>
-          </View>
-
-          {/* Name & role badge */}
-          <Text variant="headlineSmall" style={[s.name, { color: theme.colors.onSurface }]}>
-            {profile.name}
-          </Text>
-          <View style={[s.roleBadge, { backgroundColor: Palette.primary[50] }]}>
-            <User size={12} color={Palette.primary[500]} />
-            <Text
-              variant="labelSmall"
-              style={{ color: Palette.primary[500], marginLeft: 4, fontWeight: '600', textTransform: 'capitalize' }}
-            >
-              {roleLabel}
-            </Text>
-          </View>
-
-          {/* Stats */}
-          <View style={[s.statsRow, { borderColor: Palette.light.border }]}>
-            <View style={s.statItem}>
-              <Text variant="titleLarge" style={[s.statValue, { color: theme.colors.onSurface }]}>
-                {profile.followerCount}
-              </Text>
-              <Text variant="labelSmall" style={{ color: theme.colors.onSurfaceVariant }}>
-                Followers
-              </Text>
-            </View>
-            <View style={[s.statDivider, { backgroundColor: Palette.light.border }]} />
-            <View style={s.statItem}>
-              <Text variant="titleLarge" style={[s.statValue, { color: theme.colors.onSurface }]}>
-                {profile.followingCount}
-              </Text>
-              <Text variant="labelSmall" style={{ color: theme.colors.onSurfaceVariant }}>
-                Following
-              </Text>
-            </View>
-          </View>
-
-          {/* Follow button */}
-          {!isMe && (
-            <Button
-              mode={profile.isFollowing ? 'outlined' : 'contained'}
-              onPress={() => toggleFollow.mutate(profile.isFollowing || false)}
-              loading={toggleFollow.isPending}
-              icon={() =>
-                profile.isFollowing ? (
-                  <UserCheck size={18} color={theme.colors.primary} />
+          {/* ── Hero ── */}
+          <View style={[s.hero, { backgroundColor: theme.colors.surface }]}>
+            {/* Avatar */}
+            <View style={s.avatarWrapper}>
+              <View style={[s.avatarRing, { borderColor: theme.colors.primary }]}>
+                {avatarUri ? (
+                  <Image source={{ uri: avatarUri }} style={s.avatarImg} />
                 ) : (
-                  <Users size={18} color="#FFF" />
-                )
-              }
-              style={s.followBtn}
-              contentStyle={{ height: 46 }}
-            >
-              {profile.isFollowing ? 'Following' : 'Follow'}
-            </Button>
-          )}
-        </View>
-
-        {/* ── About card ── */}
-        <View style={s.section}>
-          <Text variant="titleMedium" style={[s.sectionTitle, { color: theme.colors.onBackground }]}>
-            About
-          </Text>
-          <Surface style={[s.aboutCard, { backgroundColor: theme.colors.surface }]} elevation={1}>
-            <View style={[s.aboutIcon, { backgroundColor: Palette.primary[50] }]}>
-              <User size={20} color={Palette.primary[500]} />
+                  <View style={[s.avatarPlaceholder, { backgroundColor: Palette.primary[100] }]}>
+                    <Text style={[s.avatarInitial, { color: Palette.primary[500] }]}>
+                      {initials}
+                    </Text>
+                  </View>
+                )}
+              </View>
             </View>
-            <Text variant="bodyMedium" style={{ color: theme.colors.onSurfaceVariant, flex: 1, lineHeight: 22 }}>
-              {profile.name} is a {roleLabel} on Rawy. Explore their world of stories and podcasts.
+
+            {/* Name & role badge */}
+            <Text variant="headlineSmall" style={[s.name, { color: theme.colors.onSurface }]}>
+              {profile.name}
             </Text>
-          </Surface>
-        </View>
-      </ScrollView>
+            <View style={[s.roleBadge, { backgroundColor: Palette.primary[50] }]}>
+              <User size={12} color={Palette.primary[500]} />
+              <Text
+                variant="labelSmall"
+                style={{ color: Palette.primary[500], marginLeft: 4, fontWeight: '600', textTransform: 'capitalize' }}
+              >
+                {roleLabel}
+              </Text>
+            </View>
+
+            {/* Stats */}
+            <View style={[s.statsRow, { borderColor: Palette.light.border }]}>
+              <TouchableOpacity
+                style={s.statItem}
+                onPress={() => router.push(`/followers?userId=${id}` as any)}
+              >
+                <Text variant="titleLarge" style={[s.statValue, { color: theme.colors.onSurface }]}>
+                  {profile.followerCount}
+                </Text>
+                <Text variant="labelSmall" style={{ color: theme.colors.onSurfaceVariant }}>
+                  Followers
+                </Text>
+              </TouchableOpacity>
+              <View style={[s.statDivider, { backgroundColor: Palette.light.border }]} />
+              <TouchableOpacity
+                style={s.statItem}
+                onPress={() => router.push(`/following?userId=${id}` as any)}
+              >
+                <Text variant="titleLarge" style={[s.statValue, { color: theme.colors.onSurface }]}>
+                  {profile.followingCount}
+                </Text>
+                <Text variant="labelSmall" style={{ color: theme.colors.onSurfaceVariant }}>
+                  Following
+                </Text>
+              </TouchableOpacity>
+            </View>
+
+            {/* Follow button */}
+            {!isMe && (
+              <Button
+                mode={profile.isFollowing ? 'outlined' : 'contained'}
+                onPress={handleToggleFollow}
+                loading={toggleFollow.isPending}
+                icon={() =>
+                  profile.isFollowing ? (
+                    <UserCheck size={18} color={theme.colors.primary} />
+                  ) : (
+                    <Users size={18} color="#FFF" />
+                  )
+                }
+                style={s.followBtn}
+                contentStyle={{ height: 46 }}
+              >
+                {profile.isFollowing ? 'Following' : 'Follow'}
+              </Button>
+            )}
+          </View>
+
+          {/* ── About card ── */}
+          <View style={s.section}>
+            <Text variant="titleMedium" style={[s.sectionTitle, { color: theme.colors.onBackground }]}>
+              About
+            </Text>
+            <Surface style={[s.aboutCard, { backgroundColor: theme.colors.surface }]} elevation={1}>
+              <View style={[s.aboutIcon, { backgroundColor: Palette.primary[50] }]}>
+                <User size={20} color={Palette.primary[500]} />
+              </View>
+              <Text variant="bodyMedium" style={{ color: theme.colors.onSurfaceVariant, flex: 1, lineHeight: 22 }}>
+                {profile.name} is a {roleLabel} on Rawy. Explore their world of stories and podcasts.
+              </Text>
+            </Surface>
+          </View>
+        </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>
   );

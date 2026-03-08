@@ -10,13 +10,15 @@ import { Comment, CommentDocument } from './schemas/comment.schema';
 import { EpisodesService } from '../episodes/episodes.service';
 import { CreateCommentDto } from './dto/create-comment.dto';
 import { PaginatedResponseDto } from '../common/dto/paginated-response.dto';
+import { NotificationsService } from '../notifications/notifications.service';
 
 @Injectable()
 export class CommentsService {
   constructor(
     @InjectModel(Comment.name) private commentModel: Model<CommentDocument>,
     private episodesService: EpisodesService,
-  ) {}
+    private notificationsService: NotificationsService,
+  ) { }
 
   /**
    * Create a comment and atomically increment Episode.commentsCount.
@@ -28,16 +30,44 @@ export class CommentsService {
   ): Promise<Comment> {
     await this.episodesService.findById(episodeId.toString());
 
-    const comment = await this.commentModel.create({
+    let parentCommentId: Types.ObjectId | null = null;
+    if (dto.parentCommentId) {
+      const parentComment = await this.commentModel.findById(dto.parentCommentId);
+      if (!parentComment) throw new NotFoundException('Parent comment not found');
+      // Enforce one-level nesting
+      parentCommentId = parentComment.parentCommentId || parentComment._id;
+    }
+
+    const commentData: any = {
       text: dto.text,
       userId,
       episodeId,
-    });
+    };
+    if (parentCommentId) {
+      commentData.parentCommentId = parentCommentId;
+    }
+
+    const comment = await this.commentModel.create(commentData);
+
+    if (dto.parentCommentId) {
+      const parentComment = await this.commentModel.findById(dto.parentCommentId);
+      if (parentComment && !userId.equals(parentComment.userId)) {
+        await this.notificationsService.createOrAggregateNotification(
+          parentComment.userId,
+          'comment_reply',
+          userId,
+          parentComment._id,
+          'Comment',
+          episodeId,
+          dto.text.substring(0, 100),
+        );
+      }
+    }
 
     await this.episodesService.incrementCommentsCount(episodeId);
-    
+
     // Populate user for consistent return
-    const populated = await comment.populate('userId', 'name');
+    const populated = await comment.populate('userId', 'name avatarUrl');
     const { userId: user, ...rest } = populated.toObject();
     return { ...rest, user } as any;
   }
@@ -50,31 +80,68 @@ export class CommentsService {
     episodeId: Types.ObjectId,
     page: number = 1,
     limit: number = 20,
-  ): Promise<PaginatedResponseDto<Comment & { user?: { _id: Types.ObjectId; name: string } }>> {
+  ): Promise<PaginatedResponseDto<Comment & { user?: { _id: Types.ObjectId; name: string }; replyCount?: number }>> {
     await this.episodesService.findById(episodeId.toString());
 
     const skip = (page - 1) * limit;
-    const filter = { episodeId };
+    const filter = { episodeId, parentCommentId: { $exists: false } }; // or null
 
     const [rawData, total] = await Promise.all([
       this.commentModel
-        .find(filter)
+        .find({ ...filter, $or: [{ parentCommentId: null }, { parentCommentId: { $exists: false } }] })
         .sort({ createdAt: 1 })
         .skip(skip)
         .limit(limit)
-        .populate('userId', 'name')
+        .populate('userId', 'name avatarUrl')
         .lean()
         .exec(),
-      this.commentModel.countDocuments(filter).exec(),
+      this.commentModel.countDocuments({ ...filter, $or: [{ parentCommentId: null }, { parentCommentId: { $exists: false } }] }).exec(),
     ]);
+
+    // Gather reply counts
+    const commentIds = rawData.map((c: any) => c._id);
+    const repliesAggr = await this.commentModel.aggregate([
+      { $match: { parentCommentId: { $in: commentIds } } },
+      { $group: { _id: '$parentCommentId', count: { $sum: 1 } } }
+    ]);
+    const replyCountMap = new Map(repliesAggr.map((r: any) => [r._id.toString(), r.count]));
 
     // Map userId -> user
     const data = rawData.map(({ userId: user, ...rest }: any) => ({
       ...rest,
       user,
+      replyCount: replyCountMap.get(rest._id.toString()) || 0,
     }));
 
     const totalPages = Math.ceil(total / limit);
+    return new PaginatedResponseDto(data as any, total, page, limit);
+  }
+
+  async getReplies(
+    commentId: Types.ObjectId,
+    page: number = 1,
+    limit: number = 20,
+  ): Promise<PaginatedResponseDto<Comment & { user?: { _id: Types.ObjectId; name: string } }>> {
+    const skip = (page - 1) * limit;
+    const filter = { parentCommentId: commentId };
+
+    const [rawData, total] = await Promise.all([
+      this.commentModel
+        .find(filter)
+        .sort({ createdAt: 1 }) // Or whatever standard order
+        .skip(skip)
+        .limit(limit)
+        .populate('userId', 'name avatarUrl')
+        .lean()
+        .exec(),
+      this.commentModel.countDocuments(filter).exec(),
+    ]);
+
+    const data = rawData.map(({ userId: user, ...rest }: any) => ({
+      ...rest,
+      user,
+    }));
+
     return new PaginatedResponseDto(data as any, total, page, limit);
   }
 
@@ -97,8 +164,12 @@ export class CommentsService {
       throw new ForbiddenException('You can only delete your own comments');
     }
 
+    const childRepliesCount = await this.commentModel.countDocuments({ parentCommentId: commentId });
+    await this.commentModel.deleteMany({ parentCommentId: commentId }).exec();
     await this.commentModel.findByIdAndDelete(commentId).exec();
-    await this.episodesService.decrementCommentsCount(comment.episodeId);
+
+    const countToDecrement = 1 + childRepliesCount;
+    await this.episodesService.decrementCommentsCountBy(comment.episodeId, countToDecrement);
   }
 
   /**

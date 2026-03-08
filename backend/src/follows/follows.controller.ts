@@ -27,7 +27,7 @@ import { ApiCommonErrorResponses } from '../common/decorators/api-error-response
 @ApiCommonErrorResponses()
 @Controller('follows')
 export class FollowsController {
-  constructor(private readonly followsService: FollowsService) {}
+  constructor(private readonly followsService: FollowsService) { }
 
   @Post('users/:targetId')
   @ApiBearerAuth()
@@ -143,6 +143,33 @@ export class FollowsController {
       throw new BadRequestException('Limit cannot exceed 100');
     }
     const result = await this.followsService.getFollowers(
+      new Types.ObjectId(targetId),
+      page,
+      limit,
+    );
+    return { statusCode: 200, data: result };
+  }
+
+  @Get('users/:targetId/following')
+  @Public()
+  @ApiOperation({ summary: 'List users the target user follows (public, paginated)' })
+  @ApiParam({ name: 'targetId', description: 'Target user ID' })
+  @ApiQuery({ name: 'page', required: false, type: Number, example: 1 })
+  @ApiQuery({ name: 'limit', required: false, type: Number, example: 20 })
+  @ApiResponse({ status: 200, description: 'Paginated user profiles' })
+  @ApiResponse({ status: 404, description: 'User not found' })
+  async getUserFollowing(
+    @Param('targetId') targetId: string,
+    @Query('page', new DefaultValuePipe(1), ParseIntPipe) page: number,
+    @Query('limit', new DefaultValuePipe(20), ParseIntPipe) limit: number,
+  ) {
+    if (!Types.ObjectId.isValid(targetId)) {
+      throw new BadRequestException('Invalid target ID');
+    }
+    if (limit > 100) {
+      throw new BadRequestException('Limit cannot exceed 100');
+    }
+    const result = await this.followsService.getFollowing(
       new Types.ObjectId(targetId),
       page,
       limit,

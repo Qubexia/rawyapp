@@ -120,7 +120,7 @@ export default function LoginScreen() {
 
                   {/* Forgot password link */}
                   <TouchableOpacity
-                    onPress={() => router.push('/(auth)/forgot-password')}
+                    onPress={() => router.push('/(auth)/forgot-password' as any)}
                     style={styles.forgotLink}
                     activeOpacity={0.7}
                   >
@@ -146,7 +146,7 @@ export default function LoginScreen() {
                   </Button>
 
                   <TouchableOpacity
-                    onPress={() => router.push('/(legal)/terms')}
+                    onPress={() => router.push('/(legal)/terms' as any)}
                     style={styles.termsLink}
                     activeOpacity={0.7}
                   >
@@ -203,7 +203,7 @@ export default function LoginScreen() {
                   <Button
                     mode="text"
                     compact
-                    onPress={() => router.push('/(auth)/register')}
+                    onPress={() => router.push('/(auth)/register' as any)}
                     labelStyle={styles.footerLink}
                   >
                     Sign Up

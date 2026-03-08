@@ -13,10 +13,14 @@ export interface Comment {
   user: {
     _id: string;
     name: string;
+    avatarUrl?: string;
   };
   episode: string;
   createdAt: string;
   updatedAt: string;
+  likesCount: number;
+  replyCount?: number;
+  parentCommentId?: string;
 }
 
 // ─── API calls ───────────────────────────────────────────────────────────────
@@ -40,6 +44,30 @@ export async function createComment(
   const { data } = await axiosClient.post<Comment>(
     `/comments/episodes/${episodeId}`,
     { text },
+  );
+  return data;
+}
+
+export async function createReply(
+  episodeId: string,
+  text: string,
+  parentCommentId: string,
+): Promise<Comment> {
+  const { data } = await axiosClient.post<Comment>(
+    `/comments/episodes/${episodeId}`,
+    { text, parentCommentId },
+  );
+  return data;
+}
+
+export async function getReplies(
+  commentId: string,
+  page = 1,
+  limit = 20,
+): Promise<PaginatedResponse<Comment>> {
+  const { data } = await axiosClient.get<PaginatedResponse<Comment>>(
+    `/comments/${commentId}/replies`,
+    { params: { page, limit } },
   );
   return data;
 }

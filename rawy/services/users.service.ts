@@ -27,6 +27,11 @@ export async function removeDeviceToken(token: string): Promise<void> {
   await axiosClient.delete('/users/me/device-token', { data: { token } });
 }
 
+export async function updatePushPreference(enabled: boolean): Promise<{ enabled: boolean }> {
+  const { data } = await axiosClient.patch<{ enabled: boolean }>('/users/me/push-preference', { enabled });
+  return data;
+}
+
 export async function updateAvatar(image: { uri: string; name: string; type: string }): Promise<UserProfile> {
   const formData = new FormData();
   // @ts-ignore - FormData expects string | Blob, but RN needs uri/name/type object
@@ -60,5 +65,10 @@ export async function deleteAccount(password: string): Promise<{ message: string
   const { data } = await axiosClient.delete<{ message: string }>('/users/me', {
     data: { password },
   });
+  return data;
+}
+
+export async function updateLocation(payload: { city?: string; coordinates?: number[] }): Promise<UserProfile> {
+  const { data } = await axiosClient.patch<UserProfile>('/users/me/location', payload);
   return data;
 }

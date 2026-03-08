@@ -1,5 +1,5 @@
 /**
- * Home screen — trending podcasts, recent episodes, followed creators.
+ * Home screen — trending podcasts, personalized feed, followed creators.
  */
 
 import React, { useCallback } from 'react';
@@ -10,9 +10,9 @@ import {
   StyleSheet,
   RefreshControl,
   TouchableOpacity,
-  Dimensions,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useRouter } from 'expo-router';
 import {
   Text,
   useTheme,
@@ -26,25 +26,31 @@ import {
   Star,
 } from 'lucide-react-native';
 
-import { 
-  PodcastCard, 
-  EpisodeRow, 
+import {
+  PodcastCard,
+  EpisodeRow,
   EmptyState,
   GuestBanner,
   CreatorCard,
+  ErrorBoundary,
 } from '@/components/ui';
 import { useAuthContext } from '@/context/auth-context';
 import { usePodcasts } from '@/hooks/queries/use-podcasts';
-import { useEpisodes } from '@/hooks/queries/use-episodes';
-import { useFollowing } from '@/hooks/queries/use-follows';
+import { useHomeFeed } from '@/hooks/queries/use-feed';
 import { useTopCreators } from '@/hooks/queries/use-creators';
+import { useUnreadCount } from '@/hooks/queries/use-notifications';
+import { useSuggestions } from '@/hooks/queries/use-suggestions';
+import { WhoToFollow } from '@/components/home/WhoToFollow';
 import { Spacing, Radius } from '@/constants/theme';
-
 
 export default function HomeScreen() {
   const theme = useTheme();
+  const router = useRouter();
   const { user } = useAuthContext();
-  const {width} = Dimensions.get('window');
+
+  const { data: unreadData } = useUnreadCount({ enabled: !!user });
+  const unreadCount = unreadData?.unreadCount || 0;
+
   const {
     data: podcastsData,
     isLoading: podcastsLoading,
@@ -52,15 +58,10 @@ export default function HomeScreen() {
   } = usePodcasts();
 
   const {
-    data: episodesData,
-    isLoading: episodesLoading,
-    refetch: refetchEpisodes,
-  } = useEpisodes();
-
-  const {
-    isLoading: followingLoading,
-    refetch: refetchFollowing,
-  } = useFollowing({ enabled: !!user });
+    data: feedData,
+    isLoading: feedLoading,
+    refetch: refetchFeed,
+  } = useHomeFeed();
 
   const {
     data: topCreatorsData,
@@ -68,21 +69,29 @@ export default function HomeScreen() {
     refetch: refetchTopCreators,
   } = useTopCreators();
 
+  const { refetch: refetchSuggestions } = useSuggestions(10, { enabled: !!user });
+
   const [refreshing, setRefreshing] = React.useState(false);
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
-    const promises: Promise<any>[] = [refetchPodcasts(), refetchEpisodes(), refetchTopCreators()];
+    const promises: Promise<any>[] = [
+      refetchPodcasts(),
+      refetchFeed(),
+      refetchTopCreators(),
+    ];
     if (user) {
-      promises.push(refetchFollowing());
+      promises.push(refetchSuggestions());
     }
     await Promise.all(promises);
     setRefreshing(false);
-  }, [refetchPodcasts, refetchEpisodes, refetchTopCreators, refetchFollowing, user]);
+  }, [refetchPodcasts, refetchFeed, refetchTopCreators, refetchSuggestions, user]);
 
   const podcasts = podcastsData?.pages.flatMap((p) => p.data || []) ?? [];
-  const episodes = episodesData?.pages.flatMap((p) => p.data || []) ?? [];
-  const topCreators = (topCreatorsData ?? []).filter(c => c.userId !== user?._id);
+  const topCreators = (topCreatorsData ?? []).filter((c) => c.userId !== user?._id);
+
+  const followingEpisodes = feedData?.following.data ?? [];
+  const recommendedEpisodes = feedData?.recommended.data ?? [];
 
   const greeting = () => {
     const hour = new Date().getHours();
@@ -91,175 +100,219 @@ export default function HomeScreen() {
     return 'Good evening';
   };
 
-  // ── Render helpers ──
-
-
-
-  const isLoading = podcastsLoading || episodesLoading || topCreatorsLoading || followingLoading;
+  const isLoading = podcastsLoading || feedLoading || topCreatorsLoading;
 
   return (
     <SafeAreaView
-      style={[
-        styles.container,
-        { backgroundColor: theme.colors.background },
-      ]}
+      style={[styles.container, { backgroundColor: theme.colors.background }]}
       edges={['top']}
     >
-      <ScrollView
-        showsVerticalScrollIndicator={false}
-        refreshControl={
-          <RefreshControl
-            refreshing={refreshing}
-            onRefresh={onRefresh}
-            tintColor={theme.colors.primary}
-          />
-        }
-      >
-        {/* ── Header ── */}
-        <View style={styles.header}>
-          <View>
-            <Text
-              variant="bodyMedium"
-              style={{ color: theme.colors.onSurfaceVariant }}
-            >
-              {greeting()} 👋
-            </Text>
-            <Text
-              variant="headlineSmall"
-              style={[styles.userName, { color: theme.colors.onBackground }]}
-            >
-              {user?.name || 'Listener'}
-            </Text>
-          </View>
-          <TouchableOpacity style={styles.bellButton}>
-            <Bell size={24} color={theme.colors.onSurfaceVariant} />
-          </TouchableOpacity>
-        </View>
-
-        {!user && <GuestBanner />}
-
-        {isLoading ? (
-          <View style={styles.loadingContainer}>
-            <ActivityIndicator size="large" color={theme.colors.primary} />
-          </View>
-        ) : (
-          <>
-            {/* ── Trending Podcasts ── */}
-            <View style={styles.section}>
-              <View style={styles.sectionHeader}>
-                <TrendingUp size={20} color={theme.colors.primary} />
-                <Text
-                  variant="titleMedium"
-                  style={[
-                    styles.sectionTitle,
-                    { color: theme.colors.onBackground },
-                  ]}
-                >
-                  Trending Podcasts
-                </Text>
-              </View>
-              {podcasts.length > 0 ? (
-                <FlatList
-                  horizontal
-                  data={podcasts}
-                  keyExtractor={(item, index) => item?._id ? String(item._id) : String(index)}
-                  renderItem={({ item }) => <PodcastCard podcast={item} />}
-                  showsHorizontalScrollIndicator={false}
-                  contentContainerStyle={styles.horizontalList}
-                />
-              ) : (
-                <EmptyState
-                  icon={
-                    <Headphones
-                      size={32}
-                      color={theme.colors.onSurfaceVariant}
-                      strokeWidth={1}
-                    />
-                  }
-                  message="No podcasts yet. Be the first!"
-                  isCard
-                />
-              )}
+      <ErrorBoundary onReset={onRefresh}>
+        <ScrollView
+          showsVerticalScrollIndicator={false}
+          refreshControl={
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={onRefresh}
+              tintColor={theme.colors.primary}
+            />
+          }
+        >
+          {/* ... existing header and sections ... */}
+          {/* Re-implementing the content with ErrorBoundary */}
+          <View style={styles.header}>
+            <View>
+              <Text variant="bodyMedium" style={{ color: theme.colors.onSurfaceVariant }}>
+                {greeting()} 👋
+              </Text>
+              <Text
+                variant="headlineSmall"
+                style={[styles.userName, { color: theme.colors.onBackground }]}
+              >
+                {user?.name || 'Listener'}
+              </Text>
             </View>
+            <TouchableOpacity
+              style={styles.bellButton}
+              onPress={() => router.push('/(profile)/notifications' as any)}
+            >
+              <View style={{ position: 'relative' }}>
+                <Bell size={24} color={theme.colors.onSurfaceVariant} />
+                {unreadCount > 0 && (
+                  <View
+                    style={{
+                      position: 'absolute',
+                      right: -2,
+                      top: -2,
+                      backgroundColor: theme.colors.error,
+                      borderRadius: 7,
+                      width: 14,
+                      height: 14,
+                      justifyContent: 'center',
+                      alignItems: 'center',
+                      borderWidth: 1.5,
+                      borderColor: theme.colors.background,
+                    }}
+                  >
+                    <Text
+                      style={{
+                        color: '#FFF',
+                        fontSize: 7,
+                        fontWeight: '900',
+                        lineHeight: 10,
+                      }}
+                    >
+                      {unreadCount > 9 ? '9+' : unreadCount}
+                    </Text>
+                  </View>
+                )}
+              </View>
+            </TouchableOpacity>
+          </View>
 
-            {/* ── Top Creators ── */}
-            {topCreators.length > 0 && (
+          {!user && <GuestBanner />}
+
+          {isLoading ? (
+            <View style={styles.loadingContainer}>
+              <ActivityIndicator size="large" color={theme.colors.primary} />
+            </View>
+          ) : (
+            <>
+              {/* ── Trending Podcasts ── */}
               <View style={styles.section}>
                 <View style={styles.sectionHeader}>
-                  <Star size={20} color={theme.colors.primary} />
+                  <TrendingUp size={20} color={theme.colors.primary} />
                   <Text
                     variant="titleMedium"
-                    style={[
-                      styles.sectionTitle,
-                      { color: theme.colors.onBackground },
-                    ]}
+                    style={[styles.sectionTitle, { color: theme.colors.onBackground }]}
                   >
-                    Top Creators
+                    Trending Podcasts
                   </Text>
                 </View>
-                <FlatList
-                  horizontal
-                  data={topCreators}
-                  keyExtractor={(item) => item._id}
-                  renderItem={({ item }) => (
-                    <View style={{ flexDirection: 'row',  }}>
-                      <CreatorCard creator={item} />
+                {podcasts.length > 0 ? (
+                  <FlatList
+                    horizontal
+                    data={podcasts}
+                    keyExtractor={(item, index) => (item?._id ? String(item._id) : String(index))}
+                    renderItem={({ item }) => <PodcastCard podcast={item} />}
+                    showsHorizontalScrollIndicator={false}
+                    contentContainerStyle={styles.horizontalList}
+                    removeClippedSubviews={true}
+                    maxToRenderPerBatch={5}
+                    windowSize={5}
+                  />
+                ) : (
+                  <EmptyState
+                    icon={<Headphones size={32} color={theme.colors.onSurfaceVariant} strokeWidth={1} />}
+                    message="No podcasts yet. Be the first!"
+                    isCard
+                  />
+                )}
+              </View>
+
+              {user && <WhoToFollow />}
+
+              {/* ── New From Following ── */}
+              {user && (
+                <View style={styles.section}>
+                  <View style={styles.sectionHeader}>
+                    <Star size={20} color={theme.colors.primary} />
+                    <Text
+                      variant="titleMedium"
+                      style={[styles.sectionTitle, { color: theme.colors.onBackground }]}
+                    >
+                      From Your Following
+                    </Text>
+                  </View>
+                  {followingEpisodes.length > 0 ? (
+                    <FlatList
+                      horizontal
+                      data={followingEpisodes}
+                      keyExtractor={(item) => item._id}
+                      renderItem={({ item }) => (
+                        <View style={{ width: 280, marginRight: Spacing.md }}>
+                          <EpisodeRow episode={item} />
+                        </View>
+                      )}
+                      showsHorizontalScrollIndicator={false}
+                      contentContainerStyle={styles.horizontalList}
+                      removeClippedSubviews={true}
+                      maxToRenderPerBatch={5}
+                      windowSize={5}
+                    />
+                  ) : (
+                    <View style={{ paddingHorizontal: Spacing.lg }}>
+                      <TouchableOpacity
+                        onPress={() => router.push('/(tabs)/explore')}
+                        style={[styles.emptyFollowing, { backgroundColor: theme.colors.surfaceVariant }]}
+                      >
+                        <Headphones size={24} color={theme.colors.primary} style={{ marginBottom: 4 }} />
+                        <Text variant="bodySmall" style={{ color: theme.colors.onSurfaceVariant, textAlign: 'center' }}>
+                          Explore and follow creators to personalize your feed
+                        </Text>
+                      </TouchableOpacity>
                     </View>
                   )}
-                  showsHorizontalScrollIndicator={false}
-                  contentContainerStyle={styles.horizontalList}
-                />
-              </View>
-            )}
+                </View>
+              )}
 
-
-            {/* ── Recent Episodes ── */}
-            <View style={styles.section}>
-              <View style={styles.sectionHeader}>
-                <Play
-                  size={20}
-                  color={theme.colors.primary}
-                  fill={theme.colors.primary}
-                />
-                <Text
-                  variant="titleMedium"
-                  style={[
-                    styles.sectionTitle,
-                    { color: theme.colors.onBackground },
-                  ]}
-                >
-                  Recent Episodes
-                </Text>
-              </View>
-              {episodes.length > 0 ? (
-                <View style={styles.episodeList}>
-                  {episodes.slice(0, 10).map((episode) => {
-                    if (!episode) return null;
-                    return (
-                      <View key={episode._id || Math.random().toString()}>
+              {/* ── Recommended / Trending Episodes ── */}
+              <View style={styles.section}>
+                <View style={styles.sectionHeader}>
+                  <Play size={20} color={theme.colors.primary} fill={theme.colors.primary} />
+                  <Text
+                    variant="titleMedium"
+                    style={[styles.sectionTitle, { color: theme.colors.onBackground }]}
+                  >
+                    Recommended for You
+                  </Text>
+                </View>
+                {recommendedEpisodes.length > 0 ? (
+                  <View style={styles.episodeList}>
+                    {recommendedEpisodes.slice(0, 10).map((episode) => (
+                      <View key={episode._id}>
                         <EpisodeRow episode={episode} />
                       </View>
-                    );
-                  })}
-                </View>
-              ) : (
-                <EmptyState
-                  icon={
-                    <Play
-                      size={32}
-                      color={theme.colors.onSurfaceVariant}
-                      strokeWidth={1}
-                    />
-                  }
-                  message="No episodes yet"
-                  isCard
-                />
-              )}
-            </View>
-          </>
-        )}
+                    ))}
+                  </View>
+                ) : (
+                  <EmptyState
+                    icon={<Play size={32} color={theme.colors.onSurfaceVariant} strokeWidth={1} />}
+                    message="No episodes found"
+                    isCard
+                  />
+                )}
+              </View>
 
-      </ScrollView>
+              {/* ── Top Creators ── */}
+              {topCreators.length > 0 && (
+                <View style={styles.section}>
+                  <View style={styles.sectionHeader}>
+                    <Star size={20} color={theme.colors.primary} />
+                    <Text
+                      variant="titleMedium"
+                      style={[styles.sectionTitle, { color: theme.colors.onBackground }]}
+                    >
+                      Top Creators
+                    </Text>
+                  </View>
+                  <FlatList
+                    horizontal
+                    data={topCreators}
+                    keyExtractor={(item) => item._id}
+                    renderItem={({ item }) => <CreatorCard creator={item} />}
+                    showsHorizontalScrollIndicator={false}
+                    contentContainerStyle={styles.horizontalList}
+                    removeClippedSubviews={true}
+                    maxToRenderPerBatch={5}
+                    windowSize={5}
+                  />
+                </View>
+              )}
+            </>
+          )}
+        </ScrollView>
+      </ErrorBoundary>
     </SafeAreaView>
   );
 }
@@ -314,5 +367,14 @@ const styles = StyleSheet.create({
   episodeList: {
     paddingHorizontal: Spacing.lg,
     gap: Spacing.sm,
+  },
+  emptyFollowing: {
+    padding: Spacing.lg,
+    borderRadius: Radius.md,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderStyle: 'dashed',
+    borderColor: 'rgba(0,0,0,0.1)',
   },
 });

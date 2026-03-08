@@ -318,6 +318,9 @@ export default function ExploreScreen() {
                   renderItem={renderCreatorChip}
                   showsHorizontalScrollIndicator={false}
                   contentContainerStyle={styles.horizontalList}
+                  removeClippedSubviews={true}
+                  maxToRenderPerBatch={5}
+                  windowSize={5}
                 />
               </View>
             ) : (

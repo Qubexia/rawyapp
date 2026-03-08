@@ -20,6 +20,9 @@ import { SeedModule } from './seed/seed.module';
 import { JwtAuthGuard } from './common/guards/jwt-auth.guard';
 import { RolesGuard } from './common/guards/roles.guard';
 import { ActiveUserGuard } from './common/guards/active-user.guard';
+import { CommentLikesModule } from './comment-likes/comment-likes.module';
+import { FeedModule } from './feed/feed.module';
+import { SuggestionsModule } from './suggestions/suggestions.module';
 
 @Module({
   imports: [
@@ -46,6 +49,9 @@ import { ActiveUserGuard } from './common/guards/active-user.guard';
     NotificationsModule,
     AdminModule,
     SeedModule,
+    CommentLikesModule,
+    FeedModule,
+    SuggestionsModule,
   ],
   controllers: [AppController],
   providers: [

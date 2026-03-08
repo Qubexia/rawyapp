@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
-import { View, StyleSheet, TouchableOpacity, StyleProp, ViewStyle, Image, Dimensions } from 'react-native';
+import { View, StyleSheet, Image, Dimensions, StyleProp, ViewStyle } from 'react-native';
 import { Text, Surface, useTheme } from 'react-native-paper';
 import { Headphones } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
 
 import { Palette, Spacing, Radius } from '@/constants/theme';
+import { Interactive } from './Interactive';
 import type { Podcast } from '@/services/podcasts.service';
 
 import { resolveImageUrl } from '@/utils/url';
@@ -24,10 +25,9 @@ export function PodcastCard({ podcast, style, }: PodcastCardProps) {
   const { width } = Dimensions.get('window');
   const cardWidth = width * 0.8;
   return (
-    <TouchableOpacity
-      activeOpacity={0.8}
+    <Interactive
       onPress={() => router.push(`/podcast/${podcast._id}` as any)}
-      style={[{ width: cardWidth  }, style]}
+      style={[{ width: cardWidth }, style]}
     >
       <Surface
         style={[
@@ -74,7 +74,7 @@ export function PodcastCard({ podcast, style, }: PodcastCardProps) {
           {podcast.creator?.name || 'Unknown'}
         </Text>
       </Surface>
-    </TouchableOpacity>
+    </Interactive>
   );
 }
 

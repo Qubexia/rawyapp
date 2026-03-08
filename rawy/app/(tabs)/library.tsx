@@ -43,17 +43,17 @@ import { Palette, Spacing, Radius } from '@/constants/theme';
 import { useAuthContext } from '@/context/auth-context';
 import { resolveImageUrl } from '@/utils/url';
 import type { Episode } from '@/services/episodes.service';
-import type { FollowedCreator } from '@/services/follows.service';
+import type { FollowUser } from '@/services/follows.service';
 
-function FollowingCreatorRow({ creator }: { creator: FollowedCreator }) {
+function FollowingCreatorRow({ creator }: { creator: FollowUser }) {
   const theme = useTheme();
   const router = useRouter();
-  const targetId = creator.userId ?? creator._id;
+  const targetId = creator.id;
   const toggleFollow = useToggleFollow(targetId);
-  const avatarUri = resolveImageUrl(creator.avatarUrl ?? creator.avatar);
+  const avatarUri = resolveImageUrl(creator.avatarUrl);
 
   const handleRowPress = () => {
-    router.push(`/creator/${creator._id}` as any);
+    router.push(`/user/${creator.id}` as any);
   };
 
   const handleUnfollowPress = (e: any) => {
@@ -102,15 +102,13 @@ function FollowingCreatorRow({ creator }: { creator: FollowedCreator }) {
           >
             {creator.name}
           </Text>
-          {creator.showName && (
-            <Text
-              variant="bodySmall"
-              numberOfLines={1}
-              style={{ color: theme.colors.onSurfaceVariant }}
-            >
-              {creator.showName}
-            </Text>
-          )}
+          <Text
+            variant="bodySmall"
+            numberOfLines={1}
+            style={{ color: theme.colors.onSurfaceVariant }}
+          >
+            {creator.followerCount} followers
+          </Text>
         </View>
         <IconButton
           icon={() => <UserMinus size={20} color={theme.colors.onSurfaceVariant} />}
@@ -126,8 +124,7 @@ function FollowingCreatorRow({ creator }: { creator: FollowedCreator }) {
 export default function LibraryScreen() {
   const theme = useTheme();
   const router = useRouter();
-  const { isAuthenticated } = useAuthContext();
-
+  const { user, isAuthenticated } = useAuthContext();
   const [segment, setSegment] = useState('episodes');
   const [refreshing, setRefreshing] = useState(false);
 
@@ -135,13 +132,13 @@ export default function LibraryScreen() {
     data: followingData,
     isLoading: followingLoading,
     refetch: refetchFollowing,
-  } = useFollowing({ enabled: isAuthenticated });
+  } = useFollowing(user?._id || '', { enabled: isAuthenticated });
 
   const {
     data: episodesData,
     isLoading: episodesLoading,
     refetch: refetchEpisodes,
-  } = useLikedEpisodes({ enabled: isAuthenticated });
+  } = useLikedEpisodes(1, 20, { enabled: isAuthenticated });
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
@@ -156,7 +153,7 @@ export default function LibraryScreen() {
     <EpisodeRow episode={item} />
   );
 
-  const renderCreatorRow = ({ item }: { item: FollowedCreator }) => (
+  const renderCreatorRow = ({ item }: { item: FollowUser }) => (
     <FollowingCreatorRow creator={item} />
   );
 
@@ -182,7 +179,7 @@ export default function LibraryScreen() {
           />
           <Button
             mode="contained"
-            onPress={() => router.push('/(auth)/login')}
+            onPress={() => router.push('/(auth)/login' as any)}
             style={styles.signInButton}
           >
             Sign In
@@ -207,7 +204,7 @@ export default function LibraryScreen() {
           />
           <Button
             mode="contained"
-            onPress={() => router.push('/(auth)/login')}
+            onPress={() => router.push('/(auth)/login' as any)}
             style={styles.signInButton}
           >
             Sign In
@@ -247,7 +244,7 @@ export default function LibraryScreen() {
           />
           <Button
             mode="outlined"
-            onPress={() => router.push('/(tabs)/explore')}
+            onPress={() => router.push('/(tabs)/explore' as any)}
             icon={() => <Compass size={18} color={theme.colors.primary} />}
             style={styles.exploreButton}
           >

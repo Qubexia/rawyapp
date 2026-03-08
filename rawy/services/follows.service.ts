@@ -17,18 +17,11 @@ export interface FollowStatus {
   followerCount: number;
 }
 
-export interface FollowedCreator {
-  _id: string;
-  userId?: string;
+export interface FollowUser {
+  id: string;
   name: string;
-  avatar?: string;
   avatarUrl?: string;
-  showName?: string;
-}
-
-export interface FollowerUser {
-  _id: string;
-  name: string;
+  followerCount: number;
 }
 
 // ─── API calls ───────────────────────────────────────────────────────────────
@@ -55,11 +48,12 @@ export async function getFollowStatus(targetId: string): Promise<FollowStatus> {
 }
 
 export async function getFollowing(
+  targetId: string,
   page = 1,
   limit = 20,
-): Promise<PaginatedResponse<FollowedCreator>> {
-  const { data } = await axiosClient.get<PaginatedResponse<FollowedCreator>>(
-    '/follows/me/following',
+): Promise<PaginatedResponse<FollowUser>> {
+  const { data } = await axiosClient.get<PaginatedResponse<FollowUser>>(
+    `/follows/users/${targetId}/following`,
     { params: { page, limit } },
   );
   return data;
@@ -69,8 +63,8 @@ export async function getFollowers(
   targetId: string,
   page = 1,
   limit = 20,
-): Promise<PaginatedResponse<FollowerUser>> {
-  const { data } = await axiosClient.get<PaginatedResponse<FollowerUser>>(
+): Promise<PaginatedResponse<FollowUser>> {
+  const { data } = await axiosClient.get<PaginatedResponse<FollowUser>>(
     `/follows/users/${targetId}/followers`,
     { params: { page, limit } },
   );

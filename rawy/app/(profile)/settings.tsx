@@ -29,24 +29,36 @@ import {
 
 import { Palette, Spacing, Radius } from '@/constants/theme';
 import { STORAGE_KEYS } from '@/utils/constants';
+import { useAuthContext } from '@/context/auth-context';
+import { updatePushPreference } from '@/services/users.service';
 
 export default function SettingsScreen() {
   const theme = useTheme();
+  const { user, updateUser } = useAuthContext();
   const router = useRouter();
-  const [pushEnabled, setPushEnabled] = useState(true);
+  const [pushEnabled, setPushEnabled] = useState(user?.pushEnabled ?? true);
 
   useEffect(() => {
-    AsyncStorage.getItem(STORAGE_KEYS.PUSH_NOTIFICATIONS_ENABLED).then((v) => {
-      setPushEnabled(v !== 'false');
-    });
-  }, []);
+    if (user) {
+      setPushEnabled(user.pushEnabled);
+    }
+  }, [user]);
 
   const onPushToggle = async (value: boolean) => {
+    // Optimistic update
     setPushEnabled(value);
-    await AsyncStorage.setItem(
-      STORAGE_KEYS.PUSH_NOTIFICATIONS_ENABLED,
-      String(value),
-    );
+    try {
+      await updatePushPreference(value);
+      updateUser({ pushEnabled: value });
+      await AsyncStorage.setItem(
+        STORAGE_KEYS.PUSH_NOTIFICATIONS_ENABLED,
+        String(value),
+      );
+    } catch (err) {
+      // Revert on error
+      setPushEnabled(!value);
+      console.error('Failed to update push preference:', err);
+    }
   };
 
   const appVersion =
@@ -124,7 +136,7 @@ export default function SettingsScreen() {
         >
           <Pressable
             style={s.row}
-            onPress={() => router.push('/(profile)/change-password')}
+            onPress={() => router.push('/(profile)/change-password' as any)}
           >
             <View style={s.rowLeft}>
               <Lock
@@ -150,7 +162,7 @@ export default function SettingsScreen() {
           <Divider style={{ marginHorizontal: Spacing.md }} />
           <Pressable
             style={s.row}
-            onPress={() => router.push('/(profile)/delete-account')}
+            onPress={() => router.push('/(profile)/delete-account' as any)}
           >
             <View style={s.rowLeft}>
               <Trash2
@@ -193,7 +205,7 @@ export default function SettingsScreen() {
         >
           <Pressable
             style={s.row}
-            onPress={() => router.push('/(legal)/terms')}
+            onPress={() => router.push('/(legal)/terms' as any)}
           >
             <View style={s.rowLeft}>
               <FileText
@@ -219,7 +231,7 @@ export default function SettingsScreen() {
           <Divider style={{ marginHorizontal: Spacing.md }} />
           <Pressable
             style={s.row}
-            onPress={() => router.push('/(legal)/privacy')}
+            onPress={() => router.push('/(legal)/privacy' as any)}
           >
             <View style={s.rowLeft}>
               <Shield

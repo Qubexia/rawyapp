@@ -2,16 +2,16 @@ import React, { useState } from "react";
 import {
   View,
   StyleSheet,
-  TouchableOpacity,
+  Image,
   StyleProp,
   ViewStyle,
-  Image,
 } from "react-native";
 import { Text, Surface, useTheme } from "react-native-paper";
 import { Play, Clock } from "lucide-react-native";
 import { useRouter } from "expo-router";
 
 import { Palette, Spacing, Radius } from "@/constants/theme";
+import { Interactive } from "./Interactive";
 import type { Episode } from "@/services/episodes.service";
 import { resolveImageUrl } from "@/utils/url";
 import { formatCount } from "@/utils/format";
@@ -36,8 +36,7 @@ export function EpisodeRow({
   const [imgError, setImgError] = useState(false);
 
   return (
-    <TouchableOpacity
-      activeOpacity={0.8}
+    <Interactive
       onPress={() => router.push(`/episode/${episode._id}` as any)}
       style={style}
     >
@@ -117,7 +116,7 @@ export function EpisodeRow({
         </View>
         {rightAction && <View style={styles.rightAction}>{rightAction}</View>}
       </Surface>
-    </TouchableOpacity>
+    </Interactive>
   );
 }
 
