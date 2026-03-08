@@ -30,6 +30,8 @@ import { LoginDto } from './dto/login.dto';
 import { RefreshTokenDto } from './dto/refresh-token.dto';
 import { TokenResponseDto } from './dto/token-response.dto';
 import { ChangePasswordDto } from './dto/change-password.dto';
+import { ForgotPasswordDto } from './dto/forgot-password.dto';
+import { ResetPasswordDto } from './dto/reset-password.dto';
 import { Public } from '../common/decorators/public.decorator';
 import { GoogleAuthGuard } from './guards/google-auth.guard';
 import { FacebookAuthGuard } from './guards/facebook-auth.guard';
@@ -147,6 +149,30 @@ export class AuthController {
       dto.newPassword,
     );
     return { message: 'Password changed successfully' };
+  }
+
+  @Public()
+  @Post('forgot-password')
+  @ApiOperation({ summary: 'Request a password-reset OTP via email' })
+  @ApiResponse({ status: HttpStatus.OK, description: 'If the email exists an OTP has been sent' })
+  @ApiResponse({ status: HttpStatus.BAD_REQUEST, description: 'Validation error' })
+  async forgotPassword(
+    @Body() dto: ForgotPasswordDto,
+  ): Promise<{ message: string }> {
+    await this.authService.forgotPassword(dto);
+    return { message: 'If an account with that email exists, a reset code has been sent' };
+  }
+
+  @Public()
+  @Post('reset-password')
+  @ApiOperation({ summary: 'Reset password using email + OTP' })
+  @ApiResponse({ status: HttpStatus.OK, description: 'Password reset successfully' })
+  @ApiResponse({ status: HttpStatus.BAD_REQUEST, description: 'Invalid or expired reset code' })
+  async resetPassword(
+    @Body() dto: ResetPasswordDto,
+  ): Promise<{ message: string }> {
+    await this.authService.resetPassword(dto);
+    return { message: 'Password has been reset successfully' };
   }
 
   @Post('logout')

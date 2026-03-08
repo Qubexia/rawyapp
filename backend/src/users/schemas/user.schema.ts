@@ -55,6 +55,12 @@ export class User {
   @Prop({ required: true, default: 0, min: 0 })
   @ApiProperty({ description: 'Number of users this user is following', default: 0 })
   followingCount: number;
+
+  @Prop({ select: false })
+  passwordResetOtp?: string;
+
+  @Prop({ select: false })
+  passwordResetOtpExpires?: Date;
 }
 
 export const UserSchema = SchemaFactory.createForClass(User);

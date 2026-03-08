@@ -266,4 +266,38 @@ export class UsersService {
     // 4. Delete user record
     await this.userModel.findByIdAndDelete(userId).exec();
   }
+
+  async findByEmailWithResetOtp(email: string): Promise<UserDocument | null> {
+    return this.userModel
+      .findOne({ email })
+      .select('+passwordHash +passwordResetOtp +passwordResetOtpExpires')
+      .exec();
+  }
+
+  async setPasswordResetOtp(
+    userId: string,
+    otpHash: string,
+    expiresAt: Date,
+  ): Promise<void> {
+    await this.userModel
+      .findByIdAndUpdate(userId, {
+        passwordResetOtp: otpHash,
+        passwordResetOtpExpires: expiresAt,
+      })
+      .exec();
+  }
+
+  async clearPasswordResetOtp(userId: string): Promise<void> {
+    await this.userModel
+      .findByIdAndUpdate(userId, {
+        $unset: { passwordResetOtp: 1, passwordResetOtpExpires: 1 },
+      })
+      .exec();
+  }
+
+  async updatePassword(userId: string, passwordHash: string): Promise<void> {
+    await this.userModel
+      .findByIdAndUpdate(userId, { passwordHash })
+      .exec();
+  }
 }

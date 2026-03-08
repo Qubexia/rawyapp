@@ -10,6 +10,7 @@ import { GoogleStrategy } from './strategies/google.strategy';
 import { FacebookStrategy } from './strategies/facebook.strategy';
 import { UsersModule } from '../users/users.module';
 import { CreatorsModule } from '../creators/creators.module';
+import { EmailService } from '../common/services/email.service';
 
 @Module({
   imports: [
@@ -36,6 +37,7 @@ import { CreatorsModule } from '../creators/creators.module';
     LocalStrategy,
     GoogleStrategy,
     FacebookStrategy,
+    EmailService,
   ],
   exports: [AuthService],
 })

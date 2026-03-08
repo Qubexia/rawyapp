@@ -1,16 +1,20 @@
-import { Injectable, UnauthorizedException, ConflictException } from '@nestjs/common';
+import { Injectable, UnauthorizedException, ConflictException, BadRequestException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import * as bcrypt from 'bcrypt';
+import { randomInt } from 'crypto';
 import { UsersService } from '../users/users.service';
 import { UserDocument } from '../users/schemas/user.schema';
 import { CreatorsService } from '../creators/creators.service';
+import { EmailService } from '../common/services/email.service';
 import { RegisterDto } from './dto/register.dto';
 import { RegisterCreatorDto } from './dto/register-creator.dto';
 import { LoginDto } from './dto/login.dto';
 import { RefreshTokenDto } from './dto/refresh-token.dto';
 import { TokenResponseDto } from './dto/token-response.dto';
 import { ChangePasswordDto } from './dto/change-password.dto';
+import { ForgotPasswordDto } from './dto/forgot-password.dto';
+import { ResetPasswordDto } from './dto/reset-password.dto';
 import { Role } from '../common/constants/roles.enum';
 import { Types } from 'mongoose';
 import { OAuth2Client } from 'google-auth-library';
@@ -29,6 +33,7 @@ export class AuthService {
     private jwtService: JwtService,
     private configService: ConfigService,
     private creatorsService: CreatorsService,
+    private emailService: EmailService,
   ) {}
 
   async register(registerDto: RegisterDto): Promise<TokenResponseDto> {
@@ -206,6 +211,44 @@ export class AuthService {
     }
     const newPasswordHash = await bcrypt.hash(newPassword, 10);
     await this.usersService.update(userId, { passwordHash: newPasswordHash });
+  }
+
+  async forgotPassword(dto: ForgotPasswordDto): Promise<void> {
+    const { email } = dto;
+    const user = await this.usersService.findByEmailWithResetOtp(email);
+
+    // Always return success to prevent email enumeration
+    if (!user || !user.isActive) return;
+
+    const otp = String(randomInt(100000, 1000000)); // 6-digit OTP
+    const otpHash = await bcrypt.hash(otp, 10);
+    const expiresAt = new Date(Date.now() + 15 * 60 * 1000); // 15 minutes
+
+    await this.usersService.setPasswordResetOtp(user._id.toString(), otpHash, expiresAt);
+    await this.emailService.sendPasswordResetOtp(email, otp);
+  }
+
+  async resetPassword(dto: ResetPasswordDto): Promise<void> {
+    const { email, otp, newPassword } = dto;
+    const user = await this.usersService.findByEmailWithResetOtp(email);
+
+    if (!user || !user.passwordResetOtp || !user.passwordResetOtpExpires) {
+      throw new BadRequestException('Invalid or expired reset code');
+    }
+
+    if (new Date() > user.passwordResetOtpExpires) {
+      await this.usersService.clearPasswordResetOtp(user._id.toString());
+      throw new BadRequestException('Reset code has expired');
+    }
+
+    const isOtpValid = await bcrypt.compare(otp, user.passwordResetOtp);
+    if (!isOtpValid) {
+      throw new BadRequestException('Invalid reset code');
+    }
+
+    const newPasswordHash = await bcrypt.hash(newPassword, 10);
+    await this.usersService.updatePassword(user._id.toString(), newPasswordHash);
+    await this.usersService.clearPasswordResetOtp(user._id.toString());
   }
 
   async generateTokens(user: UserDocument): Promise<{ accessToken: string; refreshToken: string }> {

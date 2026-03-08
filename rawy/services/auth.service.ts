@@ -153,3 +153,23 @@ export async function changePassword(
   );
   return data;
 }
+
+export async function forgotPassword(email: string): Promise<{ message: string }> {
+  const { data } = await axiosClient.post<{ message: string }>(
+    '/auth/forgot-password',
+    { email },
+  );
+  return data;
+}
+
+export async function resetPassword(
+  email: string,
+  otp: string,
+  newPassword: string,
+): Promise<{ message: string }> {
+  const { data } = await axiosClient.post<{ message: string }>(
+    '/auth/reset-password',
+    { email, otp, newPassword },
+  );
+  return data;
+}
