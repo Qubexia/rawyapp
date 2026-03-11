@@ -22,11 +22,14 @@ import {
   ActivityIndicator,
 } from 'react-native-paper';
 import { useRouter } from 'expo-router';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import {
   Search,
   Headphones,
   Users,
   Mic,
+  Clock,
+  X,
 } from 'lucide-react-native';
 
 import { usePodcasts } from '@/hooks/queries/use-podcasts';
@@ -57,6 +60,34 @@ export default function ExploreScreen() {
   const [searchQuery, setSearchQuery] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
   const [activeCategory, setActiveCategory] = useState('All');
+
+  const [searchHistory, setSearchHistory] = useState<string[]>([]);
+  const [isSearchFocused, setIsSearchFocused] = useState(false);
+
+  useEffect(() => {
+    AsyncStorage.getItem('searchHistory').then(res => {
+      if (res) setSearchHistory(JSON.parse(res));
+    });
+  }, []);
+
+  const saveSearch = (query: string) => {
+    const trimmed = query.trim();
+    if (!trimmed) return;
+    const newHistory = [trimmed, ...searchHistory.filter(q => q !== trimmed)].slice(0, 10);
+    setSearchHistory(newHistory);
+    AsyncStorage.setItem('searchHistory', JSON.stringify(newHistory));
+  };
+
+  const removeHistoryItem = (query: string) => {
+    const newHistory = searchHistory.filter(q => q !== query);
+    setSearchHistory(newHistory);
+    AsyncStorage.setItem('searchHistory', JSON.stringify(newHistory));
+  };
+  
+  const clearHistory = () => {
+    setSearchHistory([]);
+    AsyncStorage.removeItem('searchHistory');
+  };
 
   useEffect(() => {
     const t = setTimeout(() => {
@@ -245,6 +276,17 @@ export default function ExploreScreen() {
             placeholder="Search podcasts, creators..."
             onChangeText={setSearchQuery}
             value={searchQuery}
+            onFocus={() => setIsSearchFocused(true)}
+            onSubmitEditing={() => {
+              setIsSearchFocused(false);
+              saveSearch(searchQuery);
+            }}
+            onIconPress={() => {
+              if (isSearchFocused) {
+                setIsSearchFocused(false);
+                setSearchQuery('');
+              }
+            }}
             style={[
               styles.searchbar,
               {
@@ -258,12 +300,46 @@ export default function ExploreScreen() {
                 color={theme.colors.onSurfaceVariant}
               />
             )}
-            elevation={0}
           />
         </View>
 
-        {/* Categories */}
-        <ScrollView
+        {isSearchFocused ? (
+          <View style={styles.historyContainer}>
+            <View style={styles.historyHeader}>
+              <Text variant="titleMedium" style={{ fontWeight: '700', color: theme.colors.onBackground }}>Recent Searches</Text>
+              {searchHistory.length > 0 && (
+                <TouchableOpacity onPress={clearHistory}>
+                  <Text variant="labelMedium" style={{ color: theme.colors.primary, fontWeight: '600' }}>Clear</Text>
+                </TouchableOpacity>
+              )}
+            </View>
+            {searchHistory.map((h, i) => (
+              <View key={i} style={styles.historyRow}>
+                <TouchableOpacity 
+                  style={styles.historyContent} 
+                  onPress={() => {
+                    setSearchQuery(h);
+                    setIsSearchFocused(false);
+                    saveSearch(h);
+                  }}
+                  activeOpacity={0.7}
+                >
+                  <Clock size={16} color={theme.colors.onSurfaceVariant} />
+                  <Text style={[styles.historyText, { color: theme.colors.onSurface }]}>{h}</Text>
+                </TouchableOpacity>
+                <TouchableOpacity onPress={() => removeHistoryItem(h)} style={styles.historyRemoveBtn}>
+                  <X size={16} color={theme.colors.onSurfaceVariant} />
+                </TouchableOpacity>
+              </View>
+            ))}
+            {searchHistory.length === 0 && (
+              <Text style={[styles.emptyHistory, { color: theme.colors.onSurfaceVariant }]}>No recent searches</Text>
+            )}
+          </View>
+        ) : (
+          <>
+            {/* Categories */}
+            <ScrollView
           horizontal
           showsHorizontalScrollIndicator={false}
           contentContainerStyle={styles.categoriesContainer}
@@ -417,6 +493,8 @@ export default function ExploreScreen() {
             </View>
           </>
         )}
+          </>
+        )}
 
         <View style={{ height: Spacing.xxl }} />
       </ScrollView>
@@ -532,5 +610,37 @@ const styles = StyleSheet.create({
     padding: Spacing.xl,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  historyContainer: {
+    paddingHorizontal: Spacing.lg,
+  },
+  historyHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: Spacing.md,
+  },
+  historyRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: Spacing.md,
+  },
+  historyContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
+  },
+  historyText: {
+    fontSize: 15,
+    marginLeft: Spacing.sm,
+  },
+  historyRemoveBtn: {
+    padding: Spacing.xs,
+  },
+  emptyHistory: {
+    textAlign: 'center',
+    marginTop: Spacing.xl,
+    fontSize: 14,
   },
 });

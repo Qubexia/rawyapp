@@ -40,11 +40,11 @@ export const Palette = {
     500: '#00D2A0',
   },
   dark: {
-    bg: '#0F0F1A',
-    surface: '#1A1A2E',
-    surfaceVariant: '#252540',
-    elevated: '#2A2A45',
-    border: '#35355A',
+    bg: '#1A1A2E',
+    surface: '#252540',
+    surfaceVariant: '#2A2A45',
+    elevated: '#35355A',
+    border: '#45456A',
   },
   light: {
     bg: '#F8F9FC',

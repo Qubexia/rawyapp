@@ -3,7 +3,7 @@
  * Supports Listener and Creator tabs.
  */
 
-import React, { useRef, useEffect } from 'react';
+import React, { useRef, useEffect } from "react";
 import {
   View,
   KeyboardAvoidingView,
@@ -13,10 +13,10 @@ import {
   useWindowDimensions,
   StyleSheet,
   TouchableOpacity,
-} from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { Text, Surface, Button, useTheme } from 'react-native-paper';
-import { useRouter } from 'expo-router';
+} from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
+import { Text, Surface, Button, useTheme } from "react-native-paper";
+import { useRouter } from "expo-router";
 import {
   User,
   Mail,
@@ -26,12 +26,12 @@ import {
   Mic,
   Radio,
   Info,
-} from 'lucide-react-native';
+} from "lucide-react-native";
 
-import { FormInput } from '@/components/ui/FormInput';
-import { useRegister } from '@/hooks/auth/use-register';
-import { useGoogleAuth } from '@/hooks/auth/use-google-auth';
-import { Palette, Spacing, Radius } from '@/constants/theme';
+import { FormInput } from "@/components/ui/FormInput";
+import { useRegister } from "@/hooks/auth/use-register";
+import { useGoogleAuth } from "@/hooks/auth/use-google-auth";
+import { Palette, Spacing, Radius } from "@/constants/theme";
 
 export default function RegisterScreen() {
   const router = useRouter();
@@ -48,7 +48,8 @@ export default function RegisterScreen() {
     handleSubmit,
   } = useRegister();
 
-  const { signInWithGoogle, googleLoading, googleError, isReady } = useGoogleAuth();
+  const { signInWithGoogle, googleLoading, googleError, isReady } =
+    useGoogleAuth();
 
   // Animation values
   const indicatorPosition = useRef(new Animated.Value(0)).current;
@@ -56,7 +57,7 @@ export default function RegisterScreen() {
 
   useEffect(() => {
     Animated.spring(indicatorPosition, {
-      toValue: activeTab === 'user' ? 0 : 1,
+      toValue: activeTab === "user" ? 0 : 1,
       useNativeDriver: false,
       friction: 8,
       tension: 60,
@@ -83,13 +84,11 @@ export default function RegisterScreen() {
   });
 
   return (
-    <View
-      style={[styles.root, { backgroundColor: '#FFFFFF' }]}
-    >
+    <View style={[styles.root, { backgroundColor: "#FFFFFF" }]}>
       <SafeAreaView style={styles.safeArea}>
         <KeyboardAvoidingView
           style={styles.flex}
-          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          behavior={Platform.OS === "ios" ? "padding" : "height"}
         >
           <ScrollView
             showsVerticalScrollIndicator={false}
@@ -98,13 +97,31 @@ export default function RegisterScreen() {
           >
             {/* ── Brand Header ── */}
             <View style={styles.header}>
-              <View style={[styles.logoContainer, { backgroundColor: theme.colors.primaryContainer }]}>
-                <Headphones size={36} color={theme.colors.primary} strokeWidth={1.5} />
+              <View
+                style={[
+                  styles.logoContainer,
+                  { backgroundColor: theme.colors.primaryContainer },
+                ]}
+              >
+                <Headphones
+                  size={36}
+                  color={theme.colors.primary}
+                  strokeWidth={1.5}
+                />
               </View>
-              <Text variant="headlineLarge" style={[styles.appName, { color: theme.colors.onBackground }]}>
+              <Text
+                variant="headlineLarge"
+                style={[styles.appName, { color: theme.colors.onBackground }]}
+              >
                 Rawy
               </Text>
-              <Text variant="bodyMedium" style={[styles.tagline, { color: theme.colors.onSurfaceVariant }]}>
+              <Text
+                variant="bodyMedium"
+                style={[
+                  styles.tagline,
+                  { color: theme.colors.onSurfaceVariant },
+                ]}
+              >
                 Discover · Listen · Create
               </Text>
             </View>
@@ -129,17 +146,21 @@ export default function RegisterScreen() {
                 <TouchableOpacity
                   style={styles.tabButton}
                   activeOpacity={0.8}
-                  onPress={() => setActiveTab('user')}
+                  onPress={() => setActiveTab("user")}
                 >
                   <Headphones
                     size={16}
-                    color={activeTab === 'user' ? '#FFFFFF' : Palette.text.lightTertiary}
+                    color={
+                      activeTab === "user"
+                        ? "#FFFFFF"
+                        : Palette.text.lightTertiary
+                    }
                     style={{ marginRight: 6 }}
                   />
                   <Text
                     style={[
                       styles.tabText,
-                      activeTab === 'user' && styles.activeTabText,
+                      activeTab === "user" && styles.activeTabText,
                     ]}
                   >
                     Listener
@@ -148,18 +169,21 @@ export default function RegisterScreen() {
                 <TouchableOpacity
                   style={styles.tabButton}
                   activeOpacity={0.8}
-                  onPress={() => setActiveTab('creator')}
+                  onPress={() => setActiveTab("creator")}
                 >
                   <Mic
                     size={16}
-                    color={activeTab === 'creator' ? '#FFFFFF' : Palette.text.lightTertiary}
-
+                    color={
+                      activeTab === "creator"
+                        ? "#FFFFFF"
+                        : Palette.text.lightTertiary
+                    }
                     style={{ marginRight: 6 }}
                   />
                   <Text
                     style={[
                       styles.tabText,
-                      activeTab === 'creator' && styles.activeTabText,
+                      activeTab === "creator" && styles.activeTabText,
                     ]}
                   >
                     Creator
@@ -168,7 +192,7 @@ export default function RegisterScreen() {
               </View>
 
               {/* Creator hint */}
-              {activeTab === 'creator' && (
+              {activeTab === "creator" && (
                 <View style={styles.creatorHint}>
                   <Info
                     size={15}
@@ -176,7 +200,8 @@ export default function RegisterScreen() {
                     style={{ marginRight: 6 }}
                   />
                   <Text style={styles.creatorHintText}>
-                    As a creator you can publish podcasts and grow your audience.
+                    As a creator you can publish podcasts and grow your
+                    audience.
                   </Text>
                 </View>
               )}
@@ -223,7 +248,7 @@ export default function RegisterScreen() {
                   }
                 />
 
-                {activeTab === 'creator' && (
+                {activeTab === "creator" && (
                   <FormInput
                     name="showName"
                     control={control}
@@ -267,7 +292,9 @@ export default function RegisterScreen() {
                 {/* Server error */}
                 {(!!serverError || !!googleError) && (
                   <Surface style={styles.errorBanner} elevation={0}>
-                    <Text style={styles.errorText}>{serverError || googleError}</Text>
+                    <Text style={styles.errorText}>
+                      {serverError || googleError}
+                    </Text>
                   </Surface>
                 )}
 
@@ -291,7 +318,10 @@ export default function RegisterScreen() {
                 <View
                   style={[
                     styles.dividerLine,
-                    { backgroundColor: theme.colors.outlineVariant || theme.colors.outline },
+                    {
+                      backgroundColor:
+                        theme.colors.outlineVariant || theme.colors.outline,
+                    },
                   ]}
                 />
                 <Text variant="labelMedium" style={styles.dividerText}>
@@ -300,7 +330,10 @@ export default function RegisterScreen() {
                 <View
                   style={[
                     styles.dividerLine,
-                    { backgroundColor: theme.colors.outlineVariant || theme.colors.outline },
+                    {
+                      backgroundColor:
+                        theme.colors.outlineVariant || theme.colors.outline,
+                    },
                   ]}
                 />
               </View>
@@ -322,12 +355,12 @@ export default function RegisterScreen() {
 
               {/* Terms & Conditions */}
               <TouchableOpacity
-                onPress={() => router.push('/(legal)/terms' as any)}
+                onPress={() => router.push("/(legal)/terms" as any)}
                 style={styles.termsLink}
                 activeOpacity={0.7}
               >
                 <Text variant="bodySmall" style={styles.termsText}>
-                  By continuing, you agree to our{' '}
+                  By continuing, you agree to our{" "}
                   <Text variant="bodySmall" style={styles.termsLinkText}>
                     Terms & Conditions
                   </Text>
@@ -339,12 +372,12 @@ export default function RegisterScreen() {
               {/* Footer */}
               <View style={styles.footer}>
                 <Text variant="bodyMedium" style={styles.footerText}>
-                  Already have an account?{' '}
+                  Already have an account?{" "}
                 </Text>
                 <Button
                   mode="text"
                   compact
-                  onPress={() => router.push('/(auth)/login' as any)}
+                  onPress={() => router.push("/(auth)/login" as any)}
                   labelStyle={styles.footerLink}
                 >
                   Sign In
@@ -376,50 +409,50 @@ const styles = StyleSheet.create({
     paddingTop: Spacing.lg,
   },
   header: {
-    alignItems: 'center',
+    alignItems: "center",
     marginBottom: Spacing.lg,
   },
   logoContainer: {
     width: 72,
     height: 72,
     borderRadius: Radius.xl,
-    backgroundColor: 'rgba(255,255,255,0.15)',
-    alignItems: 'center',
-    justifyContent: 'center',
+    backgroundColor: "rgba(255,255,255,0.15)",
+    alignItems: "center",
+    justifyContent: "center",
     marginBottom: Spacing.md,
   },
   appName: {
-    color: '#FFFFFF',
-    fontWeight: '800',
+    color: "#FFFFFF",
+    fontWeight: "800",
     fontSize: 36,
     letterSpacing: 1,
   },
   tagline: {
-    color: 'rgba(255,255,255,0.7)',
+    color: "rgba(255,255,255,0.7)",
     marginTop: Spacing.xs,
   },
   card: {
     borderRadius: Radius.xl,
     padding: Spacing.lg,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: "#FFFFFF",
   },
   cardTitle: {
-    fontWeight: '700',
+    fontWeight: "700",
     color: Palette.text.lightPrimary,
-    textAlign: 'center',
+    textAlign: "center",
     marginBottom: Spacing.md,
   },
   // ── Tab bar ──
   tabContainer: {
-    flexDirection: 'row',
+    flexDirection: "row",
     backgroundColor: Palette.light.surfaceVariant,
     borderRadius: Radius.md,
     padding: 4,
     marginBottom: Spacing.md,
-    position: 'relative',
+    position: "relative",
   },
   tabIndicator: {
-    position: 'absolute',
+    position: "absolute",
     top: 4,
     bottom: 4,
     borderRadius: Radius.sm,
@@ -427,27 +460,27 @@ const styles = StyleSheet.create({
   },
   tabButton: {
     flex: 1,
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "center",
+    alignItems: "center",
     paddingVertical: 10,
     zIndex: 1,
   },
   tabText: {
     fontSize: 14,
-    fontWeight: '600',
+    fontWeight: "600",
     color: Palette.text.lightTertiary,
   },
   activeTabText: {
-    color: '#FFFFFF',
+    color: "#FFFFFF",
   },
   activeCreatorTabText: {
     color: Palette.primary[700],
   },
   // ── Creator hint ──
   creatorHint: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     backgroundColor: Palette.primary[50],
     borderRadius: Radius.sm,
     paddingHorizontal: Spacing.md,
@@ -464,14 +497,14 @@ const styles = StyleSheet.create({
     gap: Spacing.sm,
   },
   errorBanner: {
-    backgroundColor: '#FEF2F2',
+    backgroundColor: "#FEF2F2",
     borderRadius: Radius.md,
     padding: Spacing.md,
     borderLeftWidth: 3,
-    borderLeftColor: '#EF4444',
+    borderLeftColor: "#EF4444",
   },
   errorText: {
-    color: '#DC2626',
+    color: "#DC2626",
     fontSize: 13,
   },
   submitButton: {
@@ -480,29 +513,29 @@ const styles = StyleSheet.create({
   },
   submitContent: {
     height: 52,
-    flexDirection: 'row-reverse',
+    flexDirection: "row-reverse",
   },
   submitLabel: {
     fontSize: 16,
-    fontWeight: '600',
+    fontWeight: "600",
     letterSpacing: 0.5,
   },
   socialButton: {
     borderRadius: Radius.md,
     borderColor: Palette.light.border,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: "#FFFFFF",
   },
   socialContent: {
     height: 52,
   },
   socialLabel: {
     fontSize: 16,
-    fontWeight: '600',
+    fontWeight: "600",
   },
   // ── Divider ──
   divider: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     marginVertical: Spacing.lg,
   },
   dividerLine: {
@@ -515,25 +548,25 @@ const styles = StyleSheet.create({
   },
   // ── Footer ──
   footer: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "center",
+    alignItems: "center",
   },
   footerText: {
     color: Palette.text.lightSecondary,
   },
   footerLink: {
-    fontWeight: '600',
+    fontWeight: "600",
   },
   termsLink: {
-    alignSelf: 'center',
+    alignSelf: "center",
     paddingVertical: Spacing.xs,
   },
   termsText: {
     color: Palette.text.lightSecondary,
   },
   termsLinkText: {
-    textDecorationLine: 'underline',
-    fontWeight: '600',
+    textDecorationLine: "underline",
+    fontWeight: "600",
   },
 });

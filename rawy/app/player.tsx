@@ -20,17 +20,19 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
 import { generateEpisodeLink } from "@/utils/deep-link";
+import * as Haptics from 'expo-haptics';
 import {
   ChevronDown,
   Play,
   Pause,
   SkipBack,
   SkipForward,
-  Heart,
   Share2,
   MessageCircle,
   Music2,
 } from "lucide-react-native";
+
+import { AnimatedHeart } from "@/components/ui";
 
 import { usePlayer } from "@/context/player-context";
 import { resolveImageUrl } from "@/utils/url";
@@ -86,6 +88,7 @@ export default function PlayerScreen() {
     (e: GestureResponderEvent) => {
       const x = e.nativeEvent.locationX;
       const ratio = Math.max(0, Math.min(x / barWidth, 1));
+      Haptics.selectionAsync().catch(() => {});
       seek(ratio * duration);
     },
     [barWidth, duration, seek],
@@ -192,8 +195,11 @@ export default function PlayerScreen() {
               {formatViews(currentEpisode.viewsCount)}
             </Text>
           </View>
-          <TouchableOpacity
-            style={s.likeBtn}
+          <AnimatedHeart
+            size={26}
+            isLiked={likeStatus?.isLiked || false}
+            activeColor="#EF4444"
+            inactiveColor="rgba(255,255,255,0.7)"
             onPress={() => {
               if (!user) {
                 router.push("/(auth)/login" as any);
@@ -201,13 +207,8 @@ export default function PlayerScreen() {
               }
               toggleLike.mutate(likeStatus?.isLiked || false);
             }}
-          >
-            <Heart
-              size={26}
-              color={likeStatus?.isLiked ? "#EF4444" : "rgba(255,255,255,0.7)"}
-              fill={likeStatus?.isLiked ? "#EF4444" : "transparent"}
-            />
-          </TouchableOpacity>
+            style={s.likeBtn}
+          />
         </View>
 
         {/* ── Seekable progress bar ── */}
@@ -377,7 +378,7 @@ const s = StyleSheet.create({
     marginBottom: Spacing.lg,
   },
   progressTrackWrapper: {
-    paddingVertical: Spacing.sm, // larger touch target
+    paddingVertical: Spacing.lg, // increased touch target
   },
   progressTrack: {
     height: 4,

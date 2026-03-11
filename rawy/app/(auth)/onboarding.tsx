@@ -34,11 +34,23 @@ const slides = [
         description: 'Have something to share? Become a creator and start publishing your own episodes. Get instant notifications and build your audience.',
         image: require('../../assets/images/onboarding3.png'),
     },
+    {
+        id: '4',
+        title: 'Pick Your Interests',
+        description: 'Select your favorite topics below so we can recommend the best podcasts for you.',
+        image: null,
+    },
+];
+
+const TOPICS = [
+    "Technology", "History", "Sports", "Business", "Health", 
+    "Comedy", "True Crime", "Education", "Art", "News"
 ];
 
 export default function OnboardingScreen() {
     const { width, height } = useWindowDimensions();
     const [currentIndex, setCurrentIndex] = useState(0);
+    const [selectedTopics, setSelectedTopics] = useState<string[]>([]);
     const scrollX = useRef(new Animated.Value(0)).current;
     const slidesRef = useRef<FlatList>(null);
     const router = useRouter();
@@ -57,6 +69,10 @@ export default function OnboardingScreen() {
         } else {
             try {
                 await AsyncStorage.setItem(STORAGE_KEYS.HAS_SEEN_ONBOARDING, 'true');
+                if (selectedTopics.length > 0) {
+                    // Ideally pass these to the backend during registration
+                    await AsyncStorage.setItem('USER_INTERESTS', JSON.stringify(selectedTopics));
+                }
             } catch (error) {
                 // Ignore error saving state
             }
@@ -71,21 +87,65 @@ export default function OnboardingScreen() {
             <View style={{ flex: 3 }}>
                 <FlatList
                     data={slides}
-                    renderItem={({ item }) => (
-                        <View style={[styles.slide, { width }]}>
-                            <View style={styles.imageContainer}>
-                                <Image
-                                    source={item.image}
-                                    style={[styles.image, { width: width * 0.9, height: height * 0.5 }]}
-                                    resizeMode="contain"
-                                />
+                    renderItem={({ item }) => {
+                        if (item.id === '4') {
+                            return (
+                                <View style={[styles.slide, { width }]}>
+                                    <View style={styles.textContainerTop}>
+                                        <Text style={styles.title}>{item.title}</Text>
+                                        <Text style={styles.description}>{item.description}</Text>
+                                    </View>
+                                    <View style={styles.topicsGrid}>
+                                        {TOPICS.map((topic) => {
+                                            const isSelected = selectedTopics.includes(topic);
+                                            return (
+                                                <TouchableOpacity
+                                                    key={topic}
+                                                    activeOpacity={0.7}
+                                                    onPress={() => {
+                                                        setSelectedTopics(prev => 
+                                                            prev.includes(topic) 
+                                                                ? prev.filter(t => t !== topic)
+                                                                : [...prev, topic]
+                                                        );
+                                                    }}
+                                                    style={[
+                                                        styles.topicChip,
+                                                        isSelected && styles.topicChipSelected
+                                                    ]}
+                                                >
+                                                    <Text style={[
+                                                        styles.topicText,
+                                                        isSelected && styles.topicTextSelected
+                                                    ]}>
+                                                        {topic}
+                                                    </Text>
+                                                </TouchableOpacity>
+                                            )
+                                        })}
+                                    </View>
+                                </View>
+                            );
+                        }
+
+                        return (
+                            <View style={[styles.slide, { width }]}>
+                                <View style={styles.imageContainer}>
+                                    {item.image && (
+                                        <Image
+                                            source={item.image}
+                                            style={[styles.image, { width: width * 0.9, height: height * 0.5 }]}
+                                            resizeMode="contain"
+                                        />
+                                    )}
+                                </View>
+                                <View style={styles.textContainer}>
+                                    <Text style={styles.title}>{item.title}</Text>
+                                    <Text style={styles.description}>{item.description}</Text>
+                                </View>
                             </View>
-                            <View style={styles.textContainer}>
-                                <Text style={styles.title}>{item.title}</Text>
-                                <Text style={styles.description}>{item.description}</Text>
-                            </View>
-                        </View>
-                    )}
+                        );
+                    }}
                     horizontal
                     showsHorizontalScrollIndicator={false}
                     pagingEnabled
@@ -219,5 +279,38 @@ const styles = StyleSheet.create({
         color: '#FFFFFF',
         fontSize: 18,
         fontWeight: 'bold',
+    },
+    textContainerTop: {
+        marginTop: 60,
+        paddingHorizontal: 30,
+        alignItems: 'center',
+    },
+    topicsGrid: {
+        flexDirection: 'row',
+        flexWrap: 'wrap',
+        justifyContent: 'center',
+        paddingHorizontal: 20,
+        paddingTop: 40,
+        gap: 12,
+    },
+    topicChip: {
+        paddingVertical: 12,
+        paddingHorizontal: 20,
+        borderRadius: 30,
+        backgroundColor: '#F3F4F6',
+        borderWidth: 1,
+        borderColor: '#E5E7EB',
+    },
+    topicChipSelected: {
+        backgroundColor: '#000000',
+        borderColor: '#000000',
+    },
+    topicText: {
+        fontSize: 16,
+        fontWeight: '600',
+        color: '#4B5563',
+    },
+    topicTextSelected: {
+        color: '#FFFFFF',
     },
 });

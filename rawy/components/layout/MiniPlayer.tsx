@@ -15,11 +15,6 @@ export default function MiniPlayer() {
   const router = useRouter();
   const [imgError, setImgError] = useState(false);
 
-  if (!currentEpisode) return null;
-
-  const coverUri = resolveImageUrl(currentEpisode.podcast.coverImageUrl);
-  const progress = duration > 0 ? Math.min(position / duration, 1) : 0;
-
   const translateX = useSharedValue(0);
   const translateY = useSharedValue(0);
 
@@ -61,6 +56,11 @@ export default function MiniPlayer() {
       { translateY: translateY.value }
     ]
   }));
+
+  if (!currentEpisode) return null;
+
+  const coverUri = resolveImageUrl(currentEpisode.podcast.coverImageUrl);
+  const progress = duration > 0 ? Math.min(position / duration, 1) : 0;
 
   return (
     <GestureDetector gesture={panGesture}>

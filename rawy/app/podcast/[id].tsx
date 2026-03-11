@@ -149,8 +149,9 @@ export default function PodcastDetailScreen() {
         style={[
           styles.hero,
           {
-            backgroundColor:
-              theme.dark ? theme.colors.surface : Palette.primary[50],
+            backgroundColor: 'transparent',
+            borderWidth: 1,
+            borderColor: theme.dark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)',
           },
         ]}
       >
@@ -342,9 +343,24 @@ export default function PodcastDetailScreen() {
     <SafeAreaView
       style={[
         styles.container,
-        { backgroundColor: theme.colors.background },
+        { backgroundColor: podcast?.coverImageUrl ? 'transparent' : theme.colors.background },
       ]}
     >
+      {/* Dynamic Background Blur */}
+      {podcast?.coverImageUrl && (
+        <View style={StyleSheet.absoluteFill} pointerEvents="none">
+          <Image 
+            source={{ uri: resolveImageUrl(podcast.coverImageUrl) }} 
+            style={StyleSheet.absoluteFill} 
+            blurRadius={80} 
+          />
+          <View style={[
+            StyleSheet.absoluteFill,
+            { backgroundColor: theme.dark ? 'rgba(26,26,46,0.85)' : 'rgba(248,249,252,0.85)' }
+          ]} />
+        </View>
+      )}
+
       {/* Top nav / back */}
       <View style={styles.topBar}>
         <IconButton

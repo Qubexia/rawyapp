@@ -24,9 +24,13 @@ import {
   Shield,
   Mail,
   Edit2,
+  BadgeCheck,
+  Music2,
+  PlayCircle,
 } from "lucide-react-native";
 
 import { useAuthContext } from "@/context/auth-context";
+import { usePlayer } from "@/context/player-context";
 import { usePublicProfile } from "@/hooks/queries/use-users";
 import { Palette, Spacing, Radius } from "@/constants/theme";
 import { isCreator, isAdmin } from "@/utils/roles";
@@ -36,6 +40,7 @@ export default function ProfileScreen() {
   const theme = useTheme();
   const router = useRouter();
   const { user, isAuthenticated, logout } = useAuthContext();
+  const { currentEpisode, isPlaying } = usePlayer();
   const { data: profile } = usePublicProfile(user?._id || '');
   const avatarUri = resolveImageUrl(user?.avatarUrl);
 
@@ -180,17 +185,21 @@ export default function ProfileScreen() {
                 alignItems: "center",
               }}
             >
-              <Text
-                variant="titleLarge"
-                numberOfLines={1}
-                style={{
-                  color: theme.colors.onSurface,
-                  fontWeight: "700",
-                  flex: 1,
-                }}
-              >
-                {user?.name || "User"}
-              </Text>
+              <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1, gap: 4 }}>
+                <Text
+                  variant="titleLarge"
+                  numberOfLines={1}
+                  style={{
+                    color: theme.colors.onSurface,
+                    fontWeight: "700",
+                  }}
+                >
+                  {user?.name || "User"}
+                </Text>
+                {isCreator(user) && (
+                  <BadgeCheck size={18} color={Palette.primary[500]} />
+                )}
+              </View>
               <IconButton
                 icon={() => (
                   <Edit2 size={18} color={theme.colors.onSurfaceVariant} />
@@ -250,6 +259,35 @@ export default function ProfileScreen() {
             )}
           </View>
         </Surface>
+
+        {/* Listening To Banner */}
+        {currentEpisode && (
+          <TouchableOpacity 
+            style={[
+              styles.listeningCard, 
+              { backgroundColor: Palette.primary[50] } // Always somewhat accented
+            ]}
+            onPress={() => router.push("/player" as any)}
+            activeOpacity={0.8}
+          >
+            <View style={[styles.listeningIconBox, { backgroundColor: Palette.primary[100] }]}>
+              {isPlaying ? (
+                <Music2 size={24} color={Palette.primary[600]} />
+              ) : (
+                <PlayCircle size={24} color={Palette.primary[600]} />
+              )}
+            </View>
+            <View style={{ flex: 1, marginLeft: Spacing.md }}>
+              <Text variant="labelMedium" style={{ color: Palette.primary[600], fontWeight: '700' }}>
+                {isPlaying ? "LISTENING TO..." : "PAUSED"}
+              </Text>
+              <Text variant="bodyMedium" numberOfLines={1} style={{ color: Palette.primary[900], fontWeight: '600' }}>
+                {currentEpisode.title}
+              </Text>
+            </View>
+            <ChevronRight size={20} color={Palette.primary[400]} />
+          </TouchableOpacity>
+        )}
 
         {/* Menu */}
         <Surface
@@ -433,5 +471,20 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
     paddingHorizontal: Spacing.xl,
+  },
+  listeningCard: {
+    marginHorizontal: Spacing.lg,
+    borderRadius: Radius.lg,
+    padding: Spacing.md,
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: Spacing.lg,
+  },
+  listeningIconBox: {
+    width: 48,
+    height: 48,
+    borderRadius: Radius.md,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
 });

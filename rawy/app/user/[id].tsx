@@ -26,6 +26,7 @@ import {
   UserCheck,
   User,
   LucideLocate,
+  BadgeCheck,
 } from "lucide-react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
@@ -162,12 +163,17 @@ export default function UserProfileScreen() {
             </View>
 
             {/* Name & role badge */}
-            <Text
-              variant="headlineSmall"
-              style={[s.name, { color: theme.colors.onSurface }]}
-            >
-              {profile.name}
-            </Text>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 2 }}>
+              <Text
+                variant="headlineSmall"
+                style={[s.name, { color: theme.colors.onSurface }]}
+              >
+                {profile.name}
+              </Text>
+              {profile.role === 'CREATOR' && (
+                <BadgeCheck size={24} color={Palette.primary[500]} />
+              )}
+            </View>
             <View
               style={[s.roleBadge, { backgroundColor: Palette.primary[50] }]}
             >

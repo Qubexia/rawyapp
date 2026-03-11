@@ -30,7 +30,6 @@ import Animated, {
 } from "react-native-reanimated";
 import {
   ArrowLeft,
-  Heart,
   MessageCircle,
   Play,
   Pause,
@@ -56,7 +55,7 @@ import { CommentItem } from "@/components/CommentItem";
 import { resolveImageUrl } from "@/utils/url";
 import { usePlayer } from "@/context/player-context";
 import { generateEpisodeLink } from "@/utils/deep-link";
-import { EpisodeRow, ErrorBoundary, BottomSheet } from "@/components/ui";
+import { EpisodeRow, ErrorBoundary, BottomSheet, AnimatedHeart } from "@/components/ui";
 
 // Space to reserve at the bottom
 const MINI_PLAYER_CLEARANCE = 92; // 77px card + 15px gap
@@ -299,27 +298,24 @@ export default function EpisodeDetailScreen() {
         style={[s.interactionBar, { backgroundColor: theme.colors.surface }]}
         elevation={1}
       >
-        <TouchableOpacity
-          style={s.interactionItem}
-          onPress={() => {
-            if (!user) {
-              router.push("/(auth)/login" as any);
-              return;
-            }
-            toggleLike.mutate(likeStatus?.isLiked || false);
-          }}
-        >
-          <Heart
+        <View style={s.interactionItem}>
+          <AnimatedHeart
+            isLiked={likeStatus?.isLiked || false}
+            activeColor="#EF4444"
+            inactiveColor={theme.colors.onSurfaceVariant}
             size={20}
-            color={
-              likeStatus?.isLiked ? "#EF4444" : theme.colors.onSurfaceVariant
-            }
-            fill={likeStatus?.isLiked ? "#EF4444" : "transparent"}
+            onPress={() => {
+              if (!user) {
+                router.push("/(auth)/login" as any);
+                return;
+              }
+              toggleLike.mutate(likeStatus?.isLiked || false);
+            }}
           />
           <Text variant="labelSmall" style={s.interactionLabel}>
             {likeStatus?.likesCount ?? episode?.likesCount ?? 0}
           </Text>
-        </TouchableOpacity>
+        </View>
 
         <TouchableOpacity
           style={s.interactionItem}
@@ -445,26 +441,45 @@ export default function EpisodeDetailScreen() {
         )}
       </View>
 
-      {/* ── Comment prompt ── */}
-      <TouchableOpacity
-        style={[
-          s.commentPrompt,
-          {
-            backgroundColor: theme.colors.surface,
-            borderColor: theme.colors.surfaceVariant,
-          },
-        ]}
-        onPress={() => setShowCommentsSheet(true)}
-        activeOpacity={0.7}
-      >
-        <Text
-          variant="bodyMedium"
-          style={{ color: theme.colors.onSurfaceVariant, flex: 1 }}
+      {/* ── Top Comment Preview & Prompt ── */}
+      {comments.length > 0 ? (
+        <TouchableOpacity 
+          style={{ marginHorizontal: Spacing.xl, marginBottom: Spacing.md }} 
+          onPress={() => setShowCommentsSheet(true)}
+          activeOpacity={0.7}
         >
-          View comments...
+          <View pointerEvents="none">
+            {renderComment({ item: comments[0] })}
+          </View>
+          {comments.length > 1 && (
+            <Text 
+              style={{ color: theme.colors.primary, marginTop: Spacing.xs, fontWeight: '600' }}
+            >
+              View all {comments.length} comments
+            </Text>
+          )}
+        </TouchableOpacity>
+      ) : (
+        <TouchableOpacity
+          style={[
+            s.commentPrompt,
+            {
+              backgroundColor: theme.colors.surface,
+              borderColor: theme.colors.surfaceVariant,
+            },
+          ]}
+          onPress={() => setShowCommentsSheet(true)}
+          activeOpacity={0.7}
+        >
+          <Text
+            variant="bodyMedium"
+            style={{ color: theme.colors.onSurfaceVariant, flex: 1 }}
+          >
+            View comments...
           </Text>
-        <MessageCircle size={18} color={theme.colors.onSurfaceVariant} />
-      </TouchableOpacity>
+          <MessageCircle size={18} color={theme.colors.onSurfaceVariant} />
+        </TouchableOpacity>
+      )}
     </View>
   );
 

@@ -16,3 +16,4 @@ export { ErrorBoundary } from './ErrorBoundary';
 export { HomeSkeleton } from './HomeSkeleton';
 export { NotificationsSkeleton } from './NotificationsSkeleton';
 export { BottomSheet } from './BottomSheet';
+export { AnimatedHeart } from './AnimatedHeart';
