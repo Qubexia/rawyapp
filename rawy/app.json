@@ -35,7 +35,8 @@
       "predictiveBackGestureEnabled": false,
       "permissions": [
         "FOREGROUND_SERVICE",
-        "FOREGROUND_SERVICE_MEDIA_PLAYBACK"
+        "FOREGROUND_SERVICE_MEDIA_PLAYBACK",
+        "POST_NOTIFICATIONS"
       ]
     },
     "ios": {
@@ -76,6 +77,14 @@
         "expo-audio",
         {
           "enableBackgroundPlayback": true
+        }
+      ],
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/images/rawy.jpg",
+          "color": "#ffffff",
+          "defaultChannel": "default"
         }
       ]
     ],
