@@ -13,11 +13,13 @@ import {
   Dimensions,
   GestureResponderEvent,
   Share,
+  Platform,
 } from "react-native";
 import { Text } from "react-native-paper";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
+import { generateEpisodeLink } from "@/utils/deep-link";
 import {
   ChevronDown,
   Play,
@@ -92,8 +94,16 @@ export default function PlayerScreen() {
   const handleShare = async () => {
     if (!currentEpisode) return;
     try {
+      const shareUrl = generateEpisodeLink(currentEpisode._id);
+      // On Android, if message contains text + custom scheme URL, some apps fail to linkify the URL.
+      // Providing just the URL or ensuring it is cleanly separated often helps.
+      const message = Platform.OS === 'android' 
+        ? `Listen to "${currentEpisode.title}" on Rawy: ${shareUrl}` 
+        : `Listen to "${currentEpisode.title}" from "${currentEpisode.podcast?.title}" on Rawy!`;
+        
       await Share.share({
-        message: `Listen to "${currentEpisode.title}" from "${currentEpisode.podcast?.title}" on Rawy!`,
+        message,
+        url: shareUrl,
       });
     } catch {}
   };

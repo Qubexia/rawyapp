@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "736042943176",
+    "project_id": "rawy-79e09",
+    "storage_bucket": "rawy-79e09.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:736042943176:android:62914f085675f37f701bfd",
+        "android_client_info": {
+          "package_name": "com.kahlaafaq.rawy"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCzZQbBKyIqPAUTf-hUvxkvKJ5ZRGBA8ZU"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

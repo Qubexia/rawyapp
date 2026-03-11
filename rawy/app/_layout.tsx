@@ -187,7 +187,7 @@ export default function RootLayout() {
                       />
                       {/* Legal screens */}
                       <Stack.Screen
-                        name="(legal)/terms"
+                        name="(legal)"
                         options={{ headerShown: false, animation: 'slide_from_right' }}
                       />
                       {/* Full-screen player modal */}

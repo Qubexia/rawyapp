@@ -151,8 +151,12 @@ export default function EpisodeDetailScreen() {
   const handleShare = async () => {
     try {
       const shareUrl = generateEpisodeLink(id);
+      const message = Platform.OS === 'android' 
+        ? `Listen to "${episode?.title}" on Rawy: ${shareUrl}` 
+        : `Listen to "${episode?.title}" from "${episode?.podcast?.title}" on Rawy!`;
+        
       await Share.share({
-        message: `Listen to "${episode?.title}" from "${episode?.podcast?.title}" on Rawy!\n\n${shareUrl}`,
+        message,
         url: shareUrl,
       });
     } catch {}

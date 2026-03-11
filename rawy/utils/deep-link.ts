@@ -3,6 +3,8 @@
  * Used for episode sharing and app navigation.
  */
 
+import * as Linking from 'expo-linking';
+
 export const DOMAIN = 'https://rawy.app'; // Placeholder domain
 export const SCHEME = 'rawy';
 
@@ -12,6 +14,9 @@ export const SCHEME = 'rawy';
  * for Universal Links (iOS) and App Links (Android).
  */
 export function generateEpisodeLink(episodeId: string): string {
+    // We use the HTTPS link for sharing so messaging apps (WhatsApp, etc.) 
+    // recognize it as a clickable URL. Android will intercept this link 
+    // if the intent filter is set up in app.json.
     return `${DOMAIN}/episode/${episodeId}`;
 }
 
