@@ -14,6 +14,7 @@ import {
   Platform,
   Share,
   RefreshControl,
+  ScrollView,
   Image,
   ActivityIndicator,
   Keyboard,
@@ -55,7 +56,7 @@ import { CommentItem } from "@/components/CommentItem";
 import { resolveImageUrl } from "@/utils/url";
 import { usePlayer } from "@/context/player-context";
 import { generateEpisodeLink } from "@/utils/deep-link";
-import { EpisodeRow, ErrorBoundary } from "@/components/ui";
+import { EpisodeRow, ErrorBoundary, BottomSheet } from "@/components/ui";
 
 // Space to reserve at the bottom
 const MINI_PLAYER_CLEARANCE = 92; // 77px card + 15px gap
@@ -72,7 +73,7 @@ export default function EpisodeDetailScreen() {
     null,
   );
   const [isDescExpanded, setIsDescExpanded] = useState(false);
-  const [showCommentInput, setShowCommentInput] = useState(false);
+  const [showCommentsSheet, setShowCommentsSheet] = useState(false);
   const sheetTranslateY = useRef(new RNAnimated.Value(0)).current;
 
   useEffect(() => {
@@ -172,7 +173,7 @@ export default function EpisodeDetailScreen() {
       await createComment.mutateAsync(t);
     }
     setCommentText("");
-    setShowCommentInput(false);
+    setShowCommentsSheet(false);
     Keyboard.dismiss();
   };
 
@@ -201,7 +202,7 @@ export default function EpisodeDetailScreen() {
       comment={item}
       onReply={(commentId, name) => {
         setReplyTo({ id: commentId, name });
-        setShowCommentInput(true);
+        setShowCommentsSheet(true);
       }}
       creatorId={episode?.creator?._id}
     />
@@ -327,13 +328,13 @@ export default function EpisodeDetailScreen() {
               router.push("/(auth)/login" as any);
               return;
             }
-            setShowCommentInput(true);
+            setShowCommentsSheet(true);
           }}
         >
           <MessageCircle
             size={20}
             color={
-              showCommentInput
+              showCommentsSheet
                 ? theme.colors.primary
                 : theme.colors.onSurfaceVariant
             }
@@ -342,7 +343,7 @@ export default function EpisodeDetailScreen() {
             variant="labelSmall"
             style={[
               s.interactionLabel,
-              showCommentInput && { color: theme.colors.primary },
+              showCommentsSheet && { color: theme.colors.primary },
             ]}
           >
             {episode?.commentsCount ?? comments.length}
@@ -445,27 +446,25 @@ export default function EpisodeDetailScreen() {
       </View>
 
       {/* ── Comment prompt ── */}
-      {user ? (
-        <TouchableOpacity
-          style={[
-            s.commentPrompt,
-            {
-              backgroundColor: theme.colors.surface,
-              borderColor: theme.colors.surfaceVariant,
-            },
-          ]}
-          onPress={() => setShowCommentInput(true)}
-          activeOpacity={0.7}
+      <TouchableOpacity
+        style={[
+          s.commentPrompt,
+          {
+            backgroundColor: theme.colors.surface,
+            borderColor: theme.colors.surfaceVariant,
+          },
+        ]}
+        onPress={() => setShowCommentsSheet(true)}
+        activeOpacity={0.7}
+      >
+        <Text
+          variant="bodyMedium"
+          style={{ color: theme.colors.onSurfaceVariant, flex: 1 }}
         >
-          <Text
-            variant="bodyMedium"
-            style={{ color: theme.colors.onSurfaceVariant, flex: 1 }}
-          >
-            Write a comment...
+          View comments...
           </Text>
-          <MessageCircle size={18} color={theme.colors.onSurfaceVariant} />
-        </TouchableOpacity>
-      ) : null}
+        <MessageCircle size={18} color={theme.colors.onSurfaceVariant} />
+      </TouchableOpacity>
     </View>
   );
 
@@ -496,17 +495,9 @@ export default function EpisodeDetailScreen() {
             marginBottom: currentEpisode ? MINI_PLAYER_CLEARANCE : 0,
           }}
         >
-          <FlatList
-            data={comments}
-            keyExtractor={(i, idx) => (i?._id ? String(i._id) : String(idx))}
-            renderItem={renderComment}
-            ListHeaderComponent={ListHeader}
+          <ScrollView
             contentContainerStyle={{ paddingBottom: Spacing.xxl }}
             showsVerticalScrollIndicator={false}
-            removeClippedSubviews={Platform.OS === "android" ? true : false}
-            maxToRenderPerBatch={8}
-            windowSize={10}
-            initialNumToRender={5}
             refreshControl={
               <RefreshControl
                 refreshing={refreshing}
@@ -514,77 +505,65 @@ export default function EpisodeDetailScreen() {
                 tintColor={theme.colors.primary}
               />
             }
-            ListEmptyComponent={() =>
-              !commentsLoading ? (
-                <TouchableOpacity
-                  style={s.emptyC}
-                  onPress={() => {
-                    if (!user) {
-                      router.push("/(auth)/login" as any);
-                      return;
-                    }
-                    setShowCommentInput(true);
-                  }}
-                >
-                  <MessageCircle
-                    size={28}
-                    color={theme.colors.primary}
-                    strokeWidth={1}
-                  />
-                  <Text
-                    variant="bodySmall"
-                    style={{
-                      color: theme.colors.primary,
-                      marginTop: 8,
-                      fontWeight: "700",
-                    }}
-                  >
-                    Be the first to comment!
-                  </Text>
-                </TouchableOpacity>
-              ) : null
-            }
-          />
-          <Modal
-            visible={showCommentInput}
-            transparent
-            animationType="slide"
-            onRequestClose={() => {
-              setShowCommentInput(false);
+          >
+            <ListHeader />
+          </ScrollView>
+
+          <BottomSheet
+            visible={showCommentsSheet}
+            onClose={() => {
+              setShowCommentsSheet(false);
               setReplyTo(null);
               Keyboard.dismiss();
             }}
           >
-            <TouchableOpacity
-              style={s.modalBackdrop}
-              activeOpacity={1}
-              onPress={() => {
-                setShowCommentInput(false);
-                setReplyTo(null);
-                Keyboard.dismiss();
-              }}
-            >
-              <TouchableOpacity activeOpacity={1} onPress={() => {}}>
-                <RNAnimated.View
-                  style={{ transform: [{ translateY: sheetTranslateY }] }}
+            <View style={{ flex: 1 }}>
+              <FlatList
+                data={comments}
+                keyExtractor={(i, idx) =>
+                  i?._id ? String(i._id) : String(idx)
+                }
+                renderItem={renderComment}
+                contentContainerStyle={{ paddingBottom: Spacing.xxl }}
+                showsVerticalScrollIndicator={false}
+                removeClippedSubviews={Platform.OS === "android" ? true : false}
+                maxToRenderPerBatch={8}
+                windowSize={10}
+                initialNumToRender={5}
+                ListEmptyComponent={() =>
+                  !commentsLoading ? (
+                    <View style={s.emptyC}>
+                      <MessageCircle
+                        size={28}
+                        color={theme.colors.primary}
+                        strokeWidth={1}
+                      />
+                      <Text
+                        variant="bodySmall"
+                        style={{
+                          color: theme.colors.primary,
+                          marginTop: 8,
+                          fontWeight: "700",
+                        }}
+                      >
+                        Be the first to comment!
+                      </Text>
+                    </View>
+                  ) : null
+                }
+              />
+              <RNAnimated.View
+                style={{ transform: [{ translateY: sheetTranslateY }] }}
+              >
+                <View
+                  style={[
+                    s.commentInputArea,
+                    { backgroundColor: theme.colors.surface, paddingTop: Spacing.md, paddingHorizontal: Spacing.lg, paddingBottom: Spacing.xl, borderTopWidth: 1, borderColor: theme.colors.surfaceVariant },
+                  ]}
                 >
-                  <Surface
-                    style={[
-                      s.commentSheet,
-                      { backgroundColor: theme.colors.surface },
-                    ]}
-                    elevation={4}
-                  >
-                    {/* Handle bar */}
-                    <View
-                      style={[
-                        s.sheetHandle,
-                        { backgroundColor: theme.colors.surfaceVariant },
-                      ]}
-                    />
-
-                    {/* Header */}
-                    <View style={s.sheetHeader}>
+                  {/* Header */}
+                  {replyTo && (
+                    <View style={[s.sheetHeader, { marginBottom: Spacing.sm }]}>
                       <Text
                         variant="titleMedium"
                         style={{
@@ -592,11 +571,10 @@ export default function EpisodeDetailScreen() {
                           color: theme.colors.onSurface,
                         }}
                       >
-                        {replyTo ? `Reply to ${replyTo.name}` : "Add a comment"}
+                        Reply to {replyTo.name}
                       </Text>
                       <TouchableOpacity
                         onPress={() => {
-                          setShowCommentInput(false);
                           setReplyTo(null);
                           setCommentText("");
                         }}
@@ -604,49 +582,50 @@ export default function EpisodeDetailScreen() {
                         <X size={22} color={theme.colors.onSurfaceVariant} />
                       </TouchableOpacity>
                     </View>
+                  )}
 
-                    {/* Input */}
-                    <TextInput
-                      autoFocus
-                      style={[
-                        s.modalInput,
-                        {
-                          color: theme.colors.onSurface,
-                          backgroundColor: theme.colors.background,
-                          borderColor: theme.colors.surfaceVariant,
-                        },
-                      ]}
-                      placeholder={
-                        replyTo
-                          ? `Reply to ${replyTo.name}...`
-                          : "Share your thoughts..."
-                      }
-                      placeholderTextColor={theme.colors.onSurfaceVariant}
-                      value={commentText}
-                      onChangeText={setCommentText}
-                      multiline
-                      maxLength={500}
-                      textAlignVertical="top"
-                    />
-                    <Text
-                      variant="labelSmall"
-                      style={{
-                        color: theme.colors.onSurfaceVariant,
-                        textAlign: "right",
-                        marginTop: 4,
-                      }}
-                    >
-                      {commentText.length}/500
-                    </Text>
+                  {/* Input */}
+                  <TextInput
+                    style={[
+                      s.modalInput,
+                      {
+                        color: theme.colors.onSurface,
+                        backgroundColor: theme.colors.background,
+                        borderColor: theme.colors.surfaceVariant,
+                      },
+                    ]}
+                    placeholder={
+                      replyTo
+                        ? `Reply to ${replyTo.name}...`
+                        : "Share your thoughts..."
+                    }
+                    placeholderTextColor={theme.colors.onSurfaceVariant}
+                    value={commentText}
+                    onChangeText={setCommentText}
+                    multiline
+                    maxLength={500}
+                    textAlignVertical="top"
+                  />
+                  <Text
+                    variant="labelSmall"
+                    style={{
+                      color: theme.colors.onSurfaceVariant,
+                      textAlign: "right",
+                      marginTop: 4,
+                      marginBottom: Spacing.sm,
+                    }}
+                  >
+                    {commentText.length}/500
+                  </Text>
 
-                    {/* Actions */}
-                    <View style={s.sheetActions}>
+                  {/* Actions */}
+                  <View style={s.sheetActions}>
                       <TouchableOpacity
                         style={s.cancelBtn}
                         onPress={() => {
-                          setShowCommentInput(false);
                           setReplyTo(null);
                           setCommentText("");
+                          Keyboard.dismiss();
                         }}
                       >
                         <Text
@@ -701,13 +680,12 @@ export default function EpisodeDetailScreen() {
                             </Text>
                           </>
                         )}
-                      </TouchableOpacity>
-                    </View>
-                  </Surface>
-                </RNAnimated.View>
-              </TouchableOpacity>
-            </TouchableOpacity>
-          </Modal>
+                    </TouchableOpacity>
+                  </View>
+                </View>
+              </RNAnimated.View>
+            </View>
+          </BottomSheet>
         </View>
       </ErrorBoundary>
     </SafeAreaView>
@@ -845,6 +823,7 @@ const s = StyleSheet.create({
     paddingTop: Spacing.sm,
     paddingBottom: Spacing.xxl,
   },
+  commentInputArea: {},
   sheetHandle: {
     width: 40,
     height: 4,

@@ -23,6 +23,7 @@ import {
   GuestBanner,
   CreatorCard,
   ErrorBoundary,
+  HomeSkeleton,
 } from "@/components/ui";
 import { useAuthContext } from "@/context/auth-context";
 import { usePodcasts } from "@/hooks/queries/use-podcasts";
@@ -176,9 +177,7 @@ export default function HomeScreen() {
           {!user && <GuestBanner />}
 
           {isLoading ? (
-            <View style={styles.loadingContainer}>
-              <ActivityIndicator size="large" color={theme.colors.primary} />
-            </View>
+            <HomeSkeleton />
           ) : (
             <>
               {/* ── Trending Podcasts ── */}

@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
 import { View, StyleSheet, TouchableOpacity, Image } from 'react-native';
+import { GestureDetector, Gesture } from 'react-native-gesture-handler';
+import Animated, { useSharedValue, useAnimatedStyle, withSpring, withTiming, runOnJS } from 'react-native-reanimated';
 import { Text, useTheme } from 'react-native-paper';
 import { useRouter } from 'expo-router';
 import { Play, Pause, X, Music2 } from 'lucide-react-native';
@@ -8,7 +10,7 @@ import { resolveImageUrl } from '@/utils/url';
 import { Spacing, Radius } from '@/constants/theme';
 
 export default function MiniPlayer() {
-  const { currentEpisode, isPlaying, togglePlay, position, duration, dismiss } = usePlayer();
+  const { currentEpisode, isPlaying, togglePlay, position, duration, dismiss, skipForward, skipBackward } = usePlayer();
   const theme = useTheme();
   const router = useRouter();
   const [imgError, setImgError] = useState(false);
@@ -18,12 +20,56 @@ export default function MiniPlayer() {
   const coverUri = resolveImageUrl(currentEpisode.podcast.coverImageUrl);
   const progress = duration > 0 ? Math.min(position / duration, 1) : 0;
 
+  const translateX = useSharedValue(0);
+  const translateY = useSharedValue(0);
+
+  const panGesture = Gesture.Pan()
+    .onUpdate((e) => {
+      translateX.value = e.translationX;
+      // Allow swiping down
+      translateY.value = e.translationY > 0 ? e.translationY : e.translationY * 0.2;
+    })
+    .onEnd((e) => {
+      const SWIPE_X_THRESHOLD = 80;
+      const SWIPE_Y_THRESHOLD = 60;
+      
+      if (e.translationY > SWIPE_Y_THRESHOLD || e.velocityY > 500) {
+        // Swipe down to dismiss
+        translateY.value = withTiming(300, {}, () => {
+          runOnJS(dismiss)();
+        });
+      } else if (e.translationX > SWIPE_X_THRESHOLD || e.velocityX > 500) {
+        // Swipe right to skip forward
+        runOnJS(skipForward)();
+        translateX.value = withSpring(0);
+        translateY.value = withSpring(0);
+      } else if (e.translationX < -SWIPE_X_THRESHOLD || e.velocityX < -500) {
+        // Swipe left to skip backward
+        runOnJS(skipBackward)();
+        translateX.value = withSpring(0);
+        translateY.value = withSpring(0);
+      } else {
+        // Reset
+        translateX.value = withSpring(0);
+        translateY.value = withSpring(0);
+      }
+    });
+
+  const animatedStyle = useAnimatedStyle(() => ({
+    transform: [
+      { translateX: translateX.value },
+      { translateY: translateY.value }
+    ]
+  }));
+
   return (
-    <TouchableOpacity
-      activeOpacity={0.97}
-      onPress={() => router.push('/player' as any)}
-      style={[s.card, { backgroundColor: '#FFFFFF', shadowColor: '#000' }]}
-    >
+    <GestureDetector gesture={panGesture}>
+      <Animated.View style={animatedStyle}>
+        <TouchableOpacity
+          activeOpacity={0.97}
+          onPress={() => router.push('/player' as any)}
+          style={[s.card, { backgroundColor: '#FFFFFF', shadowColor: '#000' }]}
+        >
       {/* Thin progress bar at very top of card */}
       <View style={s.progressBg}>
         <View style={[s.progressFill, { width: `${progress * 100}%`, backgroundColor: theme.colors.primary }]} />
@@ -80,6 +126,8 @@ export default function MiniPlayer() {
         </TouchableOpacity>
       </View>
     </TouchableOpacity>
+    </Animated.View>
+    </GestureDetector>
   );
 }
 

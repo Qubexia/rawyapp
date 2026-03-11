@@ -13,6 +13,7 @@ import * as Notifications from 'expo-notifications';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect, useState, useCallback } from 'react';
 import { View, StyleSheet, Platform } from 'react-native';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider, useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
   useFonts,
@@ -107,7 +108,7 @@ export default function RootLayout() {
   const showSplash = !animationDone || !fontsReady;
 
   return (
-    <View style={styles.root}>
+    <GestureHandlerRootView style={styles.root}>
       <StatusBar style="dark" backgroundColor="#FFFFFF" />
 
       {/* App tree – only renders once fonts are ready */}
@@ -214,7 +215,7 @@ export default function RootLayout() {
 
       {/* Animated splash overlay – single instance, never remounted */}
       {showSplash && <SplashScreenAnimated onFinish={handleSplashFinish} />}
-    </View>
+    </GestureHandlerRootView>
   );
 }
 

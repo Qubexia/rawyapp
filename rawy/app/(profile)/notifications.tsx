@@ -7,6 +7,7 @@ import { ArrowLeft, BellOff, CheckCheck } from 'lucide-react-native';
 
 import { useNotifications, useMarkAllAsRead } from '@/hooks/queries/use-notifications';
 import { NotificationItem } from '@/components/NotificationItem';
+import { NotificationsSkeleton } from '@/components/ui';
 import { Palette, Spacing } from '@/constants/theme';
 
 export default function NotificationsScreen() {
@@ -78,9 +79,7 @@ export default function NotificationsScreen() {
             </View>
 
             {isLoading ? (
-                <View style={s.center}>
-                    <ActivityIndicator size="large" color={theme.colors.primary} />
-                </View>
+                <NotificationsSkeleton />
             ) : (
                 <FlatList
                     data={notifications}
