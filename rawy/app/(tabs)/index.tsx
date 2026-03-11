@@ -2,7 +2,7 @@
  * Home screen — trending podcasts, personalized feed, followed creators.
  */
 
-import React, { useCallback } from "react";
+import React, { useCallback, useState, useEffect } from "react";
 import {
   View,
   FlatList,
@@ -10,15 +10,37 @@ import {
   StyleSheet,
   RefreshControl,
   TouchableOpacity,
+  Image,
 } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+import {
+  SafeAreaView,
+  useSafeAreaInsets,
+} from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
-import { Text, useTheme, ActivityIndicator } from "react-native-paper";
-import { Bell, TrendingUp, Headphones, Play, Star } from "lucide-react-native";
+import { Text, useTheme } from "react-native-paper";
+import {
+  Bell,
+  TrendingUp,
+  Headphones,
+  Play,
+  Star,
+  ChevronRight,
+  Sparkles,
+} from "lucide-react-native";
+import Animated, {
+  useSharedValue,
+  useAnimatedScrollHandler,
+  useAnimatedStyle,
+  interpolate,
+  Extrapolation,
+} from "react-native-reanimated";
+import { BlurView } from "expo-blur";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 import {
   PodcastCard,
   EpisodeRow,
+  EpisodeCard,
   EmptyState,
   GuestBanner,
   CreatorCard,
@@ -26,18 +48,37 @@ import {
   HomeSkeleton,
 } from "@/components/ui";
 import { useAuthContext } from "@/context/auth-context";
+import { usePlayer } from "@/context/player-context";
+import { resolveImageUrl } from "@/utils/url";
 import { usePodcasts } from "@/hooks/queries/use-podcasts";
 import { useHomeFeed } from "@/hooks/queries/use-feed";
 import { useTopCreators } from "@/hooks/queries/use-creators";
 import { useUnreadCount } from "@/hooks/queries/use-notifications";
 import { useSuggestions } from "@/hooks/queries/use-suggestions";
 import { WhoToFollow } from "@/components/home/WhoToFollow";
-import { Spacing, Radius } from "@/constants/theme";
+import { Palette, Spacing, Radius } from "@/constants/theme";
 
 export default function HomeScreen() {
   const theme = useTheme();
   const router = useRouter();
+  const insets = useSafeAreaInsets();
   const { user } = useAuthContext();
+  const { currentEpisode, togglePlay, isPlaying } = usePlayer();
+
+  const scrollY = useSharedValue(0);
+  const scrollHandler = useAnimatedScrollHandler((event) => {
+    scrollY.value = event.contentOffset.y;
+  });
+
+  // const headerAnimatedStyle = useAnimatedStyle(() => {
+  //   const opacity = interpolate(
+  //     scrollY.value,
+  //     [0, 40],
+  //     [0, 1],
+  //     Extrapolation.CLAMP,
+  //   );
+  //   return { opacity };
+  // });
 
   const { data: unreadData } = useUnreadCount({ enabled: !!user });
   const unreadCount = unreadData?.unreadCount || 0;
@@ -108,9 +149,33 @@ export default function HomeScreen() {
       style={[styles.container, { backgroundColor: theme.colors.background }]}
       edges={["top"]}
     >
+      {/* ── Sticky Glass Header ── */}
+      {/* <Animated.View style={[styles.glassHeaderContainer, headerAnimatedStyle]}>
+        <BlurView intensity={80} tint={theme.dark ? "dark" : "light"} style={StyleSheet.absoluteFill} />
+        <SafeAreaView edges={["top"]} style={styles.glassHeaderSafeArea}>
+          <View style={styles.glassHeaderContent}>
+            <Text variant="titleMedium" style={{ fontWeight: "700", color: theme.colors.onBackground }}>
+              Rawy
+            </Text>
+            <TouchableOpacity onPress={() => router.push("/(profile)/notifications" as any)}>
+              <View style={{ position: "relative" }}>
+                <Bell size={24} color={theme.colors.onSurfaceVariant} />
+                {unreadCount > 0 && (
+                  <View style={styles.badge}>
+                    <Text style={styles.badgeText}>{unreadCount > 9 ? "9+" : unreadCount}</Text>
+                  </View>
+                )}
+              </View>
+            </TouchableOpacity>
+          </View>
+        </SafeAreaView>
+      </Animated.View> */}
+
       <ErrorBoundary onReset={onRefresh}>
-        <ScrollView
+        <Animated.ScrollView
           showsVerticalScrollIndicator={false}
+          onScroll={scrollHandler}
+          scrollEventThrottle={16}
           refreshControl={
             <RefreshControl
               refreshing={refreshing}
@@ -121,7 +186,9 @@ export default function HomeScreen() {
         >
           {/* ... existing header and sections ... */}
           {/* Re-implementing the content with ErrorBoundary */}
-          <View style={styles.header}>
+          <View
+            style={styles.header}
+          >
             <View>
               <Text
                 variant="bodyMedium"
@@ -176,23 +243,113 @@ export default function HomeScreen() {
 
           {!user && <GuestBanner />}
 
+          {/* ── Continue Listening Hero ── */}
+          {user && currentEpisode && (
+            <View style={styles.section}>
+              <View style={styles.sectionHeader}>
+                <Headphones size={20} color={theme.colors.primary} />
+                <Text
+                  variant="titleMedium"
+                  style={[
+                    styles.sectionTitle,
+                    { color: theme.colors.onBackground },
+                  ]}
+                >
+                  Continue Listening
+                </Text>
+              </View>
+              <TouchableOpacity
+                activeOpacity={0.9}
+                onPress={() => router.push("/player" as any)}
+                style={styles.heroCard}
+              >
+                <Image
+                  source={{
+                    uri: resolveImageUrl(currentEpisode.podcast.coverImageUrl),
+                  }}
+                  style={[StyleSheet.absoluteFill, { opacity: 0.3 }]}
+                  blurRadius={10}
+                />
+                <View
+                  style={[
+                    StyleSheet.absoluteFill,
+                    { backgroundColor: "rgba(0,0,0,0.5)" },
+                  ]}
+                />
+                <View style={styles.heroContent}>
+                  <Image
+                    source={{
+                      uri: resolveImageUrl(
+                        currentEpisode.podcast.coverImageUrl,
+                      ),
+                    }}
+                    style={styles.heroCover}
+                  />
+                  <View style={styles.heroInfo}>
+                    <Text
+                      variant="titleMedium"
+                      numberOfLines={2}
+                      style={styles.heroTitle}
+                    >
+                      {currentEpisode.title}
+                    </Text>
+                    <Text variant="bodySmall" style={styles.heroSubtitle}>
+                      {currentEpisode.podcast.title}
+                    </Text>
+                  </View>
+                  <TouchableOpacity
+                    style={styles.heroPlayBtn}
+                    onPress={(e) => {
+                      e.stopPropagation();
+                      togglePlay();
+                    }}
+                  >
+                    {isPlaying ? (
+                      <Play size={24} color="#000" fill="#000" />
+                    ) : (
+                      <Play size={24} color="#000" fill="#000" />
+                    )}
+                  </TouchableOpacity>
+                </View>
+              </TouchableOpacity>
+            </View>
+          )}
+
           {isLoading ? (
             <HomeSkeleton />
           ) : (
             <>
               {/* ── Trending Podcasts ── */}
               <View style={styles.section}>
-                <View style={styles.sectionHeader}>
-                  <TrendingUp size={20} color={theme.colors.primary} />
-                  <Text
-                    variant="titleMedium"
-                    style={[
-                      styles.sectionTitle,
-                      { color: theme.colors.onBackground },
-                    ]}
-                  >
-                    Trending Podcasts
-                  </Text>
+                <View
+                  style={[
+                    styles.sectionHeader,
+                    { justifyContent: "space-between" },
+                  ]}
+                >
+                  <View style={{ flexDirection: "row", alignItems: "center" }}>
+                    <TrendingUp size={20} color={theme.colors.primary} />
+                    <Text
+                      variant="titleMedium"
+                      style={[
+                        styles.sectionTitle,
+                        { color: theme.colors.onBackground },
+                      ]}
+                    >
+                      Trending Podcasts
+                    </Text>
+                  </View>
+                  <TouchableOpacity style={styles.seeAllBtn}>
+                    <Text
+                      style={[
+                        styles.seeAllText,
+                        { color: theme.colors.primary },
+                      ]}
+                    >
+                      See All
+                    </Text>
+                    <ChevronRight size={16} color={theme.colors.primary} />
+                  </TouchableOpacity>
                 </View>
                 {podcasts.length > 0 ? (
                   <FlatList
@@ -227,18 +384,38 @@ export default function HomeScreen() {
 
               {/* ── New From Following ── */}
               {user && (
-                <View style={[styles.section ]}>
-                  <View style={styles.sectionHeader}>
-                    <Star size={20} color={theme.colors.primary} />
-                    <Text
-                      variant="titleMedium"
-                      style={[
-                        styles.sectionTitle,
-                        { color: theme.colors.onBackground },
-                      ]}
+                <View style={[styles.section]}>
+                  <View
+                    style={[
+                      styles.sectionHeader,
+                      { justifyContent: "space-between" },
+                    ]}
+                  >
+                    <View
+                      style={{ flexDirection: "row", alignItems: "center" }}
                     >
-                      From Your Following
-                    </Text>
+                      <Star size={20} color={theme.colors.primary} />
+                      <Text
+                        variant="titleMedium"
+                        style={[
+                          styles.sectionTitle,
+                          { color: theme.colors.onBackground },
+                        ]}
+                      >
+                        From Your Following
+                      </Text>
+                    </View>
+                    <TouchableOpacity style={styles.seeAllBtn}>
+                      <Text
+                        style={[
+                          styles.seeAllText,
+                          { color: theme.colors.primary },
+                        ]}
+                      >
+                        See All
+                      </Text>
+                      <ChevronRight size={16} color={theme.colors.primary} />
+                    </TouchableOpacity>
                   </View>
                   {followingEpisodes.length > 0 ? (
                     <FlatList
@@ -246,9 +423,10 @@ export default function HomeScreen() {
                       data={followingEpisodes}
                       keyExtractor={(item) => item._id}
                       renderItem={({ item }) => (
-                        <View style={{ width: 280, marginRight: Spacing.md, marginBottom: Spacing.md }}>
-                          <EpisodeRow episode={item} />
-                        </View>
+                        <EpisodeCard
+                          episode={item}
+                          style={{ marginRight: Spacing.md }}
+                        />
                       )}
                       showsHorizontalScrollIndicator={false}
                       contentContainerStyle={styles.horizontalList}
@@ -258,28 +436,56 @@ export default function HomeScreen() {
                     />
                   ) : (
                     <View style={{ paddingHorizontal: Spacing.lg }}>
-                      <TouchableOpacity
-                        onPress={() => router.push("/(tabs)/explore")}
-                        style={[
-                          styles.emptyFollowing,
-                          { backgroundColor: theme.colors.surfaceVariant },
-                        ]}
-                      >
+                      <View style={styles.emptyFollowing}>
                         <Headphones
-                          size={24}
+                          size={40}
                           color={theme.colors.primary}
-                          style={{ marginBottom: 4 }}
+                          style={{ marginBottom: Spacing.md, opacity: 0.8 }}
+                          strokeWidth={1.5}
                         />
+                        <Text
+                          variant="titleMedium"
+                          style={{
+                            color: theme.colors.onSurface,
+                            fontWeight: "700",
+                            marginBottom: Spacing.xs,
+                          }}
+                        >
+                          Find Your Next Favorite
+                        </Text>
                         <Text
                           variant="bodySmall"
                           style={{
                             color: theme.colors.onSurfaceVariant,
                             textAlign: "center",
+                            marginBottom: Spacing.lg,
+                            paddingHorizontal: Spacing.md,
                           }}
                         >
                           Explore and follow creators to personalize your feed
+                          with the best content.
                         </Text>
-                      </TouchableOpacity>
+                        <TouchableOpacity
+                          activeOpacity={0.8}
+                          onPress={() => router.push("/(tabs)/explore")}
+                          style={{
+                            backgroundColor: theme.colors.primary,
+                            paddingHorizontal: Spacing.xl,
+                            paddingVertical: 12,
+                            borderRadius: Radius.full,
+                          }}
+                        >
+                          <Text
+                            style={{
+                              color: "#FFF",
+                              fontWeight: "600",
+                              fontSize: 14,
+                            }}
+                          >
+                            Discover Creators
+                          </Text>
+                        </TouchableOpacity>
+                      </View>
                     </View>
                   )}
                 </View>
@@ -287,21 +493,35 @@ export default function HomeScreen() {
 
               {/* ── Recommended / Trending Episodes ── */}
               <View style={styles.section}>
-                <View style={styles.sectionHeader}>
-                  <Play
-                    size={20}
-                    color={theme.colors.primary}
-                    fill={theme.colors.primary}
-                  />
-                  <Text
-                    variant="titleMedium"
-                    style={[
-                      styles.sectionTitle,
-                      { color: theme.colors.onBackground },
-                    ]}
-                  >
-                    Recommended for You
-                  </Text>
+                <View
+                  style={[
+                    styles.sectionHeader,
+                    { justifyContent: "space-between" },
+                  ]}
+                >
+                  <View style={{ flexDirection: "row", alignItems: "center" }}>
+                    <Sparkles size={20} color={theme.colors.primary} />
+                    <Text
+                      variant="titleMedium"
+                      style={[
+                        styles.sectionTitle,
+                        { color: theme.colors.onBackground },
+                      ]}
+                    >
+                      Recommended for You
+                    </Text>
+                  </View>
+                  <TouchableOpacity style={styles.seeAllBtn}>
+                    <Text
+                      style={[
+                        styles.seeAllText,
+                        { color: theme.colors.primary },
+                      ]}
+                    >
+                      See All
+                    </Text>
+                    <ChevronRight size={16} color={theme.colors.primary} />
+                  </TouchableOpacity>
                 </View>
                 {recommendedEpisodes.length > 0 ? (
                   <View style={styles.episodeList}>
@@ -329,17 +549,37 @@ export default function HomeScreen() {
               {/* ── Top Creators ── */}
               {topCreators.length > 0 && (
                 <View style={styles.section}>
-                  <View style={styles.sectionHeader}>
-                    <Star size={20} color={theme.colors.primary} />
-                    <Text
-                      variant="titleMedium"
-                      style={[
-                        styles.sectionTitle,
-                        { color: theme.colors.onBackground },
-                      ]}
+                  <View
+                    style={[
+                      styles.sectionHeader,
+                      { justifyContent: "space-between" },
+                    ]}
+                  >
+                    <View
+                      style={{ flexDirection: "row", alignItems: "center" }}
                     >
-                      Top Creators
-                    </Text>
+                      <Star size={20} color={theme.colors.primary} />
+                      <Text
+                        variant="titleMedium"
+                        style={[
+                          styles.sectionTitle,
+                          { color: theme.colors.onBackground },
+                        ]}
+                      >
+                        Top Creators
+                      </Text>
+                    </View>
+                    <TouchableOpacity style={styles.seeAllBtn}>
+                      <Text
+                        style={[
+                          styles.seeAllText,
+                          { color: theme.colors.primary },
+                        ]}
+                      >
+                        See All
+                      </Text>
+                      <ChevronRight size={16} color={theme.colors.primary} />
+                    </TouchableOpacity>
                   </View>
                   <FlatList
                     horizontal
@@ -356,7 +596,7 @@ export default function HomeScreen() {
               )}
             </>
           )}
-        </ScrollView>
+        </Animated.ScrollView>
       </ErrorBoundary>
     </SafeAreaView>
   );
@@ -365,6 +605,43 @@ export default function HomeScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+  },
+  glassHeaderContainer: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    zIndex: 100,
+    overflow: "hidden",
+  },
+  glassHeaderSafeArea: {
+    paddingBottom: Spacing.sm,
+  },
+  glassHeaderContent: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    paddingHorizontal: Spacing.lg,
+    paddingTop: Spacing.xs,
+  },
+  badge: {
+    position: "absolute",
+    right: -2,
+    top: -2,
+    backgroundColor: "#EF4444",
+    borderRadius: 7,
+    width: 14,
+    height: 14,
+    justifyContent: "center",
+    alignItems: "center",
+    borderWidth: 1.5,
+    borderColor: "#FFF",
+  },
+  badgeText: {
+    color: "#FFF",
+    fontSize: 7,
+    fontWeight: "900",
+    lineHeight: 10,
   },
   header: {
     flexDirection: "row",
@@ -414,12 +691,82 @@ const styles = StyleSheet.create({
     gap: Spacing.sm,
   },
   emptyFollowing: {
-    padding: Spacing.lg,
-    borderRadius: Radius.md,
+    padding: Spacing.xl,
+    paddingVertical: 32,
+    borderRadius: Radius.xl,
     alignItems: "center",
     justifyContent: "center",
+    backgroundColor: "rgba(150,150,150,0.05)",
     borderWidth: 1,
-    borderStyle: "dashed",
-    borderColor: "rgba(0,0,0,0.1)",
+    borderColor: "rgba(150,150,150,0.1)",
+  },
+  heroCard: {
+    marginHorizontal: Spacing.lg,
+    borderRadius: Radius.xl,
+    overflow: "hidden",
+    backgroundColor: "#111",
+    height: 140, // Reduced from standard to save vertical space
+    marginBottom: Spacing.md,
+  },
+  heroContent: {
+    flex: 1,
+    flexDirection: "row",
+    alignItems: "center",
+    padding: Spacing.md,
+  },
+  heroCover: {
+    width: 80,
+    height: 80,
+    borderRadius: Radius.md,
+    marginRight: Spacing.md,
+  },
+  heroInfo: {
+    flex: 1,
+    justifyContent: "center",
+  },
+  heroTitle: {
+    color: "#fff",
+    fontWeight: "700",
+    marginBottom: 4,
+  },
+  heroSubtitle: {
+    color: "rgba(255,255,255,0.7)",
+  },
+  heroPlayBtn: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: "#fff",
+    alignItems: "center",
+    justifyContent: "center",
+    marginLeft: Spacing.md,
+  },
+  chipsContainer: {
+    marginBottom: Spacing.lg,
+  },
+  chipsScroll: {
+    paddingHorizontal: Spacing.lg,
+    gap: Spacing.sm,
+  },
+  chip: {
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    borderRadius: Radius.full,
+    borderWidth: 1,
+    borderColor: "rgba(150,150,150,0.2)",
+    backgroundColor: "rgba(150,150,150,0.05)",
+  },
+  chipText: {
+    fontWeight: "600",
+    fontSize: 14,
+    color: "#6B7280", // Fixed raw fallback since Palette.text is not exported in theme.ts
+  },
+  seeAllBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  seeAllText: {
+    fontSize: 14,
+    fontWeight: "600",
   },
 });

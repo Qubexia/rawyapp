@@ -1,4 +1,4 @@
-﻿/**
+/**
  * Tab layout — 4 tabs with Lucide icons + Creator center FAB (Animated - FIXED).
  */
 
@@ -30,7 +30,6 @@ import Animated, {
   interpolate,
 } from "react-native-reanimated";
 
-import { HapticTab } from "@/components/layout/haptic-tab";
 import { Palette } from "@/constants/theme";
 import { useAuthContext } from "@/context/auth-context";
 import { isCreator } from "@/utils/roles";
@@ -128,7 +127,6 @@ export default function TabLayout() {
         <Tabs
           screenOptions={{
             headerShown: false,
-            tabBarButton: HapticTab,
             tabBarActiveTintColor: theme.colors.primary,
             tabBarInactiveTintColor: Palette.text.lightTertiary,
             tabBarStyle: {

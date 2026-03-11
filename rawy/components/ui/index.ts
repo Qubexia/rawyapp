@@ -17,3 +17,4 @@ export { HomeSkeleton } from './HomeSkeleton';
 export { NotificationsSkeleton } from './NotificationsSkeleton';
 export { BottomSheet } from './BottomSheet';
 export { AnimatedHeart } from './AnimatedHeart';
+export { EpisodeCard } from './EpisodeCard';
