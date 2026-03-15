@@ -50,12 +50,12 @@ export default function CreatorDashboard() {
     data: profile,
     isLoading: profileLoading,
     refetch: refetchProfile,
-  } = useMyCreatorProfile();
+  } = useMyCreatorProfile(user?._id);
   const {
     data: podcastsData,
     isLoading: podcastsLoading,
     refetch: refetchPodcasts,
-  } = usePodcasts({ creatorId: profile?._id }, { enabled: !!profile?._id });
+  } = usePodcasts({ creatorId: user?._id }, { enabled: !!user?._id });
   const podcasts = podcastsData?.pages.flatMap((p) => p.data) ?? [];
 
   const [refreshing, setRefreshing] = useState(false);

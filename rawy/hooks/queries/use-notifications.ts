@@ -7,17 +7,19 @@ import {
     NotificationResponse,
 } from '../../services/notifications.service';
 import type { PaginatedResponse } from '../../services/podcasts.service';
+import { useAuthContext } from '@/context/auth-context';
 
 export const notificationKeys = {
     all: ['notifications'] as const,
-    lists: () => [...notificationKeys.all, 'list'] as const,
-    list: (filters: string) => [...notificationKeys.lists(), { filters }] as const,
-    unreadCount: () => [...notificationKeys.all, 'unreadCount'] as const,
+    lists: (userId?: string) => [...notificationKeys.all, 'list', userId || 'anonymous'] as const,
+    list: (filters: string, userId?: string) => [...notificationKeys.lists(userId), { filters }] as const,
+    unreadCount: (userId?: string) => [...notificationKeys.all, 'unreadCount', userId || 'anonymous'] as const,
 };
 
 export function useNotifications(options?: { enabled?: boolean }) {
+    const { user } = useAuthContext();
     return useInfiniteQuery<PaginatedResponse<NotificationResponse>, Error>({
-        queryKey: notificationKeys.lists(),
+        queryKey: notificationKeys.lists(user?._id),
         queryFn: ({ pageParam = 1 }) => getNotifications(pageParam as number, 20),
         getNextPageParam: (lastPage) =>
             lastPage.page < lastPage.totalPages ? lastPage.page + 1 : undefined,
@@ -27,8 +29,9 @@ export function useNotifications(options?: { enabled?: boolean }) {
 }
 
 export function useUnreadCount(options?: { enabled?: boolean }) {
+    const { user } = useAuthContext();
     return useQuery({
-        queryKey: notificationKeys.unreadCount(),
+        queryKey: notificationKeys.unreadCount(user?._id),
         queryFn: () => getUnreadCount(),
         refetchInterval: 30000,
         ...options,

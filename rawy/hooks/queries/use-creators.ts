@@ -17,7 +17,7 @@ export const creatorKeys = {
   lists: () => [...creatorKeys.all, 'list'] as const,
   details: () => [...creatorKeys.all, 'detail'] as const,
   detail: (id: string) => [...creatorKeys.details(), id] as const,
-  me: () => [...creatorKeys.all, 'me'] as const,
+  me: (userId?: string) => [...creatorKeys.all, 'me', userId || 'anonymous'] as const,
   top: () => [...creatorKeys.all, 'top'] as const,
 };
 
@@ -40,9 +40,9 @@ export function useCreator(id: string) {
   });
 }
 
-export function useMyCreatorProfile(options?: { enabled?: boolean }) {
+export function useMyCreatorProfile(userId?: string, options?: { enabled?: boolean }) {
   return useQuery({
-    queryKey: creatorKeys.me(),
+    queryKey: creatorKeys.me(userId),
     queryFn: () => getMyCreatorProfile(),
     ...options,
   });

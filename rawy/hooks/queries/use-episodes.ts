@@ -11,19 +11,21 @@ import {
   deleteEpisode,
 } from '../../services/episodes.service';
 import { creatorKeys } from './use-creators';
+import { useAuthContext } from '@/context/auth-context';
 
 export const episodeKeys = {
   all: ['episodes'] as const,
-  lists: () => [...episodeKeys.all, 'list'] as const,
-  list: (filters: Record<string, unknown>) =>
-    [...episodeKeys.lists(), filters] as const,
+  lists: (userId?: string) => [...episodeKeys.all, 'list', userId || 'anonymous'] as const,
+  list: (filters: Record<string, unknown>, userId?: string) =>
+    [...episodeKeys.lists(userId), filters] as const,
   details: () => [...episodeKeys.all, 'detail'] as const,
   detail: (id: string) => [...episodeKeys.details(), id] as const,
 };
 
 export function useEpisodes(podcastId?: string, creatorId?: string) {
+  const { user } = useAuthContext();
   return useInfiniteQuery({
-    queryKey: episodeKeys.list({ podcastId, creatorId }),
+    queryKey: episodeKeys.list({ podcastId, creatorId }, user?._id),
     queryFn: ({ pageParam = 1 }) =>
       getEpisodes(pageParam, 20, podcastId, creatorId),
     getNextPageParam: (lastPage) =>

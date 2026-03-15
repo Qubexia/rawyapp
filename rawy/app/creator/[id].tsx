@@ -55,7 +55,10 @@ export default function CreatorDetailScreen() {
   const { user } = useAuthContext();
 
   const { data: creator, isLoading, refetch: refetchCreator } = useCreator(id);
-  const { data: podcastsData, refetch: refetchPodcasts } = usePodcasts({ creatorId: id });
+  const { data: podcastsData, refetch: refetchPodcasts } = usePodcasts(
+    { creatorId: creator?.userId },
+    { enabled: !!creator?.userId }
+  );
 
   // Follow operations must use the creator's userId (User._id), NOT the
   // creator-profile _id that comes from the route param.

@@ -11,12 +11,13 @@ import {
   deletePodcast,
 } from '../../services/podcasts.service';
 import { creatorKeys } from './use-creators';
+import { useAuthContext } from '@/context/auth-context';
 
 export const podcastKeys = {
   all: ['podcasts'] as const,
-  lists: () => [...podcastKeys.all, 'list'] as const,
-  list: (filters: Record<string, unknown>) =>
-    [...podcastKeys.lists(), filters] as const,
+  lists: (userId?: string) => [...podcastKeys.all, 'list', userId || 'anonymous'] as const,
+  list: (filters: Record<string, unknown>, userId?: string) =>
+    [...podcastKeys.lists(userId), filters] as const,
   details: () => [...podcastKeys.all, 'detail'] as const,
   detail: (id: string) => [...podcastKeys.details(), id] as const,
 };
@@ -25,9 +26,10 @@ export function usePodcasts(
   params?: { creatorId?: string; search?: string; category?: string },
   options?: { enabled?: boolean },
 ) {
+  const { user } = useAuthContext();
   const { creatorId, search, category } = params ?? {};
   return useInfiniteQuery({
-    queryKey: podcastKeys.list({ creatorId, search, category }),
+    queryKey: podcastKeys.list({ creatorId, search, category }, user?._id),
     queryFn: ({ pageParam = 1 }) =>
       getPodcasts(pageParam, 20, creatorId, search, category),
     getNextPageParam: (lastPage) =>

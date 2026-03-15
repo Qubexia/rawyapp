@@ -33,6 +33,7 @@ import {
   saveStoredPushToken,
 } from "../utils/notifications";
 import { ApiError } from "../services/axios-client";
+import { queryClient } from "@/services/query-client";
 
 // ─── Context shape ───────────────────────────────────────────────────────────
 
@@ -172,6 +173,8 @@ export function AuthProvider({ children }: PropsWithChildren) {
       await logoutUser();
     } finally {
       setUser(null);
+      // Clear all cached data to prevent data leakage between user sessions
+      queryClient.clear();
     }
   }, [unregisterDeviceToken]);
 

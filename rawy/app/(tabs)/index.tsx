@@ -186,9 +186,7 @@ export default function HomeScreen() {
         >
           {/* ... existing header and sections ... */}
           {/* Re-implementing the content with ErrorBoundary */}
-          <View
-            style={styles.header}
-          >
+          <View style={styles.header}>
             <View>
               <Text
                 variant="bodyMedium"
@@ -547,7 +545,7 @@ export default function HomeScreen() {
               </View>
 
               {/* ── Top Creators ── */}
-              {topCreators.length > 0 && (
+              {/* {topCreators.length > 0 && (
                 <View style={styles.section}>
                   <View
                     style={[
@@ -593,7 +591,7 @@ export default function HomeScreen() {
                     windowSize={5}
                   />
                 </View>
-              )}
+              )} */}
             </>
           )}
         </Animated.ScrollView>

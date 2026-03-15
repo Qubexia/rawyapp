@@ -4,14 +4,15 @@
 
 import { useQuery } from '@tanstack/react-query';
 import { getHomeFeed } from '@/services/feed.service';
+import { useAuthContext } from '@/context/auth-context';
 
 export const FEED_QUERY_KEY = ['feed'];
 
 /**
  * Key for personalized/trending feed.
  */
-export function getHomeFeedQueryKey(page: number, limit: number) {
-    return [...FEED_QUERY_KEY, 'home', page, limit];
+export function getHomeFeedQueryKey(page: number, limit: number, userId?: string) {
+    return [...FEED_QUERY_KEY, 'home', userId || 'anonymous', page, limit];
 }
 
 /**
@@ -19,8 +20,9 @@ export function getHomeFeedQueryKey(page: number, limit: number) {
  * Returns both following-creators list and recommended list.
  */
 export function useHomeFeed(page = 1, limit = 10) {
+    const { user } = useAuthContext();
     return useQuery({
-        queryKey: getHomeFeedQueryKey(page, limit),
+        queryKey: getHomeFeedQueryKey(page, limit, user?._id),
         queryFn: () => getHomeFeed(page, limit),
         staleTime: 2 * 60 * 1000, // 2 minutes
         retry: 1,

@@ -3,7 +3,13 @@
  */
 
 import React from "react";
-import { View, ScrollView, StyleSheet, TouchableOpacity, Image } from "react-native";
+import {
+  View,
+  ScrollView,
+  StyleSheet,
+  TouchableOpacity,
+  Image,
+} from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import {
   Text,
@@ -41,7 +47,7 @@ export default function ProfileScreen() {
   const router = useRouter();
   const { user, isAuthenticated, logout } = useAuthContext();
   const { currentEpisode, isPlaying } = usePlayer();
-  const { data: profile } = usePublicProfile(user?._id || '');
+  const { data: profile } = usePublicProfile(user?._id || "");
   const avatarUri = resolveImageUrl(user?.avatarUrl);
 
   if (!isAuthenticated) {
@@ -91,27 +97,28 @@ export default function ProfileScreen() {
   const menuItems = [
     ...(isCreator(user)
       ? [
-        {
-          icon: LayoutDashboard,
-          label: "Creator Dashboard",
-          subtitle: "Manage your podcasts",
-          onPress: () => router.push("/(creator)/creator-dashboard" as any),
-        },
-        {
-          icon: Mic,
-          label: "Creator Profile",
-          subtitle: "Edit your public creator info",
-          onPress: () => router.push("/(creator)/edit-creator-profile" as any),
-        },
-      ]
+          {
+            icon: LayoutDashboard,
+            label: "Creator Dashboard",
+            subtitle: "Manage your podcasts",
+            onPress: () => router.push("/(creator)/creator-dashboard" as any),
+          },
+          {
+            icon: Mic,
+            label: "Creator Profile",
+            subtitle: "Edit your public creator info",
+            onPress: () =>
+              router.push("/(creator)/edit-creator-profile" as any),
+          },
+        ]
       : [
-        {
-          icon: Mic,
-          label: "Become a Creator",
-          subtitle: "Start your podcast journey",
-          onPress: () => router.push("/(creator)/become-creator" as any),
-        },
-      ]),
+          {
+            icon: Mic,
+            label: "Become a Creator",
+            subtitle: "Start your podcast journey",
+            onPress: () => router.push("/(creator)/become-creator" as any),
+          },
+        ]),
     {
       icon: Settings,
       label: "Settings",
@@ -122,7 +129,7 @@ export default function ProfileScreen() {
       icon: Shield,
       label: "Privacy & Security",
       subtitle: "Account protection",
-      onPress: () => { },
+      onPress: () => {},
     },
   ];
 
@@ -171,10 +178,7 @@ export default function ProfileScreen() {
                 style={{ width: "100%", height: "100%", resizeMode: "cover" }}
               />
             ) : (
-              <User
-                size={32}
-                color={Palette.primary[500]}
-              />
+              <User size={32} color={Palette.primary[500]} />
             )}
           </View>
           <View style={styles.userInfo}>
@@ -185,7 +189,14 @@ export default function ProfileScreen() {
                 alignItems: "center",
               }}
             >
-              <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1, gap: 4 }}>
+              <View
+                style={{
+                  flexDirection: "row",
+                  alignItems: "center",
+                  flex: 1,
+                  gap: 4,
+                }}
+              >
                 <Text
                   variant="titleLarge"
                   numberOfLines={1}
@@ -196,9 +207,6 @@ export default function ProfileScreen() {
                 >
                   {user?.name || "User"}
                 </Text>
-                {isCreator(user) && (
-                  <BadgeCheck size={18} color={Palette.primary[500]} />
-                )}
               </View>
               <IconButton
                 icon={() => (
@@ -234,21 +242,42 @@ export default function ProfileScreen() {
               <View style={styles.statsRow}>
                 <TouchableOpacity
                   style={styles.statItem}
-                  onPress={() => router.push(`/followers?userId=${user?._id}` as any)}
+                  onPress={() =>
+                    router.push(`/followers?userId=${user?._id}` as any)
+                  }
                 >
-                  <Text variant="titleMedium" style={[styles.statValue, { color: theme.colors.onSurface }]}>
+                  <Text
+                    variant="titleMedium"
+                    style={[
+                      styles.statValue,
+                      { color: theme.colors.onSurface },
+                    ]}
+                  >
                     {profile.followerCount || 0}
                   </Text>
                   <Text variant="labelSmall" style={styles.statLabel}>
                     Followers
                   </Text>
                 </TouchableOpacity>
-                <View style={[styles.statDivider, { backgroundColor: Palette.light.border }]} />
+                <View
+                  style={[
+                    styles.statDivider,
+                    { backgroundColor: Palette.light.border },
+                  ]}
+                />
                 <TouchableOpacity
                   style={styles.statItem}
-                  onPress={() => router.push(`/following?userId=${user?._id}` as any)}
+                  onPress={() =>
+                    router.push(`/following?userId=${user?._id}` as any)
+                  }
                 >
-                  <Text variant="titleMedium" style={[styles.statValue, { color: theme.colors.onSurface }]}>
+                  <Text
+                    variant="titleMedium"
+                    style={[
+                      styles.statValue,
+                      { color: theme.colors.onSurface },
+                    ]}
+                  >
                     {profile.followingCount || 0}
                   </Text>
                   <Text variant="labelSmall" style={styles.statLabel}>
@@ -262,15 +291,20 @@ export default function ProfileScreen() {
 
         {/* Listening To Banner */}
         {currentEpisode && (
-          <TouchableOpacity 
+          <TouchableOpacity
             style={[
-              styles.listeningCard, 
-              { backgroundColor: Palette.primary[50] } // Always somewhat accented
+              styles.listeningCard,
+              { backgroundColor: Palette.primary[50] }, // Always somewhat accented
             ]}
             onPress={() => router.push("/player" as any)}
             activeOpacity={0.8}
           >
-            <View style={[styles.listeningIconBox, { backgroundColor: Palette.primary[100] }]}>
+            <View
+              style={[
+                styles.listeningIconBox,
+                { backgroundColor: Palette.primary[100] },
+              ]}
+            >
               {isPlaying ? (
                 <Music2 size={24} color={Palette.primary[600]} />
               ) : (
@@ -278,10 +312,17 @@ export default function ProfileScreen() {
               )}
             </View>
             <View style={{ flex: 1, marginLeft: Spacing.md }}>
-              <Text variant="labelMedium" style={{ color: Palette.primary[600], fontWeight: '700' }}>
+              <Text
+                variant="labelMedium"
+                style={{ color: Palette.primary[600], fontWeight: "700" }}
+              >
                 {isPlaying ? "LISTENING TO..." : "PAUSED"}
               </Text>
-              <Text variant="bodyMedium" numberOfLines={1} style={{ color: Palette.primary[900], fontWeight: '600' }}>
+              <Text
+                variant="bodyMedium"
+                numberOfLines={1}
+                style={{ color: Palette.primary[900], fontWeight: "600" }}
+              >
                 {currentEpisode.title}
               </Text>
             </View>
@@ -314,10 +355,7 @@ export default function ProfileScreen() {
                     },
                   ]}
                 >
-                  <item.icon
-                    size={20}
-                    color={Palette.primary[500]}
-                  />
+                  <item.icon size={20} color={Palette.primary[500]} />
                 </View>
                 <View style={styles.menuLabel}>
                   <Text
@@ -414,18 +452,18 @@ const styles = StyleSheet.create({
     color: Palette.primary[700],
   },
   statsRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     marginTop: Spacing.md,
   },
   statItem: {
     flex: 1,
   },
   statValue: {
-    fontWeight: '800',
+    fontWeight: "800",
   },
   statLabel: {
-    color: '#64748B', // Same as hex for light/dark generic
+    color: "#64748B", // Same as hex for light/dark generic
   },
   statDivider: {
     width: StyleSheet.hairlineWidth,
@@ -476,15 +514,15 @@ const styles = StyleSheet.create({
     marginHorizontal: Spacing.lg,
     borderRadius: Radius.lg,
     padding: Spacing.md,
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     marginBottom: Spacing.lg,
   },
   listeningIconBox: {
     width: 48,
     height: 48,
     borderRadius: Radius.md,
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: "center",
+    justifyContent: "center",
   },
 });
