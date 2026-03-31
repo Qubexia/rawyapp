@@ -146,6 +146,46 @@ export class CommentsService {
   }
 
   /**
+   * Find all comments (for admin)
+   */
+  async findAll(
+    page: number = 1,
+    limit: number = 20,
+    episodeId?: string,
+  ): Promise<PaginatedResponseDto<any>> {
+    const skip = (page - 1) * limit;
+    const filter: any = {};
+    if (episodeId) filter.episodeId = new Types.ObjectId(episodeId);
+
+    const [rawData, total] = await Promise.all([
+      this.commentModel
+        .find(filter)
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(limit)
+        .populate('userId', 'name avatarUrl')
+        .populate('episodeId', 'title')
+        .lean()
+        .exec(),
+      this.commentModel.countDocuments(filter).exec(),
+    ]);
+
+    const data = rawData.map(({ userId: user, episodeId: episode, ...rest }: any) => ({
+      ...rest,
+      user,
+      episode,
+    }));
+
+    return {
+      data,
+      total,
+      page,
+      limit,
+      totalPages: Math.ceil(total / limit),
+    } as any;
+  }
+
+  /**
    * Delete a comment. Author only or admin. Decrements Episode.commentsCount.
    */
   async deleteComment(

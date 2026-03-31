@@ -444,4 +444,13 @@ export class EpisodesService {
       await this.episodeModel.findByIdAndDelete(ep._id).exec();
     }
   }
+
+  async findTopEpisodes(limit: number = 10): Promise<EpisodeDocument[]> {
+    return this.episodeModel.find()
+      .sort({ viewsCount: -1, likesCount: -1 })
+      .limit(limit)
+      .populate('podcastId', 'title')
+      .populate('creatorId', 'name showName')
+      .exec();
+  }
 }

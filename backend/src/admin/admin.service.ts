@@ -9,10 +9,12 @@ import { CreatorsService } from '../creators/creators.service';
 import { PodcastsService } from '../podcasts/podcasts.service';
 import { EpisodesService } from '../episodes/episodes.service';
 import { CommentsService } from '../comments/comments.service';
+import { NotificationsService } from '../notifications/notifications.service';
 import { AdminQueryDto } from './dto/admin-query.dto';
 import { Role } from '../common/constants/roles.enum';
 import { PaginatedResponseDto } from '../common/dto/paginated-response.dto';
 import { UserDocument } from '../users/schemas/user.schema';
+import { NotificationDocument } from '../notifications/schemas/notification.schema';
 
 @Injectable()
 export class AdminService {
@@ -22,6 +24,7 @@ export class AdminService {
     private podcastsService: PodcastsService,
     private episodesService: EpisodesService,
     private commentsService: CommentsService,
+    private notificationsService: NotificationsService,
   ) {}
 
   async listUsers(
@@ -71,6 +74,66 @@ export class AdminService {
     return this.usersService.findById(userId);
   }
 
+  async getUserById(userId: string): Promise<UserDocument> {
+    const user = await this.usersService.findById(userId);
+    if (!user) throw new NotFoundException('User not found');
+    return user;
+  }
+
+  async updateUser(userId: string, dto: any): Promise<UserDocument | null> {
+    const user = await this.usersService.findById(userId);
+    if (!user) throw new NotFoundException('User not found');
+    return this.usersService.update(userId, dto);
+  }
+
+  async deleteUser(userId: string): Promise<void> {
+    const user = await this.usersService.findById(userId);
+    if (!user) throw new NotFoundException('User not found');
+    await this.usersService.adminDeleteUser(userId);
+  }
+
+  async listCreators(dto: AdminQueryDto) {
+    const page = dto.page ?? 1;
+    const limit = dto.limit ?? 20;
+    return this.creatorsService.listCreators(page, limit);
+  }
+
+  async getCreatorById(creatorId: string) {
+    return this.creatorsService.getProfile(creatorId, false);
+  }
+
+  async updateCreator(creatorId: string, dto: any) {
+    const profile = await this.creatorsService.getProfile(creatorId, false);
+    return this.creatorsService.updateProfile(profile.userId, dto);
+  }
+
+  async removeCreatorStatus(creatorId: string) {
+    const profile = await this.creatorsService.getProfile(creatorId, false);
+    await this.usersService.updateRole(profile.userId.toString(), Role.USER);
+    await this.creatorsService.deleteByUserId(profile.userId);
+  }
+
+  async listPodcasts(dto: AdminQueryDto) {
+    const page = dto.page ?? 1;
+    const limit = dto.limit ?? 20;
+    const search = (dto as any).search;
+    const category = (dto as any).category;
+    return this.podcastsService.findAll(page, limit, undefined, search, category);
+  }
+
+  async getPodcastById(podcastId: string) {
+    return this.podcastsService.findById(podcastId);
+  }
+
+  async updatePodcast(podcastId: string, dto: any) {
+    const podcast = await this.podcastsService.findById(podcastId);
+    let creatorId = podcast.creator;
+    if (podcast.creator && podcast.creator._id) {
+        creatorId = podcast.creator._id;
+    }
+    return this.podcastsService.update(podcastId, dto, creatorId, 'ADMIN');
+  }
+
   async removePodcast(podcastId: string): Promise<void> {
     const podcast = await this.podcastsService.findById(podcastId);
     await this.podcastsService.delete(
@@ -80,6 +143,22 @@ export class AdminService {
     );
   }
 
+  async listEpisodes(dto: AdminQueryDto) {
+    const page = dto.page ?? 1;
+    const limit = dto.limit ?? 20;
+    const podcastId = (dto as any).podcastId;
+    const creatorId = (dto as any).creatorId;
+    return this.episodesService.findAll(page, limit, podcastId, creatorId);
+  }
+
+  async getEpisodeById(episodeId: string) {
+    return this.episodesService.findById(episodeId);
+  }
+
+  async updateEpisode(episodeId: string, dto: any) {
+    return this.episodesService.update(episodeId, dto, new Types.ObjectId(), 'ADMIN');
+  }
+
   async removeEpisode(episodeId: string): Promise<void> {
     const episode = await this.episodesService.findById(episodeId);
     await this.episodesService.delete(
@@ -87,6 +166,21 @@ export class AdminService {
       episode.creatorId as Types.ObjectId,
       'ADMIN',
     );
+  }
+
+  async listComments(dto: AdminQueryDto) {
+    const page = dto.page ?? 1;
+    const limit = dto.limit ?? 20;
+    const episodeId = (dto as any).episodeId;
+    return this.commentsService.findAll(page, limit, episodeId);
+  }
+
+  async getCommentById(commentId: string) {
+    const comment = await this.commentsService.findById(new Types.ObjectId(commentId));
+    await comment.populate('userId', 'name avatarUrl');
+    await comment.populate('episodeId', 'title');
+    const { userId: user, episodeId: episode, ...rest } = comment.toObject() as any;
+    return { ...rest, user, episode };
   }
 
   async removeComment(commentId: string): Promise<void> {
@@ -117,6 +211,103 @@ export class AdminService {
       creators: creatorsRes.total,
       podcasts: podcastsRes.total,
       episodes: episodesRes.total,
+    };
+  }
+
+  async getAnalyticsOverview() {
+    const stats = await this.getStats();
+    const [recentUsers, recentPodcasts, recentEpisodes] = await Promise.all([
+      this.usersService.findAllPaginated(1, 5, {}),
+      this.podcastsService.findAll(1, 5),
+      this.episodesService.findAll(1, 5),
+    ]);
+    return {
+      ...stats,
+      recentUsers: recentUsers.data,
+      recentPodcasts: recentPodcasts.data,
+      recentEpisodes: recentEpisodes.data,
+    };
+  }
+
+  async getTopEpisodes(dto: AdminQueryDto) {
+    const limit = dto.limit ?? 10;
+    return this.episodesService.findTopEpisodes(limit);
+  }
+
+  async getTopCreators(dto: AdminQueryDto) {
+    const limit = dto.limit ?? 10;
+    return this.creatorsService.getTopCreators(limit);
+  }
+
+  async listBroadcastNotifications(dto: AdminQueryDto) {
+    const page = dto.page ?? 1;
+    const limit = dto.limit ?? 20;
+    const notifications = await this.notificationsService.findAll(page, limit, 'admin');
+    return notifications;
+  }
+
+  async broadcastNotification(dto: any, targetRole?: Role) {
+    const { title, body } = dto;
+    
+    let userIds: Types.ObjectId[] = [];
+    
+    if (targetRole) {
+      const users = await this.usersService.findByRole(targetRole);
+      userIds = users.map(u => u._id as Types.ObjectId);
+    } else {
+      const result = await this.usersService.findAllPaginated(1, 1000);
+      userIds = result.data.map(u => u._id as Types.ObjectId);
+    }
+
+    const results: NotificationDocument[] = [];
+    for (const userId of userIds) {
+      try {
+        const notification = await this.notificationsService.createOrAggregateNotification(
+          userId,
+          'admin_broadcast',
+          new Types.ObjectId(),
+          new Types.ObjectId(),
+          'User',
+          undefined,
+          body,
+        );
+        results.push(notification);
+      } catch (error) {
+        console.error(`Failed to send notification to ${userId}:`, error);
+      }
+    }
+
+    return {
+      sent: results.length,
+      totalRecipients: userIds.length,
+      title,
+      body,
+      targetRole: targetRole || 'ALL',
+    };
+  }
+
+  async getSystemHealth() {
+    return {
+      status: 'healthy',
+      timestamp: new Date().toISOString(),
+      uptime: process.uptime(),
+      memory: process.memoryUsage(),
+      nodeVersion: process.version,
+    };
+  }
+
+  async getSystemConfig() {
+    return {
+      appName: 'Rawy Platform',
+      version: '1.0.0',
+      environment: process.env.NODE_ENV || 'development',
+      apiPrefix: '/api',
+      features: {
+        userRegistration: true,
+        creatorMode: true,
+        notifications: true,
+        analytics: true,
+      },
     };
   }
 }

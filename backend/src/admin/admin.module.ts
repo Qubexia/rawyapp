@@ -6,6 +6,7 @@ import { CreatorsModule } from '../creators/creators.module';
 import { PodcastsModule } from '../podcasts/podcasts.module';
 import { EpisodesModule } from '../episodes/episodes.module';
 import { CommentsModule } from '../comments/comments.module';
+import { NotificationsModule } from '../notifications/notifications.module';
 
 @Module({
   imports: [
@@ -14,6 +15,7 @@ import { CommentsModule } from '../comments/comments.module';
     PodcastsModule,
     EpisodesModule,
     CommentsModule,
+    NotificationsModule,
   ],
   controllers: [AdminController],
   providers: [AdminService],

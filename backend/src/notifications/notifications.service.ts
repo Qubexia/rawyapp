@@ -219,6 +219,42 @@ export class NotificationsService {
     };
   }
 
+  async findAll(
+    page: number = 1,
+    limit: number = 20,
+    typeFilter?: string,
+  ): Promise<PaginatedResponseDto<NotificationDocument>> {
+    const skip = (page - 1) * limit;
+    const filter: any = {};
+    if (typeFilter) {
+      if (typeFilter === 'admin') {
+        filter.type = 'admin_broadcast';
+      } else {
+        filter.type = typeFilter;
+      }
+    }
+
+    const [data, total] = await Promise.all([
+      this.notificationModel
+        .find(filter)
+        .sort({ updatedAt: -1 })
+        .skip(skip)
+        .limit(limit)
+        .populate('recipientId', 'name email avatarUrl')
+        .populate('lastActorId', 'name avatarUrl')
+        .exec(),
+      this.notificationModel.countDocuments(filter).exec(),
+    ]);
+
+    return {
+      data,
+      total,
+      page,
+      limit,
+      totalPages: Math.ceil(total / limit),
+    };
+  }
+
   async getUnreadCount(userId: Types.ObjectId): Promise<number> {
     return this.notificationModel.countDocuments({
       recipientId: userId,

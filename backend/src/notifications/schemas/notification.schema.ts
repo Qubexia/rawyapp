@@ -10,7 +10,7 @@ export class Notification {
 
     @Prop({
         required: true,
-        enum: ['new_episode', 'comment_reply', 'comment_like', 'new_follower'],
+        enum: ['new_episode', 'comment_reply', 'comment_like', 'new_follower', 'admin_broadcast'],
     })
     type: string;
 

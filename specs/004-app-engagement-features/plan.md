@@ -1,101 +1,104 @@
 # Implementation Plan: App Engagement Features
 
-**Branch**: `004-app-engagement-features` | **Date**: 2026-03-08 | **Spec**: [spec.md](./spec.md)
+**Branch**: `004-app-engagement-features` | **Date**: 2026-03-30 | **Spec**: [spec.md](spec.md)
 **Input**: Feature specification from `/specs/004-app-engagement-features/spec.md`
 
 ## Summary
 
-This plan covers 10 engagement and UX features for the RAWY Podcast platform: in-app notifications with aggregation, Firebase push notifications (FCM), comment likes and threaded replies, following system improvements (user + creator), podcast sharing via deep links (Expo Universal Links / App Links), personalized home feed, location-based user suggestions, episode screen UX redesign, view count bug fix, and general UX polish. The implementation spans both the NestJS/MongoDB backend and the React Native/Expo frontend.
+This plan implements 10 engagement features for the Rawy podcast app: in-app notifications, Firebase push notifications, deep linking, comment system improvements (likes, replies), following system improvements (user+creator follow, counts), personalized feed, location-based user suggestions, episode screen UX improvements, view count fix, and general UX polish. Features are prioritized with notification systems as P1-P2, social features P3-P5, and UX polish P6-P10.
 
 ## Technical Context
 
-**Language/Version**: TypeScript 5.9 (frontend), TypeScript 5.7 (backend)  
-**Primary Dependencies**:
-- Frontend: React Native 0.81.5, Expo SDK 54, Expo Router 6, React Native Paper 5.15, @tanstack/react-query 5.x, axios, lucide-react-native, react-native-reanimated 4.x, zod 4.x
-- Backend: NestJS 11, Mongoose 9.2, firebase-admin 13.7, @nestjs/jwt, @nestjs/passport, bcrypt, nodemailer
-
-**Storage**: MongoDB (via Mongoose ODM)  
-**Testing**: Jest 30 (backend), no formal frontend test framework  
-**Target Platform**: iOS + Android (Expo managed workflow)  
-**Project Type**: Mobile app (Expo/React Native) + REST API backend (NestJS)  
-**Performance Goals**: API responses <500ms p95, push notifications delivered <10s, notification screen loads <3s  
-**Constraints**: Offline-capable for cached data, city-level location only (~10km), 90-day notification retention  
-**Scale/Scope**: ~50 screens, growing user base, 8 existing backend modules to extend + 1 new module
+**Language/Version**: React Native 0.81.5, Expo SDK 54, TypeScript  
+**Primary Dependencies**: expo-notifications, @react-native-firebase/app, expo-location, expo-linking, @tanstack/react-query, react-native-paper  
+**Storage**: MongoDB with Mongoose ODM (backend), AsyncStorage (mobile local)  
+**Testing**: Jest with ts-jest (backend), Jest (mobile)  
+**Target Platform**: Android/iOS via Expo  
+**Project Type**: Mobile app (Expo) with NestJS API backend  
+**Performance Goals**: Notifications <5s delivery, Feed load <3s, Transitions <300ms, UI feedback <100ms  
+**Constraints**: Deep linking requires custom domain (e.g., rawy.app) with .well-known/assetlinks.json and apple-app-site-association  
+**Scale/Scope**: ~10k users, ~50 screens total after feature additions
 
 ## Constitution Check
 
 *GATE: Must pass before Phase 0 research. Re-check after Phase 1 design.*
 
-Constitution is a template with no custom principles defined. No gate violations to check. Proceeding.
+| Principle | Gate Status | Notes |
+|-----------|-------------|-------|
+| I. Test-First Development | ✅ PASS | New services (notifications, comments, follows, feed) require unit tests before implementation |
+| II. Modular Library-First | ✅ PASS | Each feature (notifications, comments, follows, suggestions, feed) will be self-contained modules |
+| III. Role-Based Access Control | ✅ PASS | Existing RBAC in backend covers this feature; no new roles introduced |
+| IV. API-First Design | ⚠️ REVIEW | New API endpoints required for notifications, comment likes, user follows, personalized feed — contracts needed in Phase 1 |
+| V. Observability | ✅ PASS | All new services will include structured logging for notification events, follow actions, feed generation |
+
+**Post-Phase 1 Re-evaluation**: Need to verify API contracts are documented before implementation.
 
 ## Project Structure
 
 ### Documentation (this feature)
 
 ```text
-specs/004-app-engagement-features/
-├── plan.md              # This file
-├── research.md          # Phase 0 output
-├── data-model.md        # Phase 1 output
-├── quickstart.md        # Phase 1 output
-├── contracts/           # Phase 1 output
-│   └── api-endpoints.md
-├── checklists/
-│   └── requirements.md
-└── tasks.md             # Phase 2 output (via /speckit.tasks)
+specs/[###-feature]/
+├── plan.md              # This file (/speckit.plan command output)
+├── research.md          # Phase 0 output (/speckit.plan command)
+├── data-model.md        # Phase 1 output (/speckit.plan command)
+├── quickstart.md        # Phase 1 output (/speckit.plan command)
+├── contracts/           # Phase 1 output (/speckit.plan command)
+└── tasks.md             # Phase 2 output (/speckit.tasks command - NOT created by /speckit.plan)
 ```
 
 ### Source Code (repository root)
+<!--
+  ACTION REQUIRED: Replace the placeholder tree below with the concrete layout
+  for this feature. Delete unused options and expand the chosen structure with
+  real paths (e.g., apps/admin, packages/something). The delivered plan must
+  not include Option labels.
+-->
 
 ```text
+# [REMOVE IF UNUSED] Option 1: Single project (DEFAULT)
+src/
+├── models/
+├── services/
+├── cli/
+└── lib/
+
+tests/
+├── contract/
+├── integration/
+└── unit/
+
+# [REMOVE IF UNUSED] Option 2: Web application (when "frontend" + "backend" detected)
 backend/
 ├── src/
-│   ├── notifications/       # EXTEND: add Notification schema, controller, in-app storage
-│   ├── comments/            # EXTEND: add parentCommentId, comment likes
-│   ├── comment-likes/       # NEW: comment-level like module
-│   ├── follows/             # EXTEND: user-following support, counts optimization
-│   ├── likes/               # EXISTING: episode likes (no changes)
-│   ├── views/               # EXISTING: minor fixes if needed
-│   ├── users/               # EXTEND: add city/location fields
-│   ├── episodes/            # EXTEND: feed endpoint for personalized content
-│   ├── podcasts/            # EXISTING: category data used for suggestions
-│   ├── creators/            # EXISTING: used for suggestions
-│   └── feed/                # NEW: personalized feed module
+│   ├── models/
+│   ├── services/
+│   └── api/
 └── tests/
 
-rawy/ (frontend)
-├── app/
-│   ├── (tabs)/
-│   │   ├── _layout.tsx      # MODIFY: add 5th Notifications tab
-│   │   ├── notifications.tsx # NEW: notifications screen
-│   │   ├── index.tsx         # MODIFY: personalized feed
-│   │   └── explore.tsx       # MODIFY: suggestions section
-│   ├── episode/
-│   │   └── [id].tsx          # MODIFY: UX improvements, comment likes/replies
-│   └── _layout.tsx           # MODIFY: deep link configuration
-├── services/
-│   ├── notifications.service.ts  # NEW
-│   ├── comment-likes.service.ts  # NEW
-│   ├── comments.service.ts       # MODIFY: replies support
-│   ├── follows.service.ts        # MODIFY: user following
-│   ├── views.service.ts          # EXISTING: fix duplicate calls
-│   └── feed.service.ts           # NEW
-├── hooks/
-│   └── queries/
-│       ├── use-notifications.ts  # NEW
-│       ├── use-comment-likes.ts  # NEW
-│       ├── use-comments.ts       # MODIFY: replies
-│       └── use-feed.ts           # NEW
-├── components/
-│   ├── NotificationItem.tsx      # NEW
-│   ├── CommentItem.tsx           # NEW: enhanced comment with likes/replies
-│   └── SuggestionCard.tsx        # NEW
-└── utils/
-    └── deep-link.ts              # NEW
+frontend/
+├── src/
+│   ├── components/
+│   ├── pages/
+│   └── services/
+└── tests/
+
+# [REMOVE IF UNUSED] Option 3: Mobile + API (when "iOS/Android" detected)
+api/
+└── [same as backend above]
+
+ios/ or android/
+└── [platform-specific structure: feature modules, UI flows, platform tests]
 ```
 
-**Structure Decision**: Follows the existing monorepo pattern with `backend/` (NestJS) and `rawy/` (Expo/React Native). New modules follow the established NestJS convention (module/controller/service/schema/dto). Frontend follows Expo Router file-based routing with services layer and React Query hooks.
+**Structure Decision**: [Document the selected structure and reference the real
+directories captured above]
 
 ## Complexity Tracking
 
-No constitution violations to justify.
+> **Fill ONLY if Constitution Check has violations that must be justified**
+
+| Violation | Why Needed | Simpler Alternative Rejected Because |
+|-----------|------------|-------------------------------------|
+| [e.g., 4th project] | [current need] | [why 3 projects insufficient] |
+| [e.g., Repository pattern] | [specific problem] | [why direct DB access insufficient] |

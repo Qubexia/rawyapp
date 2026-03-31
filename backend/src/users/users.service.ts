@@ -274,6 +274,33 @@ export class UsersService {
     await this.userModel.findByIdAndDelete(userId).exec();
   }
 
+  /**
+   * Admin delete user account with cascade. No password verification.
+   */
+  async adminDeleteUser(userId: string): Promise<void> {
+    const user = await this.findById(userId);
+    if (!user) throw new NotFoundException('User not found');
+    
+    const userIdObj = new Types.ObjectId(userId);
+
+    if (this.podcastsService) {
+      const podcastIds = await this.podcastsService.findPodcastIdsByCreatorId(userIdObj);
+      for (const podcastId of podcastIds) {
+        await this.podcastsService.delete(podcastId.toString(), userIdObj, Role.ADMIN);
+      }
+    }
+
+    if (this.creatorsService) {
+      await this.creatorsService.deleteByUserId(userIdObj);
+    }
+
+    if (this.followsService) {
+      await this.followsService.deleteAllForUser(userIdObj);
+    }
+
+    await this.userModel.findByIdAndDelete(userId).exec();
+  }
+
   async findByEmailWithResetOtp(email: string): Promise<UserDocument | null> {
     return this.userModel
       .findOne({ email })
@@ -311,6 +338,13 @@ export class UsersService {
   async updateLocation(userId: string, location: { city?: string; coordinates?: number[] }): Promise<UserDocument | null> {
     return this.userModel
       .findByIdAndUpdate(userId, { location }, { new: true })
+      .exec();
+  }
+
+  async findByRole(role: Role): Promise<UserDocument[]> {
+    return this.userModel
+      .find({ role })
+      .select('-passwordHash -refreshToken -refreshTokenExpiresAt')
       .exec();
   }
 }
