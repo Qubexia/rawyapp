@@ -19,6 +19,25 @@ function timeAgo(dateStr: string): string {
   return then.toLocaleDateString();
 }
 
+interface UserData {
+  _id: string;
+  name?: string;
+  email?: string;
+  createdAt?: string;
+}
+
+interface PodcastData {
+  _id: string;
+  title: string;
+  createdAt?: string;
+}
+
+interface EpisodeData {
+  _id: string;
+  title: string;
+  createdAt?: string;
+}
+
 interface ActivityItem {
   id: string;
   icon: React.ElementType;
@@ -69,7 +88,7 @@ export function RecentActivity() {
   const activities: ActivityItem[] = [];
 
   if (data.recentUsers) {
-    data.recentUsers.forEach((u: any) => {
+    data.recentUsers.forEach((u: UserData) => {
       activities.push({
         id: `user-${u._id}`,
         icon: Users,
@@ -81,7 +100,7 @@ export function RecentActivity() {
   }
 
   if (data.recentPodcasts) {
-    data.recentPodcasts.forEach((p: any) => {
+    data.recentPodcasts.forEach((p: PodcastData) => {
       activities.push({
         id: `podcast-${p._id}`,
         icon: Podcast,
@@ -93,7 +112,7 @@ export function RecentActivity() {
   }
 
   if (data.recentEpisodes) {
-    data.recentEpisodes.forEach((e: any) => {
+    data.recentEpisodes.forEach((e: EpisodeData) => {
       activities.push({
         id: `episode-${e._id}`,
         icon: Radio,

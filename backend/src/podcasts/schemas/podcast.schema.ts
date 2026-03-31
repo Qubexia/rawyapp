@@ -34,6 +34,13 @@ export class Podcast {
     ],
   })
   category?: string;
+
+  @Prop({
+    required: false,
+    enum: ['draft', 'published'],
+    default: 'draft',
+  })
+  status?: 'draft' | 'published';
 }
 
 export const PodcastSchema = SchemaFactory.createForClass(Podcast);
@@ -43,3 +50,4 @@ PodcastSchema.index({ creatorId: 1 });
 PodcastSchema.index({ createdAt: -1 });
 PodcastSchema.index({ category: 1 });
 PodcastSchema.index({ title: 'text', description: 'text' });
+PodcastSchema.index({ status: 1 });

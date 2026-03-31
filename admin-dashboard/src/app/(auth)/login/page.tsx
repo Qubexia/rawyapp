@@ -6,6 +6,7 @@ import { Input } from '../../../components/ui/Input';
 import { Button } from '../../../components/ui/Button';
 import { useAuth } from '../../../contexts/AuthContext';
 import { apiClient } from '../../../lib/api';
+import { AxiosError } from 'axios';
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
@@ -37,14 +38,14 @@ export default function LoginPage() {
            firstName: user.firstName || user.name, 
            lastName: user.lastName 
         });
-    } catch (err: any) {
+    } catch (err) {
         setLoading(false);
-        if (err.response) {
-            setError(`Error: ${err.response.status} - ${err.response.data?.message || err.response.statusText}`);
-        } else if (err.request) {
-            setError(`Network Error: ${err.message}. Backend might be offline.`);
-        } else {
+        if (err instanceof AxiosError) {
+            setError(`Error: ${err.response?.status} - ${err.response?.data?.message || err.response?.statusText}`);
+        } else if (err instanceof Error) {
             setError(`Error: ${err.message}`);
+        } else {
+            setError('An unexpected error occurred');
         }
     }
   };
