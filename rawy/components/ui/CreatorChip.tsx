@@ -37,6 +37,9 @@ export function CreatorChip({ creator, style }: CreatorChipProps) {
       activeOpacity={0.8}
       onPress={() => router.push(`/creator/${creator._id}` as any)}
       style={style}
+      accessibilityLabel={`View creator: ${creator.showName || creator.name}`}
+      accessibilityHint={`View profile of ${creator.showName || creator.name}`}
+      accessibilityRole="link"
     >
       <Surface
         style={[

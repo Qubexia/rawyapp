@@ -39,6 +39,19 @@ export const Palette = {
     400: '#34D399',
     500: '#00D2A0',
   },
+  white: {
+    pure: '#FFFFFF',
+    light: '#F8F9FC',
+  },
+  black: {
+    pure: '#000000',
+    deep: '#0A0A0F',
+    soft: '#1A1A2E',
+  },
+  error: {
+    light: '#EF4444',
+    dark: '#FF4757',
+  },
   dark: {
     bg: '#1A1A2E',
     surface: '#252540',
@@ -87,10 +100,10 @@ export const Radius = {
 // ─── Typography ──────────────────────────────────────────────────────────────
 
 export const FontFamily = {
-  regular: 'Inter_400Regular',
-  medium: 'Inter_500Medium',
-  semiBold: 'Inter_600SemiBold',
-  bold: 'Inter_700Bold',
+  regular: 'DMSans_400Regular',
+  medium: 'DMSans_500Medium',
+  semiBold: 'DMSans_600SemiBold',
+  bold: 'DMSans_700Bold',
 };
 
 export const FontSizes = {
@@ -109,18 +122,18 @@ export const Colors = {
   light: {
     text: Palette.text.lightPrimary,
     background: Palette.light.bg,
-    tint: '#000000',
+    tint: Palette.black.pure,
     icon: Palette.text.lightSecondary,
     tabIconDefault: Palette.text.lightTertiary,
-    tabIconSelected: '#000000',
+    tabIconSelected: Palette.black.pure,
   },
   dark: {
     text: Palette.text.darkPrimary,
     background: Palette.dark.bg,
-    tint: '#FFFFFF',
+    tint: Palette.white.pure,
     icon: Palette.text.darkSecondary,
     tabIconDefault: Palette.text.darkTertiary,
-    tabIconSelected: '#FFFFFF',
+    tabIconSelected: Palette.white.pure,
   },
 } as const;
 
@@ -135,15 +148,15 @@ export const PaperLightTheme: MD3Theme = {
   fonts: configureFonts({ config: fontConfig }),
   colors: {
     ...MD3LightTheme.colors,
-    primary: '#000000',
+    primary: Palette.black.pure,
     primaryContainer: '#F3F4F6',
     secondary: Palette.secondary[500],
     secondaryContainer: Palette.secondary[400],
     background: Palette.light.bg,
     surface: Palette.light.surface,
     surfaceVariant: Palette.light.surfaceVariant,
-    error: '#EF4444',
-    onPrimary: '#FFFFFF',
+    error: Palette.error.light,
+    onPrimary: Palette.white.pure,
     onBackground: Palette.text.lightPrimary,
     onSurface: Palette.text.lightPrimary,
     onSurfaceVariant: Palette.text.lightSecondary,
@@ -164,15 +177,15 @@ export const PaperDarkTheme: MD3Theme = {
   fonts: configureFonts({ config: fontConfig }),
   colors: {
     ...MD3DarkTheme.colors,
-    primary: '#FFFFFF',
+    primary: Palette.white.pure,
     primaryContainer: '#374151',
     secondary: Palette.secondary[500],
     secondaryContainer: Palette.secondary[600],
     background: Palette.dark.bg,
     surface: Palette.dark.surface,
     surfaceVariant: Palette.dark.surfaceVariant,
-    error: '#FF4757',
-    onPrimary: '#FFFFFF',
+    error: Palette.error.dark,
+    onPrimary: Palette.white.pure,
     onBackground: Palette.text.darkPrimary,
     onSurface: Palette.text.darkPrimary,
     onSurfaceVariant: Palette.text.darkSecondary,

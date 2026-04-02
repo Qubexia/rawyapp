@@ -28,6 +28,9 @@ export function CreatorCard({ creator, onPress }: CreatorCardProps) {
   return (
     <Interactive
       onPress={onPress ?? (() => router.push(`/creator/${creator._id}` as any))}
+      accessibilityLabel={`View creator: ${displayName}`}
+      accessibilityHint={`View profile of ${displayName}`}
+      accessibilityRole="link"
     >
       <Surface
         style={[styles.card, { backgroundColor: theme.colors.surface }]}
@@ -115,6 +118,7 @@ const AVATAR_SIZE = 72;
 const styles = StyleSheet.create({
   card: {
     width: 140,
+    maxWidth: '35%',
     alignItems: "center",
     paddingHorizontal: Spacing.md,
     paddingTop: Spacing.md,

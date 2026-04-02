@@ -7,7 +7,7 @@ import { useRouter } from 'expo-router';
 import { Play, Pause, X, Music2 } from 'lucide-react-native';
 import { usePlayer } from '@/context/player-context';
 import { resolveImageUrl } from '@/utils/url';
-import { Spacing, Radius } from '@/constants/theme';
+import { Spacing, Radius, Palette } from '@/constants/theme';
 
 export default function MiniPlayer() {
   const { currentEpisode, isPlaying, togglePlay, position, duration, dismiss, skipForward, skipBackward } = usePlayer();
@@ -68,7 +68,7 @@ export default function MiniPlayer() {
         <TouchableOpacity
           activeOpacity={0.97}
           onPress={() => router.push('/player' as any)}
-          style={[s.card, { backgroundColor: '#FFFFFF', shadowColor: '#000' }]}
+          style={[s.card, { backgroundColor: Palette.light.surface, shadowColor: Palette.black.pure }]}
         >
       {/* Thin progress bar at very top of card */}
       <View style={s.progressBg}>
@@ -92,14 +92,14 @@ export default function MiniPlayer() {
           <Text
             variant="labelLarge"
             numberOfLines={1}
-            style={{ fontWeight: '700', color: '#111827', letterSpacing: 0.1 }}
+            style={{ fontWeight: '700', color: Palette.text.lightPrimary, letterSpacing: 0.1 }}
           >
             {currentEpisode.title}
           </Text>
           <Text
             variant="labelSmall"
             numberOfLines={1}
-            style={{ color: '#6B7280', marginTop: 2 }}
+            style={{ color: Palette.text.lightSecondary, marginTop: 2 }}
           >
             {currentEpisode.podcast.title}
           </Text>
@@ -110,10 +110,13 @@ export default function MiniPlayer() {
           style={[s.playBtn, { backgroundColor: theme.colors.primary }]}
           onPress={(e) => { e.stopPropagation(); togglePlay(); }}
           hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+          accessibilityLabel={isPlaying ? "Pause" : "Play"}
+          accessibilityHint="Toggle playback for current episode"
+          accessibilityRole="button"
         >
           {isPlaying
-            ? <Pause size={17} color="#FFF" fill="#FFF" />
-            : <Play size={17} color="#FFF" fill="#FFF" />}
+            ? <Pause size={17} color={Palette.white.pure} fill={Palette.white.pure} />
+            : <Play size={17} color={Palette.white.pure} fill={Palette.white.pure} />}
         </TouchableOpacity>
 
         {/* Close */}
@@ -121,8 +124,11 @@ export default function MiniPlayer() {
           style={s.closeBtn}
           onPress={(e) => { e.stopPropagation(); dismiss(); }}
           hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+          accessibilityLabel="Close player"
+          accessibilityHint="Dismiss the mini player"
+          accessibilityRole="button"
         >
-          <X size={16} color="#9CA3AF" />
+          <X size={16} color={Palette.text.lightTertiary} />
         </TouchableOpacity>
       </View>
     </TouchableOpacity>
@@ -176,15 +182,15 @@ const s = StyleSheet.create({
     flex: 1,
   },
   playBtn: {
-    width: 38,
-    height: 38,
-    borderRadius: 19,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
     alignItems: 'center',
     justifyContent: 'center',
   },
   closeBtn: {
-    width: 30,
-    height: 30,
+    width: 44,
+    height: 44,
     alignItems: 'center',
     justifyContent: 'center',
   },

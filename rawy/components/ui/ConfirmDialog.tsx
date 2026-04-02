@@ -136,7 +136,7 @@ export function ConfirmDialog({
             >
               <Text
                 variant="labelLarge"
-                style={{ color: '#FFFFFF', fontWeight: '700' }}
+                style={{ color: Palette.white.pure, fontWeight: '700' }}
               >
                 {confirmLabel}
               </Text>
@@ -166,7 +166,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.xl,
     paddingBottom: Spacing.lg,
     alignItems: 'center',
-    shadowColor: '#000',
+    shadowColor: Palette.black.pure,
     shadowOffset: { width: 0, height: 8 },
     shadowOpacity: 0.14,
     shadowRadius: 24,

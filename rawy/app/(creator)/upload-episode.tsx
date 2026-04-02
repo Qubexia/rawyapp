@@ -265,7 +265,7 @@ export default function UploadEpisodeScreen() {
           {/* ── Step 1: Audio file picker ── */}
           <View style={s.stepHeader}>
             <View style={[s.stepBadge, { backgroundColor: theme.colors.primary }]}>
-              <Text style={{ color: '#FFF', fontWeight: '800', fontSize: 13 }}>1</Text>
+              <Text style={{ color: Palette.white.pure, fontWeight: '800', fontSize: 13 }}>1</Text>
             </View>
             <Text variant="titleSmall" style={{ color: theme.colors.onBackground, fontWeight: '700' }}>
               Choose Audio File
@@ -291,7 +291,7 @@ export default function UploadEpisodeScreen() {
               {audioFile ? (
                 <>
                   <View style={[s.audioIconBox, { backgroundColor: theme.colors.primary }]}>
-                    <FileAudio size={28} color="#FFF" />
+                    <FileAudio size={28} color={Palette.white.pure} />
                   </View>
                   <Text
                     variant="bodyMedium"
@@ -354,7 +354,7 @@ export default function UploadEpisodeScreen() {
           {/* ── Step 2: Episode Info ── */}
           <View style={[s.stepHeader, { marginTop: Spacing.lg }]}>
             <View style={[s.stepBadge, { backgroundColor: theme.colors.primary }]}>
-              <Text style={{ color: '#FFF', fontWeight: '800', fontSize: 13 }}>2</Text>
+              <Text style={{ color: Palette.white.pure, fontWeight: '800', fontSize: 13 }}>2</Text>
             </View>
             <Text variant="titleSmall" style={{ color: theme.colors.onBackground, fontWeight: '700' }}>
               Episode Info
@@ -590,7 +590,7 @@ export default function UploadEpisodeScreen() {
             contentStyle={{ height: 52 }}
             labelStyle={{ fontSize: 16, fontWeight: "600" }}
             icon={() =>
-              isUploading ? null : <Upload size={18} color="#FFF" />
+              isUploading ? null : <Upload size={18} color={Palette.white.pure} />
             }
           >
             {isUploading

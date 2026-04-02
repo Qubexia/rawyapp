@@ -14,10 +14,10 @@ async function seed() {
 
   const db = mongoose.connection.db;
   if (!db) {
-      console.log('Failed to get db');
-      return;
+    console.log('Failed to get db');
+    return;
   }
-  
+
   const usersCollection = db.collection('users');
 
   const existingAdmin = await usersCollection.findOne({ email });
@@ -44,7 +44,7 @@ async function seed() {
     });
     console.log('Admin user created successfully!');
   }
-  
+
   await mongoose.disconnect();
 }
 

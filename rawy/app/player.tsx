@@ -36,7 +36,7 @@ import { AnimatedHeart } from "@/components/ui";
 
 import { usePlayer } from "@/context/player-context";
 import { resolveImageUrl } from "@/utils/url";
-import { Spacing, Radius } from "@/constants/theme";
+import { Spacing, Radius, Palette } from "@/constants/theme";
 import { useLikeStatus, useToggleLike } from "@/hooks/queries/use-likes";
 import { useAuthContext } from "@/context/auth-context";
 
@@ -122,7 +122,7 @@ export default function PlayerScreen() {
 
   return (
     <View style={s.root}>
-      <StatusBar barStyle="light-content" backgroundColor="#000000" />
+      <StatusBar barStyle="light-content" backgroundColor={Palette.black.pure} />
       <LinearGradient
         colors={[gradTop, gradMid, gradBot]}
         style={StyleSheet.absoluteFill}
@@ -140,14 +140,16 @@ export default function PlayerScreen() {
         ]}
       />
 
-      <SafeAreaView style={s.safe}>
+        <SafeAreaView style={s.safe}>
         {/* ── Top bar ── */}
         <View style={s.topBar}>
           <TouchableOpacity
             onPress={() => router.back()}
             hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+            accessibilityLabel="Close player"
+            accessibilityRole="button"
           >
-            <ChevronDown size={28} color="#FFF" strokeWidth={2} />
+            <ChevronDown size={28} color={Palette.white.pure} strokeWidth={2} />
           </TouchableOpacity>
 
           <View style={s.topMeta}>
@@ -233,7 +235,12 @@ export default function PlayerScreen() {
 
         {/* ── Controls ── */}
         <View style={s.controls}>
-          <TouchableOpacity style={s.ctrlSkip} onPress={skipBackward}>
+          <TouchableOpacity 
+            style={s.ctrlSkip} 
+            onPress={skipBackward}
+            accessibilityLabel="Skip backward 15 seconds"
+            accessibilityRole="button"
+          >
             <SkipBack
               size={32}
               color="rgba(255,255,255,0.85)"
@@ -246,15 +253,22 @@ export default function PlayerScreen() {
             style={s.playBtn}
             onPress={togglePlay}
             activeOpacity={0.85}
+            accessibilityLabel={isPlaying ? "Pause" : "Play"}
+            accessibilityRole="button"
           >
             {isPlaying ? (
-              <Pause size={36} color="#050505" fill="#FFF" />
+              <Pause size={36} color={Palette.black.deep} fill={Palette.white.pure} />
             ) : (
-              <Play size={36} color="#000000" fill="#000000" />
+              <Play size={36} color={Palette.black.pure} fill={Palette.black.pure} />
             )}
           </TouchableOpacity>
 
-          <TouchableOpacity style={s.ctrlSkip} onPress={skipForward}>
+          <TouchableOpacity 
+            style={s.ctrlSkip} 
+            onPress={skipForward}
+            accessibilityLabel="Skip forward 15 seconds"
+            accessibilityRole="button"
+          >
             <SkipForward
               size={32}
               color="rgba(255,255,255,0.85)"
@@ -266,7 +280,12 @@ export default function PlayerScreen() {
 
         {/* ── Action row ── */}
         <View style={s.actionRow}>
-          <TouchableOpacity style={s.actionItem} onPress={handleShare}>
+          <TouchableOpacity 
+            style={s.actionItem} 
+            onPress={handleShare}
+            accessibilityLabel="Share episode"
+            accessibilityRole="button"
+          >
             <Share2 size={22} color="rgba(255,255,255,0.7)" />
             <Text style={s.actionLabel}>Share</Text>
           </TouchableOpacity>
@@ -277,6 +296,8 @@ export default function PlayerScreen() {
               router.back();
               router.push(`/episode/${currentEpisode._id}` as any);
             }}
+            accessibilityLabel="View comments"
+            accessibilityRole="button"
           >
             <MessageCircle size={22} color="rgba(255,255,255,0.7)" />
             <Text style={s.actionLabel}>Comments</Text>
@@ -290,7 +311,7 @@ export default function PlayerScreen() {
 const s = StyleSheet.create({
   root: {
     flex: 1,
-    backgroundColor: "#0D0D1A",
+    backgroundColor: Palette.black.deep,
   },
   safe: {
     flex: 1,
@@ -333,7 +354,7 @@ const s = StyleSheet.create({
   coverWrapper: {
     alignSelf: "center",
     marginBottom: Spacing.xl,
-    shadowColor: "#000",
+    shadowColor: Palette.black.pure,
     shadowOffset: { width: 0, height: 16 },
     shadowOpacity: 0.6,
     shadowRadius: 24,
@@ -346,7 +367,7 @@ const s = StyleSheet.create({
     resizeMode: "cover",
   },
   coverFallback: {
-    backgroundColor: "#252540",
+    backgroundColor: Palette.dark.surface,
     alignItems: "center",
     justifyContent: "center",
   },
@@ -360,7 +381,7 @@ const s = StyleSheet.create({
   episodeTitle: {
     fontSize: 20,
     fontWeight: "800",
-    color: "#FFFFFF",
+    color: Palette.white.pure,
     marginBottom: 4,
   },
   podcastLink: {
@@ -389,7 +410,7 @@ const s = StyleSheet.create({
   },
   progressFill: {
     height: "100%",
-    backgroundColor: "#FFFFFF",
+    backgroundColor: Palette.white.pure,
     borderRadius: 2,
   },
   progressThumb: {
@@ -399,8 +420,8 @@ const s = StyleSheet.create({
     width: 14,
     height: 14,
     borderRadius: 7,
-    backgroundColor: "#FFFFFF",
-    shadowColor: "#FFF",
+    backgroundColor: Palette.white.pure,
+    shadowColor: Palette.white.pure,
     shadowOffset: { width: 0, height: 0 },
     shadowOpacity: 0.6,
     shadowRadius: 4,
@@ -443,10 +464,10 @@ const s = StyleSheet.create({
     width: 72,
     height: 72,
     borderRadius: 36,
-    backgroundColor: "#FFFFFF",
+    backgroundColor: Palette.white.pure,
     alignItems: "center",
     justifyContent: "center",
-    shadowColor: "#FFF",
+    shadowColor: Palette.white.pure,
     shadowOffset: { width: 0, height: 0 },
     shadowOpacity: 0.3,
     shadowRadius: 16,

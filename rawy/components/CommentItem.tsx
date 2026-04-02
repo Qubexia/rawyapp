@@ -61,7 +61,7 @@ export function CommentItem({ episodeId, comment, onReply, isReply = false, crea
                 onPress={() => comment.user?._id && router.push(`/user/${comment.user._id}` as any)}
                 style={[s.avatar, { backgroundColor: isCreator ? Palette.primary[500] : Palette.primary[50] }]}
             >
-                <Text style={{ fontSize: 14, fontWeight: '700', color: isCreator ? '#FFF' : Palette.primary[500] }}>
+                <Text style={{ fontSize: 14, fontWeight: '700', color: isCreator ? Palette.white.pure : Palette.primary[500] }}>
                     {comment.user?.name?.[0]?.toUpperCase() || '?'}
                 </Text>
             </TouchableOpacity>
@@ -92,7 +92,12 @@ export function CommentItem({ episodeId, comment, onReply, isReply = false, crea
 
                 <View style={s.actionsBar}>
                     {/* Like */}
-                    <TouchableOpacity style={s.actionBtn} onPress={handleLike}>
+                    <TouchableOpacity 
+                        style={s.actionBtn} 
+                        onPress={handleLike}
+                        accessibilityLabel={likeStatus?.isLiked ? "Unlike comment" : "Like comment"}
+                        accessibilityRole="button"
+                    >
                         <Heart
                             size={14}
                             color={likeStatus?.isLiked ? theme.colors.error : theme.colors.onSurfaceVariant}
@@ -108,6 +113,8 @@ export function CommentItem({ episodeId, comment, onReply, isReply = false, crea
                         <TouchableOpacity
                             style={s.actionBtn}
                             onPress={() => onReply(comment._id, comment.user?.name || 'Anon')}
+                            accessibilityLabel="Reply to comment"
+                            accessibilityRole="button"
                         >
                             <MessageCircle size={14} color={theme.colors.onSurfaceVariant} />
                             <Text variant="labelSmall" style={{ color: theme.colors.onSurfaceVariant, marginLeft: 6 }}>
@@ -118,7 +125,12 @@ export function CommentItem({ episodeId, comment, onReply, isReply = false, crea
 
                     {/* Delete */}
                     {isAuthor && (
-                        <TouchableOpacity style={s.actionBtn} onPress={() => deleteComment.mutate(comment._id)}>
+                        <TouchableOpacity 
+                            style={s.actionBtn} 
+                            onPress={() => deleteComment.mutate(comment._id)}
+                            accessibilityLabel="Delete comment"
+                            accessibilityRole="button"
+                        >
                             <Trash2 size={14} color={theme.colors.error} />
                             <Text variant="labelSmall" style={{ color: theme.colors.error, marginLeft: 4 }}>
                                 Delete
@@ -133,6 +145,8 @@ export function CommentItem({ episodeId, comment, onReply, isReply = false, crea
                         <TouchableOpacity
                             style={s.toggleReplies}
                             onPress={() => setShowReplies(!showReplies)}
+                            accessibilityLabel={showReplies ? "Hide replies" : `View ${comment.replyCount} replies`}
+                            accessibilityRole="button"
                         >
                             <View style={[s.replyLine, { backgroundColor: Palette.light.border }]} />
                             <Text variant="labelSmall" style={{ color: theme.colors.primary, fontWeight: '600', marginRight: 4 }}>
@@ -242,7 +256,7 @@ const s = StyleSheet.create({
         marginLeft: 6,
     },
     creatorBadgeText: {
-        color: '#FFF',
+        color: Palette.white.pure,
         fontSize: 9,
         fontWeight: '800',
         textTransform: 'uppercase',

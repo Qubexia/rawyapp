@@ -28,6 +28,9 @@ export function PodcastCard({ podcast, style, }: PodcastCardProps) {
     <Interactive
       onPress={() => router.push(`/podcast/${podcast._id}` as any)}
       style={[{ width: cardWidth }, style]}
+      accessibilityLabel={`Open podcast: ${podcast.title}`}
+      accessibilityHint={`View episodes of ${podcast.title} by ${podcast.creator?.name || 'Unknown'}`}
+      accessibilityRole="link"
     >
       <Surface
         style={[

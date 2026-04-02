@@ -30,7 +30,7 @@ export default function LoginScreen() {
   return (
     <>
       <Stack.Screen options={{ headerShown: false }} />
-      <View style={[styles.root, { backgroundColor: "#FFFFFF" }]}>
+      <View style={[styles.root, { backgroundColor: Palette.light.surface }]}>
         <SafeAreaView style={styles.safeArea}>
           <KeyboardAvoidingView
             style={styles.flex}
@@ -160,7 +160,7 @@ export default function LoginScreen() {
                     contentStyle={styles.submitContent}
                     style={styles.submitButton}
                     labelStyle={styles.submitLabel}
-                    icon={() => <ArrowRight size={18} color="#FFFFFF" />}
+                    icon={() => <ArrowRight size={18} color={Palette.white.pure} />}
                   >
                     Sign In
                   </Button>
@@ -274,7 +274,7 @@ const styles = StyleSheet.create({
     marginBottom: Spacing.md,
   },
   appName: {
-    color: "#FFFFFF",
+    color: Palette.white.pure,
     fontWeight: "800",
     fontSize: 36,
     letterSpacing: 1,
@@ -286,7 +286,7 @@ const styles = StyleSheet.create({
   card: {
     borderRadius: Radius.xl,
     padding: Spacing.lg,
-    backgroundColor: "#FFFFFF",
+    backgroundColor: Palette.light.surface,
   },
   cardTitle: {
     fontWeight: "700",
@@ -329,7 +329,7 @@ const styles = StyleSheet.create({
   socialButton: {
     borderRadius: Radius.md,
     borderColor: Palette.light.border,
-    backgroundColor: "#FFFFFF",
+    backgroundColor: Palette.light.surface,
   },
   socialContent: {
     height: 52,

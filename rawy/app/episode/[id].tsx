@@ -271,12 +271,12 @@ export default function EpisodeDetailScreen() {
             activeOpacity={1}
           >
             {isCurrentPlaying && isPlaying ? (
-              <Pause size={32} color="#FFF" fill="#FFF" />
+              <Pause size={32} color={Palette.white.pure} fill={Palette.white.pure} />
             ) : (
               <Play
                 size={32}
-                color="#FFF"
-                fill="#FFF"
+                color={Palette.white.pure}
+                fill={Palette.white.pure}
                 style={{ marginLeft: 4 }}
               />
             )}
@@ -670,21 +670,21 @@ export default function EpisodeDetailScreen() {
                         }
                       >
                         {createComment.isPending || createReply.isPending ? (
-                          <ActivityIndicator size={18} color="#FFF" />
+                          <ActivityIndicator size={18} color={Palette.white.pure} />
                         ) : (
                           <>
                             <Send
                               size={16}
                               color={
                                 commentText.trim()
-                                  ? "#FFF"
+                                  ? Palette.white.pure
                                   : theme.colors.onSurfaceVariant
                               }
                             />
                             <Text
                               style={{
                                 color: commentText.trim()
-                                  ? "#FFF"
+                                  ? Palette.white.pure
                                   : theme.colors.onSurfaceVariant,
                                 fontWeight: "700",
                                 fontSize: 15,

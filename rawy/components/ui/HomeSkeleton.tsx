@@ -8,7 +8,14 @@ export function HomeSkeleton() {
   const theme = useTheme();
   
   return (
-    <ScrollView style={styles.container} showsVerticalScrollIndicator={false} pointerEvents="none">
+    <ScrollView 
+      style={styles.container} 
+      showsVerticalScrollIndicator={false} 
+      pointerEvents="none"
+      accessibilityLabel="Loading content"
+      accessibilityRole="progressbar"
+      accessibilityState={{ busy: true }}
+    >
       {/* Header Skeleton */}
       <View style={styles.header}>
         <View>

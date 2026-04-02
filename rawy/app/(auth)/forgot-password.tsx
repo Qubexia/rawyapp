@@ -13,7 +13,7 @@ import { Mail, ArrowLeft, CheckCircle } from 'lucide-react-native';
 
 import { FormInput } from '@/components/ui/FormInput';
 import { useForgotPassword } from '@/hooks/auth/use-forgot-password';
-import { Spacing, Radius } from '@/constants/theme';
+import { Palette, Spacing, Radius } from '@/constants/theme';
 
 export default function ForgotPasswordScreen() {
   const theme = useTheme();
@@ -23,7 +23,7 @@ export default function ForgotPasswordScreen() {
   return (
     <>
       <Stack.Screen options={{ headerShown: false }} />
-      <View style={[styles.root, { backgroundColor: '#FFFFFF' }]}>
+      <View style={[styles.root, { backgroundColor: Palette.light.surface }]}>
         <SafeAreaView style={styles.safeArea}>
           <KeyboardAvoidingView
             style={styles.flex}

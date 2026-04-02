@@ -84,7 +84,7 @@ export default function RegisterScreen() {
   });
 
   return (
-    <View style={[styles.root, { backgroundColor: "#FFFFFF" }]}>
+    <View style={[styles.root, { backgroundColor: Palette.light.surface }]}>
       <SafeAreaView style={styles.safeArea}>
         <KeyboardAvoidingView
           style={styles.flex}
@@ -152,7 +152,7 @@ export default function RegisterScreen() {
                     size={16}
                     color={
                       activeTab === "user"
-                        ? "#FFFFFF"
+                        ? Palette.white.pure
                         : Palette.text.lightTertiary
                     }
                     style={{ marginRight: 6 }}
@@ -175,7 +175,7 @@ export default function RegisterScreen() {
                     size={16}
                     color={
                       activeTab === "creator"
-                        ? "#FFFFFF"
+                        ? Palette.white.pure
                         : Palette.text.lightTertiary
                     }
                     style={{ marginRight: 6 }}
@@ -307,7 +307,7 @@ export default function RegisterScreen() {
                   contentStyle={styles.submitContent}
                   style={styles.submitButton}
                   labelStyle={styles.submitLabel}
-                  icon={() => <ArrowRight size={18} color="#FFFFFF" />}
+                  icon={() => <ArrowRight size={18} color={Palette.white.pure} />}
                 >
                   Get Started
                 </Button>
@@ -422,7 +422,7 @@ const styles = StyleSheet.create({
     marginBottom: Spacing.md,
   },
   appName: {
-    color: "#FFFFFF",
+    color: Palette.white.pure,
     fontWeight: "800",
     fontSize: 36,
     letterSpacing: 1,
@@ -434,7 +434,7 @@ const styles = StyleSheet.create({
   card: {
     borderRadius: Radius.xl,
     padding: Spacing.lg,
-    backgroundColor: "#FFFFFF",
+    backgroundColor: Palette.light.surface,
   },
   cardTitle: {
     fontWeight: "700",
@@ -472,7 +472,7 @@ const styles = StyleSheet.create({
     color: Palette.text.lightTertiary,
   },
   activeTabText: {
-    color: "#FFFFFF",
+    color: Palette.white.pure,
   },
   activeCreatorTabText: {
     color: Palette.primary[700],
@@ -523,7 +523,7 @@ const styles = StyleSheet.create({
   socialButton: {
     borderRadius: Radius.md,
     borderColor: Palette.light.border,
-    backgroundColor: "#FFFFFF",
+    backgroundColor: Palette.light.surface,
   },
   socialContent: {
     height: 52,

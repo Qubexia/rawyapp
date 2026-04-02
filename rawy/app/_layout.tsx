@@ -17,11 +17,11 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider, useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
   useFonts,
-  Inter_400Regular,
-  Inter_500Medium,
-  Inter_600SemiBold,
-  Inter_700Bold,
-} from '@expo-google-fonts/inter';
+  DMSans_400Regular,
+  DMSans_500Medium,
+  DMSans_600SemiBold,
+  DMSans_700Bold,
+} from '@expo-google-fonts/dm-sans';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -33,7 +33,7 @@ import { QueryClientProvider } from '@tanstack/react-query';
 
 import { AuthProvider } from '@/context/auth-context';
 import { PlayerProvider, usePlayer } from '@/context/player-context';
-import { PaperLightTheme } from '@/constants/theme';
+import { PaperLightTheme, Palette } from '@/constants/theme';
 import { queryClient } from '@/services/query-client';
 import SplashScreenAnimated from '@/components/SplashScreenAnimated';
 import MiniPlayer from '@/components/layout/MiniPlayer';
@@ -50,10 +50,10 @@ export default function RootLayout() {
   const router = useRouter();
   const [animationDone, setAnimationDone] = useState(false);
   const [fontsLoaded, fontError] = useFonts({
-    Inter_400Regular,
-    Inter_500Medium,
-    Inter_600SemiBold,
-    Inter_700Bold,
+    DMSans_400Regular,
+    DMSans_500Medium,
+    DMSans_600SemiBold,
+    DMSans_700Bold,
   });
 
   const fontsReady = fontsLoaded || !!fontError;
@@ -109,7 +109,7 @@ export default function RootLayout() {
 
   return (
     <GestureHandlerRootView style={styles.root}>
-      <StatusBar style="dark" backgroundColor="#FFFFFF" />
+      <StatusBar style="dark" backgroundColor={Palette.light.surface} />
 
       {/* App tree – only renders once fonts are ready */}
       {fontsReady && (
@@ -222,7 +222,7 @@ export default function RootLayout() {
 const styles = StyleSheet.create({
   root: {
     flex: 1,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: Palette.light.surface,
   },
 });
 

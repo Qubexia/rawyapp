@@ -14,6 +14,7 @@ import { View, StyleSheet } from 'react-native';
 import { TextInput, HelperText, useTheme } from 'react-native-paper';
 import { Controller, Control, FieldValues, Path } from 'react-hook-form';
 import { Eye, EyeOff } from 'lucide-react-native';
+import { Palette } from '@/constants/theme';
 
 interface FormInputProps<T extends FieldValues> {
   name: Path<T>;
@@ -88,7 +89,7 @@ export function FormInput<T extends FieldValues>({
             outlineStyle={styles.outline}
             style={[
               styles.input,
-              { backgroundColor: '#FFFFFF' },
+              { backgroundColor: Palette.light.surface },
               multiline && { minHeight: (numberOfLines || 3) * 24 },
             ]}
             theme={{

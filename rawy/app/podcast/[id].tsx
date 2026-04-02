@@ -160,7 +160,7 @@ export default function PodcastDetailScreen() {
             style={[
               styles.coverWrapper,
               {
-                shadowColor: '#000',
+                shadowColor: Palette.black.pure,
               },
             ]}
           >
@@ -249,12 +249,12 @@ export default function PodcastDetailScreen() {
                     followStatus?.isFollowing ? (
                       <UserCheck size={18} color={theme.colors.primary} />
                     ) : (
-                      <UserPlus size={18} color="#FFFFFF" />
+                      <UserPlus size={18} color={Palette.white.pure} />
                     )
                   }
                   style={styles.followButton}
                   contentStyle={styles.followContent}
-                  labelStyle={[styles.followLabel, { color: followStatus?.isFollowing ? theme.colors.primary : '#FFFFFF' }]}
+                  labelStyle={[styles.followLabel, { color: followStatus?.isFollowing ? theme.colors.primary : Palette.white.pure }]}
                 >
                   {followStatus?.isFollowing ? 'Following' : 'Follow'}
                 </Button>

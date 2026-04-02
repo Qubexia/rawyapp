@@ -130,7 +130,7 @@ export default function TabLayout() {
             tabBarActiveTintColor: theme.colors.primary,
             tabBarInactiveTintColor: Palette.text.lightTertiary,
             tabBarStyle: {
-              backgroundColor: "#FFFFFF",
+              backgroundColor: Palette.light.surface,
               borderTopWidth: 0.5,
               height: TAB_BAR_HEIGHT,
               paddingBottom: Platform.OS === "ios" ? 28 : 8,
@@ -143,6 +143,7 @@ export default function TabLayout() {
             options={{
               title: "Home",
               tabBarIcon: ({ color }) => <Home size={24} color={color} />,
+              tabBarAccessibilityLabel: "Home tab",
             }}
           />
           <Tabs.Screen
@@ -150,6 +151,7 @@ export default function TabLayout() {
             options={{
               title: "Explore",
               tabBarIcon: ({ color }) => <Search size={24} color={color} />,
+              tabBarAccessibilityLabel: "Explore tab",
             }}
           />
           <Tabs.Screen
@@ -157,6 +159,7 @@ export default function TabLayout() {
             options={{
               title: "Library",
               tabBarIcon: ({ color }) => <Library size={24} color={color} />,
+              tabBarAccessibilityLabel: "Library tab",
             }}
           />
           <Tabs.Screen
@@ -179,12 +182,12 @@ export default function TabLayout() {
                         justifyContent: 'center',
                         alignItems: 'center',
                         borderWidth: 1.5,
-                        borderColor: '#FFF',
+                        borderColor: Palette.white.pure,
                       }}
                     >
                       <Text
                         style={{
-                          color: '#FFF',
+                          color: Palette.white.pure,
                           fontSize: 8,
                           fontWeight: '800',
                           lineHeight: 10,
@@ -193,9 +196,10 @@ export default function TabLayout() {
                         {unreadCount > 9 ? '9+' : unreadCount}
                       </Text>
                     </View>
-                  )}
+                      )}
                 </View>
               ),
+              tabBarAccessibilityLabel: "Profile tab",
             }}
           />
         </Tabs>
@@ -231,6 +235,8 @@ export default function TabLayout() {
             <TouchableOpacity
               style={styles.actionItem}
               onPress={handleNewPodcast}
+              accessibilityLabel="Create new podcast"
+              accessibilityRole="button"
             >
               <View
                 style={[
@@ -238,7 +244,7 @@ export default function TabLayout() {
                   { backgroundColor: Palette.primary[500] },
                 ]}
               >
-                <Mic size={22} color="#FFF" />
+                <Mic size={22} color={Palette.white.pure} />
               </View>
               <Text style={styles.actionLabel}>New Podcast</Text>
             </TouchableOpacity>
@@ -246,6 +252,8 @@ export default function TabLayout() {
             <TouchableOpacity
               style={styles.actionItem}
               onPress={handleUploadEpisode}
+              accessibilityLabel="Upload episode"
+              accessibilityRole="button"
             >
               <View
                 style={[
@@ -253,7 +261,7 @@ export default function TabLayout() {
                   { backgroundColor: Palette.secondary[500] },
                 ]}
               >
-                <Upload size={22} color="#FFF" />
+                <Upload size={22} color={Palette.white.pure} />
               </View>
               <Text style={styles.actionLabel}>Upload Episode</Text>
             </TouchableOpacity>
@@ -267,7 +275,13 @@ export default function TabLayout() {
               currentEpisode ? styles.fabRight : styles.fabCenter,
             ]}
           >
-            <TouchableOpacity activeOpacity={0.85} onPress={toggleFab}>
+            <TouchableOpacity 
+              activeOpacity={0.85} 
+              onPress={toggleFab}
+              accessibilityLabel="Create new"
+              accessibilityHint="Create a new podcast or upload an episode"
+              accessibilityRole="button"
+            >
               <Animated.View
                 style={[
                   styles.fab,
@@ -275,7 +289,7 @@ export default function TabLayout() {
                   { backgroundColor: theme.colors.primary },
                 ]}
               >
-                <Plus size={26} color="#FFF" strokeWidth={2.5} />
+                <Plus size={26} color={Palette.white.pure} strokeWidth={2.5} />
               </Animated.View>
             </TouchableOpacity>
           </View>
@@ -335,7 +349,7 @@ const styles = StyleSheet.create({
     marginTop: 6,
     fontSize: 12,
     fontWeight: "600",
-    color: "#FFFFFF",
+    color: Palette.white.pure,
   },
   fab: {
     width: FAB_SIZE,

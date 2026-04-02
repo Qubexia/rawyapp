@@ -49,7 +49,14 @@ export function AnimatedHeart({
   }));
 
   return (
-    <TouchableOpacity onPress={handlePress} activeOpacity={0.8} style={style}>
+    <TouchableOpacity 
+      onPress={handlePress} 
+      activeOpacity={0.8} 
+      style={style}
+      accessibilityLabel={isLiked ? "Unlike" : "Like"}
+      accessibilityHint={isLiked ? "Remove like from this episode" : "Like this episode"}
+      accessibilityRole="button"
+    >
       <Animated.View style={animatedStyle}>
         <Heart
           size={size}

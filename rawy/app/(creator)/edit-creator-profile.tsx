@@ -120,7 +120,7 @@ export default function EditCreatorProfileScreen() {
 
           <Button mode="contained" onPress={onSubmit} loading={updateProfile.isPending} disabled={updateProfile.isPending || !isDirty}
             style={s.submitBtn} contentStyle={{ height: 52 }} labelStyle={{ fontSize: 16, fontWeight: '600' }}
-            icon={() => <Save size={18} color="#FFF" />}>
+            icon={() => <Save size={18} color={Palette.white.pure} />}>
             Save Changes
           </Button>
         </ScrollView>

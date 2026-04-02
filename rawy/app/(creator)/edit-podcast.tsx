@@ -106,7 +106,7 @@ export default function EditPodcastScreen() {
                 <Headphones size={48} color={Palette.primary[500]} strokeWidth={1.5} />
               )}
               <View style={[s.cameraBadge, { backgroundColor: theme.colors.primary }]}>
-                <Camera size={14} color="#FFF" />
+                <Camera size={14} color={Palette.white.pure} />
               </View>
             </Surface>
             <Text variant="labelSmall" style={{ color: theme.colors.primary, marginTop: Spacing.sm, fontWeight: '600' }}>
@@ -119,7 +119,7 @@ export default function EditPodcastScreen() {
 
           <Button mode="contained" onPress={onSubmit} loading={updatePodcast.isPending} disabled={updatePodcast.isPending || (!isDirty && !newCover)}
             style={s.submitBtn} contentStyle={{ height: 52 }} labelStyle={{ fontSize: 16, fontWeight: '600' }}
-            icon={() => <Save size={18} color="#FFF" />}>
+            icon={() => <Save size={18} color={Palette.white.pure} />}>
             Save Changes
           </Button>
         </ScrollView>
@@ -135,7 +135,7 @@ const s = StyleSheet.create({
   coverPicker: { alignSelf: 'center', alignItems: 'center', marginBottom: Spacing.xl },
   iconBox: { width: 120, height: 120, borderRadius: Radius.xl, alignItems: 'center', justifyContent: 'center', overflow: 'hidden' },
   coverImage: { width: '100%', height: '100%', resizeMode: 'cover' },
-  cameraBadge: { position: 'absolute', bottom: 4, right: 4, width: 28, height: 28, borderRadius: 14, alignItems: 'center', justifyContent: 'center', borderWidth: 2, borderColor: '#FFF' },
+  cameraBadge: { position: 'absolute', bottom: 4, right: 4, width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center', borderWidth: 2, borderColor: Palette.white.pure },
   submitBtn: { borderRadius: Radius.md, marginTop: Spacing.lg },
 });
 

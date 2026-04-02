@@ -130,6 +130,8 @@ export default function ExploreScreen() {
       <TouchableOpacity
         activeOpacity={0.8}
         onPress={() => router.push(`/podcast/${item._id}` as any)}
+        accessibilityLabel={`View podcast: ${item.title}`}
+        accessibilityRole="link"
       >
         <Surface
           style={[
@@ -190,6 +192,8 @@ export default function ExploreScreen() {
       <TouchableOpacity
         activeOpacity={0.8}
         onPress={() => router.push(`/creator/${item._id}` as any)}
+        accessibilityLabel={`View creator: ${item.showName || item.name}`}
+        accessibilityRole="link"
       >
         <Surface
           style={[
@@ -308,7 +312,11 @@ export default function ExploreScreen() {
             <View style={styles.historyHeader}>
               <Text variant="titleMedium" style={{ fontWeight: '700', color: theme.colors.onBackground }}>Recent Searches</Text>
               {searchHistory.length > 0 && (
-                <TouchableOpacity onPress={clearHistory}>
+                <TouchableOpacity 
+                  onPress={clearHistory}
+                  accessibilityLabel="Clear search history"
+                  accessibilityRole="button"
+                >
                   <Text variant="labelMedium" style={{ color: theme.colors.primary, fontWeight: '600' }}>Clear</Text>
                 </TouchableOpacity>
               )}
@@ -357,7 +365,7 @@ export default function ExploreScreen() {
               ]}
               textStyle={[
                 styles.categoryText,
-                activeCategory === cat && { color: '#FFFFFF' },
+                activeCategory === cat && { color: Palette.white.pure },
               ]}
               mode="flat"
             >

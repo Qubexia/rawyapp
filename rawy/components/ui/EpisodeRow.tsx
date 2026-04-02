@@ -33,6 +33,9 @@ export function EpisodeRow({
     <Interactive
       onPress={() => router.push(`/episode/${episode._id}` as any)}
       style={style}
+      accessibilityLabel={`Play episode: ${episode.title}`}
+      accessibilityHint={`Listen to ${episode.title}`}
+      accessibilityRole="button"
     >
       <Surface
         style={[

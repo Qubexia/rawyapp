@@ -210,7 +210,7 @@ export default function CreatorDashboard() {
             activeOpacity={0.8}
             onPress={() => router.push("/(creator)/create-podcast" as any)}
           >
-            <Plus size={24} color="#FFF" />
+            <Plus size={24} color={Palette.white.pure} />
             <Text style={s.actionText}>New Podcast</Text>
           </TouchableOpacity>
           <TouchableOpacity
@@ -218,7 +218,7 @@ export default function CreatorDashboard() {
             activeOpacity={0.8}
             onPress={() => router.push("/(creator)/upload-episode" as any)}
           >
-            <Upload size={24} color="#FFF" />
+            <Upload size={24} color={Palette.white.pure} />
             <Text style={s.actionText}>Upload Episode</Text>
           </TouchableOpacity>
         </View>
@@ -324,7 +324,7 @@ export default function CreatorDashboard() {
                     borderRadius: Radius.md,
                     paddingHorizontal: Spacing.lg,
                   }}
-                  icon={() => <Plus size={18} color="#FFF" />}
+                  icon={() => <Plus size={18} color={Palette.white.pure} />}
                 >
                   Create First Podcast
                 </Button>
@@ -379,7 +379,7 @@ const s = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
-  actionText: { color: "#FFF", fontWeight: "700", fontSize: 14, marginTop: 8 },
+  actionText: { color: Palette.white.pure, fontWeight: "700", fontSize: 14, marginTop: 8 },
   podcastRow: {
     flexDirection: "row",
     borderRadius: Radius.lg,

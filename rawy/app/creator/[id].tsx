@@ -272,7 +272,7 @@ export default function CreatorDetailScreen() {
               followStatus?.isFollowing ? (
                 <UserCheck size={18} color={theme.colors.primary} />
               ) : (
-                <UserPlus size={18} color="#FFF" />
+                <UserPlus size={18} color={Palette.white.pure} />
               )
             }
             style={s.followBtn}

@@ -92,6 +92,8 @@ export function NotificationItem({ notification }: NotificationItemProps) {
             ]}
             onPress={handlePress}
             activeOpacity={0.7}
+            accessibilityLabel={`${config.text}`}
+            accessibilityRole="button"
         >
             <View style={s.avatarContainer}>
                 {avatarUri ? (

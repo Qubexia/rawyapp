@@ -34,7 +34,7 @@ export const GuestBanner: React.FC = () => {
             onPress={() => router.push('/(auth)/login')}
             style={styles.button}
             labelStyle={styles.buttonLabel}
-            icon={() => <LogIn size={16} color="#FFF" />}
+            icon={() => <LogIn size={16} color={Palette.white.pure} />}
           >
             Sign In
           </Button>

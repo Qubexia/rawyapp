@@ -245,7 +245,7 @@ export default function UserProfileScreen() {
                   isFollowing ? (
                     <UserCheck size={18} color={theme.colors.primary} />
                   ) : (
-                    <Users size={18} color="#FFF" />
+                    <Users size={18} color={Palette.white.pure} />
                   )
                 }
                 style={s.followBtn}

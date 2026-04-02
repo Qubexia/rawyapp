@@ -4,6 +4,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useAuthContext } from '@/context/auth-context';
 import { STORAGE_KEYS } from '@/utils/constants';
 import { View, ActivityIndicator } from 'react-native';
+import { Palette } from '@/constants/theme';
 
 export default function Index() {
     const { isAuthenticated, isLoading } = useAuthContext();
@@ -25,8 +26,8 @@ export default function Index() {
 
     if (isLoading || hasSeenOnboarding === null) {
         return (
-            <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#FFFFFF' }}>
-                <ActivityIndicator size="large" color="#000000" />
+            <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: Palette.light.surface }}>
+                <ActivityIndicator size="large" color={Palette.black.pure} />
             </View>
         );
     }

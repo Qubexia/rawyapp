@@ -204,6 +204,9 @@ export default function HomeScreen() {
             <TouchableOpacity
               style={styles.bellButton}
               onPress={() => router.push("/(profile)/notifications" as any)}
+              accessibilityLabel="Notifications"
+              accessibilityHint="View your notifications"
+              accessibilityRole="button"
             >
               <View style={{ position: "relative" }}>
                 <Bell size={24} color={theme.colors.onSurfaceVariant} />
@@ -225,7 +228,7 @@ export default function HomeScreen() {
                   >
                     <Text
                       style={{
-                        color: "#FFF",
+                        color: Palette.white.pure,
                         fontSize: 7,
                         fontWeight: "900",
                         lineHeight: 10,
@@ -260,6 +263,9 @@ export default function HomeScreen() {
                 activeOpacity={0.9}
                 onPress={() => router.push("/player" as any)}
                 style={styles.heroCard}
+                accessibilityLabel="Continue listening"
+                accessibilityHint={`Resume playing ${currentEpisode.title} from ${currentEpisode.podcast.title}`}
+                accessibilityRole="button"
               >
                 <Image
                   source={{
@@ -301,11 +307,13 @@ export default function HomeScreen() {
                       e.stopPropagation();
                       togglePlay();
                     }}
+                    accessibilityLabel={isPlaying ? "Pause" : "Play"}
+                    accessibilityRole="button"
                   >
                     {isPlaying ? (
-                      <Play size={24} color="#000" fill="#000" />
+                      <Play size={24} color={Palette.black.pure} fill={Palette.black.pure} />
                     ) : (
-                      <Play size={24} color="#000" fill="#000" />
+                      <Play size={24} color={Palette.black.pure} fill={Palette.black.pure} />
                     )}
                   </TouchableOpacity>
                 </View>
@@ -475,7 +483,7 @@ export default function HomeScreen() {
                         >
                           <Text
                             style={{
-                              color: "#FFF",
+                              color: Palette.white.pure,
                               fontWeight: "600",
                               fontSize: 14,
                             }}
@@ -633,10 +641,10 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
     borderWidth: 1.5,
-    borderColor: "#FFF",
+    borderColor: Palette.white.pure,
   },
   badgeText: {
-    color: "#FFF",
+    color: Palette.white.pure,
     fontSize: 7,
     fontWeight: "900",
     lineHeight: 10,

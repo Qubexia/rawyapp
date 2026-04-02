@@ -14,6 +14,7 @@ import { StatusBar } from 'expo-status-bar';
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { STORAGE_KEYS } from '@/utils/constants';
+import { Palette, Spacing, Radius } from '@/constants/theme';
 
 const slides = [
     {
@@ -83,7 +84,7 @@ export default function OnboardingScreen() {
 
     return (
         <View style={styles.container}>
-            <StatusBar style="dark" backgroundColor="#FFFFFF" />
+            <StatusBar style="dark" backgroundColor={Palette.light.surface} />
             <View style={{ flex: 3 }}>
                 <FlatList
                     data={slides}
@@ -207,7 +208,7 @@ export default function OnboardingScreen() {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: '#FFFFFF',
+        backgroundColor: Palette.light.surface,
     },
     slide: {
         flex: 1,
@@ -257,16 +258,16 @@ const styles = StyleSheet.create({
     dot: {
         height: 10,
         borderRadius: 5,
-        backgroundColor: '#000000', // Primary Modern Color
+        backgroundColor: Palette.black.pure, // Primary Modern Color
         marginHorizontal: 8,
     },
     button: {
-        backgroundColor: '#000000',
+        backgroundColor: Palette.black.pure,
         borderRadius: 30,
         height: 60,
         justifyContent: 'center',
         alignItems: 'center',
-        shadowColor: '#000000',
+        shadowColor: Palette.black.pure,
         shadowOffset: {
             width: 0,
             height: 4,
@@ -276,7 +277,7 @@ const styles = StyleSheet.create({
         elevation: 8,
     },
     buttonText: {
-        color: '#FFFFFF',
+        color: Palette.white.pure,
         fontSize: 18,
         fontWeight: 'bold',
     },
@@ -302,8 +303,8 @@ const styles = StyleSheet.create({
         borderColor: '#E5E7EB',
     },
     topicChipSelected: {
-        backgroundColor: '#000000',
-        borderColor: '#000000',
+        backgroundColor: Palette.black.pure,
+        borderColor: Palette.black.pure,
     },
     topicText: {
         fontSize: 16,
@@ -311,6 +312,6 @@ const styles = StyleSheet.create({
         color: '#4B5563',
     },
     topicTextSelected: {
-        color: '#FFFFFF',
+        color: Palette.white.pure,
     },
 });

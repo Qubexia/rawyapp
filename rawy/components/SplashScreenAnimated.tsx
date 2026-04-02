@@ -12,6 +12,7 @@ import Animated, {
   runOnJS,
   Easing,
 } from 'react-native-reanimated';
+import { Palette } from '@/constants/theme';
 
 const LOGO_SIZE = 120;
 const EXIT_START = 2200; // Time before exit starts
@@ -97,7 +98,7 @@ export default function SplashScreenAnimated({ onFinish }: SplashScreenAnimatedP
 const styles = StyleSheet.create({
   container: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: Palette.light.surface,
     justifyContent: 'center',
     alignItems: 'center',
     zIndex: 9999,

@@ -1,4 +1,5 @@
 import { StyleSheet, Platform } from 'react-native'
+import { Palette } from '@/constants/theme';
 
 const styles = StyleSheet.create({
   root: {
@@ -26,7 +27,7 @@ const styles = StyleSheet.create({
     borderRadius: 28,
     overflow: 'hidden',
     marginBottom: 16,
-    shadowColor: '#000000',
+    shadowColor: Palette.black.pure,
     shadowOffset: { width: 0, height: 8 },
     shadowOpacity: 0.5,
     shadowRadius: 16,
@@ -48,7 +49,7 @@ const styles = StyleSheet.create({
   waveBar: {
     width: 4,
     borderRadius: 4,
-    backgroundColor: '#000000',
+    backgroundColor: Palette.black.pure,
   },
   appName: {
     fontSize: 42,
@@ -66,12 +67,12 @@ const styles = StyleSheet.create({
 
   // ── Card ──────────────────────────────────────────────────────
   card: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: Palette.light.surface,
     borderRadius: 28,
     padding: 24,
     borderWidth: 1,
     borderColor: 'rgba(16,24,40,0.06)',
-    shadowColor: '#000',
+    shadowColor: Palette.black.pure,
     shadowOffset: { width: 0, height: 6 },
     shadowOpacity: 0.08,
     shadowRadius: 12,
@@ -102,9 +103,9 @@ const styles = StyleSheet.create({
     top: 4,
     left: 0,
     height: 44,
-    backgroundColor: '#000000',
+    backgroundColor: Palette.black.pure,
     borderRadius: 22,
-    shadowColor: '#000',
+    shadowColor: Palette.black.pure,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.06,
     shadowRadius: 8,
@@ -123,7 +124,7 @@ const styles = StyleSheet.create({
     color: '#8A9BB0',
   },
   activeTabText: {
-    color: '#FFFFFF',
+    color: Palette.white.pure,
   },
 
   // ── Creator hint ──────────────────────────────────────────────
@@ -158,7 +159,7 @@ const styles = StyleSheet.create({
   inputGroup: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#FFFFFF',
+    backgroundColor: Palette.light.surface,
     height: 58,
     borderRadius: 16,
     paddingHorizontal: 16,
@@ -216,7 +217,7 @@ const styles = StyleSheet.create({
     marginTop: 8,
     borderRadius: 30,
     overflow: 'hidden',
-    shadowColor: '#000',
+    shadowColor: Palette.black.pure,
     shadowOffset: { width: 0, height: 6 },
     shadowOpacity: 0.08,
     shadowRadius: 12,
@@ -230,7 +231,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   submitText: {
-    color: '#FFFFFF',
+    color: Palette.white.pure,
     fontSize: 17,
     fontWeight: '700',
     letterSpacing: 0.5,
@@ -267,7 +268,7 @@ const styles = StyleSheet.create({
     fontWeight: '500',
   },
   footerLink: {
-    color: '#000000',
+    color: Palette.black.pure,
     fontSize: 14,
     fontWeight: '700',
   },

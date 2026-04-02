@@ -25,6 +25,9 @@ export function EpisodeCard({ episode, style }: EpisodeCardProps) {
     <Interactive
       onPress={() => router.push(`/episode/${episode._id}` as any)}
       style={[styles.container, style]}
+      accessibilityLabel={`Play episode: ${episode.title}`}
+      accessibilityHint={`Listen to ${episode.title} from ${episode.podcast?.title || 'Podcast'}`}
+      accessibilityRole="button"
     >
       <Surface
         style={[styles.card, { backgroundColor: Palette.light.surface }]}
@@ -44,7 +47,7 @@ export function EpisodeCard({ episode, style }: EpisodeCardProps) {
           {/* Mini Play Button Overlay */}
           <View style={styles.playOverlay}>
             <View style={[styles.playButtonWrapper, { backgroundColor: theme.colors.primary }]}>
-              <Play size={12} color="#FFF" fill="#FFF" />
+              <Play size={20} color={Palette.white.pure} fill={Palette.white.pure} />
             </View>
           </View>
         </View>
@@ -86,7 +89,8 @@ export function EpisodeCard({ episode, style }: EpisodeCardProps) {
 
 const styles = StyleSheet.create({
   container: {
-    width: 140, // Square-like narrow card
+    width: 140,
+    maxWidth: '35%',
   },
   card: {
     borderRadius: Radius.lg,
@@ -106,12 +110,12 @@ const styles = StyleSheet.create({
     left: 8,
   },
   playButtonWrapper: {
-    width: 24,
-    height: 24,
-    borderRadius: 12,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
     alignItems: "center",
     justifyContent: "center",
-    shadowColor: "#000",
+    shadowColor: Palette.black.pure,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.2,
     shadowRadius: 3,

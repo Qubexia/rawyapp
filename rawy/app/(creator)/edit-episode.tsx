@@ -107,7 +107,7 @@ export default function EditEpisodeScreen() {
 
           <Button mode="contained" onPress={onSubmit} loading={updateEpisode.isPending} disabled={updateEpisode.isPending || !isDirty}
             style={s.submitBtn} contentStyle={{ height: 52 }} labelStyle={{ fontSize: 16, fontWeight: '600' }}
-            icon={() => <Save size={18} color="#FFF" />}>
+            icon={() => <Save size={18} color={Palette.white.pure} />}>
             Save Changes
           </Button>
         </ScrollView>

@@ -2,7 +2,7 @@ import React, { Component, ErrorInfo, ReactNode } from 'react';
 import { View, StyleSheet } from 'react-native';
 import { Text, Button, useTheme } from 'react-native-paper';
 import { AlertTriangle } from 'lucide-react-native';
-import { Spacing, Radius } from '@/constants/theme';
+import { Spacing, Radius, Palette } from '@/constants/theme';
 
 interface Props {
     children: ReactNode;
@@ -80,9 +80,9 @@ const styles = StyleSheet.create({
         width: '100%',
         padding: Spacing.xl,
         borderRadius: Radius.xl,
-        backgroundColor: '#FFFFFF',
+        backgroundColor: Palette.light.surface,
         alignItems: 'center',
-        shadowColor: '#000',
+        shadowColor: Palette.black.pure,
         shadowOffset: { width: 0, height: 2 },
         shadowOpacity: 0.1,
         shadowRadius: 8,
@@ -95,7 +95,7 @@ const styles = StyleSheet.create({
         fontWeight: '700',
         textAlign: 'center',
         marginBottom: Spacing.sm,
-        color: '#111827',
+        color: Palette.text.lightPrimary,
     },
     message: {
         textAlign: 'center',

@@ -23,7 +23,7 @@ export function EmptyState({
   const theme = useTheme();
 
   const content = (
-    <>
+    <View accessibilityRole="text" accessibilityLabel={title ? `${title}. ${message}` : message}>
       {icon}
       {title && (
         <Text
@@ -49,7 +49,7 @@ export function EmptyState({
         {message}
       </Text>
       {action && <View style={styles.actionContainer}>{action}</View>}
-    </>
+    </View>
   );
 
   if (isCard) {
