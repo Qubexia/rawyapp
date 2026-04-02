@@ -18,7 +18,7 @@ import { Palette, Spacing, Radius } from '@/constants/theme';
 import { isCreator } from '@/utils/roles';
 import { updatePodcastSchema, UpdatePodcastFormData } from '@/validation/podcast.schemas';
 import { pickImage, SelectedImage } from '@/utils/image-picker';
-import { SERVER_URL } from '@/services/axios-client';
+import { resolveImageUrl } from '@/utils/url';
 
 export default function EditPodcastScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -82,9 +82,8 @@ export default function EditPodcastScreen() {
     );
   }
 
-  const currentCoverUrl = podcast?.coverImageUrl 
-    ? { uri: `${SERVER_URL}/${podcast.coverImageUrl.replace(/\\/g, '/')}` } 
-    : null;
+  const coverUri = resolveImageUrl(podcast?.coverImageUrl);
+  const currentCoverUrl = coverUri ? { uri: coverUri } : null;
 
   return (
     <SafeAreaView style={[s.root, { backgroundColor: theme.colors.background }]}>

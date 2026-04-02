@@ -1,4 +1,4 @@
-import { Controller, Get, Patch, Post, Delete, Body, UseInterceptors, UploadedFile, HttpCode, HttpStatus, Param, Req } from '@nestjs/common';
+import { Controller, Get, Patch, Post, Delete, Body, UseInterceptors, UploadedFile, HttpCode, HttpStatus, Param, Req, BadRequestException } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiConsumes, ApiBody } from '@nestjs/swagger';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { Types } from 'mongoose';
@@ -14,7 +14,7 @@ import { PushPreferenceDto } from './dto/push-preference.dto';
 import { DeleteAccountDto } from './dto/delete-account.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { UpdateLocationDto } from './dto/update-location.dto';
-import { getImageMulterConfig, normalizePath } from '../common/utils/file-upload.util';
+import { getImageMulterConfig, getRelativeUrl } from '../common/utils/file-upload.util';
 
 @ApiTags('users')
 @ApiCommonErrorResponses()
@@ -66,7 +66,10 @@ export class UsersController {
     @CurrentUser() user: UserDocument,
     @UploadedFile() file: Express.Multer.File,
   ) {
-    return this.usersService.updateAvatar(user._id.toString(), normalizePath(file.path));
+    if (!file) {
+      throw new BadRequestException('Avatar image file is required');
+    }
+    return this.usersService.updateAvatar(user._id.toString(), getRelativeUrl(file.path));
   }
 
   @Post('me/device-token')

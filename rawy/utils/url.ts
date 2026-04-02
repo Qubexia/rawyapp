@@ -8,7 +8,12 @@ export function resolveImageUrl(path?: string): string | undefined {
   if (!path) return undefined;
   if (path.startsWith('http')) return path;
   
-  // Normalize Windows backslashes from server paths stored in DB
-  const normalizedPath = path.replace(/\\/g, '/').replace(/^\//, '');
+  // Normalize Windows backslashes and clean up path artifacts
+  let normalizedPath = path
+    .replace(/\\/g, '/')       // Convert backslashes to forward slashes
+    .replace(/^\.\//, '')      // Remove leading ./
+    .replace(/^\/+/, '')       // Remove leading slashes
+    .replace(/\/\/+/g, '/');   // Collapse double slashes
+  
   return `${SERVER_URL}/${normalizedPath}`;
 }

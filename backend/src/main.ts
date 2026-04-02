@@ -11,10 +11,12 @@ import { LoggingInterceptor } from './common/interceptors/logging.interceptor';
 
 async function bootstrap() {
   // Ensure upload directories exist
+  // Use process.cwd() so paths match multer's `./uploads/images` destination
+  const uploadsRoot = join(process.cwd(), 'uploads');
   const uploadDirs = [
-    join(__dirname, '..', 'uploads'),
-    join(__dirname, '..', 'uploads', 'images'),
-    join(__dirname, '..', 'uploads', 'audio'),
+    uploadsRoot,
+    join(uploadsRoot, 'images'),
+    join(uploadsRoot, 'audio'),
   ];
 
   uploadDirs.forEach((dir) => {
@@ -54,7 +56,8 @@ async function bootstrap() {
   app.useGlobalInterceptors(new LoggingInterceptor(), new TransformInterceptor());
 
   // Static file serving for uploads
-  app.useStaticAssets(join(__dirname, '..', 'uploads'), {
+  // Must use process.cwd() to match multer's storage destination (./uploads/…)
+  app.useStaticAssets(join(process.cwd(), 'uploads'), {
     prefix: '/uploads/',
   });
 

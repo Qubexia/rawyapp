@@ -1,4 +1,9 @@
-import { Injectable, UnauthorizedException, ConflictException, BadRequestException } from '@nestjs/common';
+import {
+  Injectable,
+  UnauthorizedException,
+  ConflictException,
+  BadRequestException,
+} from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import * as bcrypt from 'bcrypt';
@@ -128,7 +133,10 @@ export class AuthService {
     };
   }
 
-  async validateUser(email: string, password: string): Promise<UserDocument | null> {
+  async validateUser(
+    email: string,
+    password: string,
+  ): Promise<UserDocument | null> {
     const user = await this.usersService.findByEmail(email);
 
     if (!user || !user.passwordHash) {
@@ -144,7 +152,9 @@ export class AuthService {
     return user;
   }
 
-  async refreshTokens(refreshTokenDto: RefreshTokenDto): Promise<TokenResponseDto> {
+  async refreshTokens(
+    refreshTokenDto: RefreshTokenDto,
+  ): Promise<TokenResponseDto> {
     const { refreshToken } = refreshTokenDto;
 
     try {
@@ -169,18 +179,25 @@ export class AuthService {
         throw new UnauthorizedException('Refresh token not found');
       }
 
-      const storedTokenMatches = await bcrypt.compare(refreshToken, user.refreshToken);
+      const storedTokenMatches = await bcrypt.compare(
+        refreshToken,
+        user.refreshToken,
+      );
       if (!storedTokenMatches) {
         throw new UnauthorizedException('Invalid refresh token');
       }
 
       // Check if refresh token is expired
-      if (user.refreshTokenExpiresAt && new Date() > user.refreshTokenExpiresAt) {
+      if (
+        user.refreshTokenExpiresAt &&
+        new Date() > user.refreshTokenExpiresAt
+      ) {
         throw new UnauthorizedException('Refresh token has expired');
       }
 
       // Generate new tokens
-      const { accessToken, refreshToken: newRefreshToken } = await this.generateTokens(user);
+      const { accessToken, refreshToken: newRefreshToken } =
+        await this.generateTokens(user);
 
       return {
         accessToken,
@@ -205,7 +222,10 @@ export class AuthService {
     if (!user || !user.passwordHash) {
       throw new UnauthorizedException('User not found or password not set');
     }
-    const isPasswordValid = await bcrypt.compare(currentPassword, user.passwordHash);
+    const isPasswordValid = await bcrypt.compare(
+      currentPassword,
+      user.passwordHash,
+    );
     if (!isPasswordValid) {
       throw new UnauthorizedException('Current password is incorrect');
     }
@@ -224,7 +244,11 @@ export class AuthService {
     const otpHash = await bcrypt.hash(otp, 10);
     const expiresAt = new Date(Date.now() + 15 * 60 * 1000); // 15 minutes
 
-    await this.usersService.setPasswordResetOtp(user._id.toString(), otpHash, expiresAt);
+    await this.usersService.setPasswordResetOtp(
+      user._id.toString(),
+      otpHash,
+      expiresAt,
+    );
     await this.emailService.sendPasswordResetOtp(email, otp);
   }
 
@@ -247,11 +271,16 @@ export class AuthService {
     }
 
     const newPasswordHash = await bcrypt.hash(newPassword, 10);
-    await this.usersService.updatePassword(user._id.toString(), newPasswordHash);
+    await this.usersService.updatePassword(
+      user._id.toString(),
+      newPasswordHash,
+    );
     await this.usersService.clearPasswordResetOtp(user._id.toString());
   }
 
-  async generateTokens(user: UserDocument): Promise<{ accessToken: string; refreshToken: string }> {
+  async generateTokens(
+    user: UserDocument,
+  ): Promise<{ accessToken: string; refreshToken: string }> {
     const payload = {
       sub: user._id.toString(),
       email: user.email,
@@ -261,7 +290,9 @@ export class AuthService {
     // ConfigService always returns strings from .env; Number() converts to actual number
     // so jsonwebtoken treats it as seconds (not milliseconds like string "900" would be)
     const accessTtl = Number(this.configService.get('JWT_ACCESS_TTL') ?? 900);
-    const refreshTtl = Number(this.configService.get('JWT_REFRESH_TTL') ?? 604800);
+    const refreshTtl = Number(
+      this.configService.get('JWT_REFRESH_TTL') ?? 604800,
+    );
 
     if (!accessTtl || !refreshTtl) {
       throw new Error('JWT TTL values are not configured properly');
@@ -321,7 +352,10 @@ export class AuthService {
         updateData.facebookId = providerId;
       }
 
-      user = await this.usersService.update(existingUser._id.toString(), updateData);
+      user = await this.usersService.update(
+        existingUser._id.toString(),
+        updateData,
+      );
       if (user) {
         return user;
       }
@@ -347,25 +381,42 @@ export class AuthService {
   async validateGoogleIdToken(idToken: string): Promise<TokenResponseDto> {
     const clientId = this.configService.get<string>('GOOGLE_CLIENT_ID');
     if (!clientId) {
-      throw new Error('Google client ID is not configured');
+      throw new UnauthorizedException(
+        'Google authentication is not configured on this server',
+      );
     }
 
+    // Collect all valid client IDs (web, android, iOS) so tokens from
+    // any platform are accepted. The audience in a Google ID token
+    // matches the client ID of the OAuth client that created it.
+    const validAudiences = [clientId];
+    const androidClientId = this.configService.get<string>('GOOGLE_ANDROID_CLIENT_ID');
+    const iosClientId = this.configService.get<string>('GOOGLE_IOS_CLIENT_ID');
+    if (androidClientId) validAudiences.push(androidClientId);
+    if (iosClientId) validAudiences.push(iosClientId);
+
     const client = new OAuth2Client(clientId);
-    
+
     try {
       const ticket = await client.verifyIdToken({
         idToken,
-        audience: clientId,
+        audience: validAudiences,
       });
 
       const payload = ticket.getPayload();
       if (!payload) {
-        throw new UnauthorizedException('Invalid Google token payload');
+        console.warn('[Google Auth] Invalid token payload received');
+        throw new UnauthorizedException(
+          'Invalid Google token: missing payload',
+        );
       }
 
       const { sub: providerId, email, name } = payload;
       if (!email || !name) {
-        throw new UnauthorizedException('Email and name are required from Google');
+        console.warn('[Google Auth] Missing email or name in token payload');
+        throw new UnauthorizedException(
+          'Google account must have email and name',
+        );
       }
 
       const user = await this.validateOAuthUser({
@@ -377,14 +428,21 @@ export class AuthService {
 
       const { accessToken, refreshToken } = await this.generateTokens(user);
 
+      console.log(`[Google Auth] User logged in: ${user.email} (${user._id})`);
+
       return {
         accessToken,
         refreshToken,
         user: user.toObject(),
       };
-    } catch (error) {
-      console.error('Error verifying Google ID token:', error);
-      throw new UnauthorizedException('Invalid Google token');
+    } catch (error: any) {
+      if (error instanceof UnauthorizedException) {
+        throw error;
+      }
+      console.error('[Google Auth] Token verification failed:', error.message);
+      throw new UnauthorizedException(
+        'Failed to verify Google token. Please try again.',
+      );
     }
   }
 }

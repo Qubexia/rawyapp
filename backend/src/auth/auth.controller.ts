@@ -10,6 +10,7 @@ import {
   HttpStatus,
   UseInterceptors,
   UploadedFile,
+  BadRequestException,
 } from '@nestjs/common';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
 import {
@@ -59,7 +60,10 @@ export class AuthController {
     status: HttpStatus.CONFLICT,
     description: 'User with this email already exists',
   })
-  @ApiResponse({ status: HttpStatus.BAD_REQUEST, description: 'Validation error' })
+  @ApiResponse({
+    status: HttpStatus.BAD_REQUEST,
+    description: 'Validation error',
+  })
   async register(@Body() registerDto: RegisterDto): Promise<TokenResponseDto> {
     return this.authService.register(registerDto);
   }
@@ -80,7 +84,10 @@ export class AuthController {
     status: HttpStatus.CONFLICT,
     description: 'User with this email already exists',
   })
-  @ApiResponse({ status: HttpStatus.BAD_REQUEST, description: 'Validation error' })
+  @ApiResponse({
+    status: HttpStatus.BAD_REQUEST,
+    description: 'Validation error',
+  })
   @ApiBody({
     schema: {
       type: 'object',
@@ -110,7 +117,10 @@ export class AuthController {
     description: 'Login successful',
     type: TokenResponseDto,
   })
-  @ApiResponse({ status: HttpStatus.UNAUTHORIZED, description: 'Invalid credentials' })
+  @ApiResponse({
+    status: HttpStatus.UNAUTHORIZED,
+    description: 'Invalid credentials',
+  })
   async login(@Body() loginDto: LoginDto): Promise<TokenResponseDto> {
     return this.authService.login(loginDto);
   }
@@ -136,9 +146,18 @@ export class AuthController {
   @Patch('change-password')
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Change password (requires current password)' })
-  @ApiResponse({ status: HttpStatus.OK, description: 'Password changed successfully' })
-  @ApiResponse({ status: HttpStatus.UNAUTHORIZED, description: 'Current password is incorrect' })
-  @ApiResponse({ status: HttpStatus.BAD_REQUEST, description: 'Validation error' })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'Password changed successfully',
+  })
+  @ApiResponse({
+    status: HttpStatus.UNAUTHORIZED,
+    description: 'Current password is incorrect',
+  })
+  @ApiResponse({
+    status: HttpStatus.BAD_REQUEST,
+    description: 'Validation error',
+  })
   async changePassword(
     @CurrentUser('id') userId: string,
     @Body() dto: ChangePasswordDto,
@@ -154,20 +173,35 @@ export class AuthController {
   @Public()
   @Post('forgot-password')
   @ApiOperation({ summary: 'Request a password-reset OTP via email' })
-  @ApiResponse({ status: HttpStatus.OK, description: 'If the email exists an OTP has been sent' })
-  @ApiResponse({ status: HttpStatus.BAD_REQUEST, description: 'Validation error' })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'If the email exists an OTP has been sent',
+  })
+  @ApiResponse({
+    status: HttpStatus.BAD_REQUEST,
+    description: 'Validation error',
+  })
   async forgotPassword(
     @Body() dto: ForgotPasswordDto,
   ): Promise<{ message: string }> {
     await this.authService.forgotPassword(dto);
-    return { message: 'If an account with that email exists, a reset code has been sent' };
+    return {
+      message:
+        'If an account with that email exists, a reset code has been sent',
+    };
   }
 
   @Public()
   @Post('reset-password')
   @ApiOperation({ summary: 'Reset password using email + OTP' })
-  @ApiResponse({ status: HttpStatus.OK, description: 'Password reset successfully' })
-  @ApiResponse({ status: HttpStatus.BAD_REQUEST, description: 'Invalid or expired reset code' })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'Password reset successfully',
+  })
+  @ApiResponse({
+    status: HttpStatus.BAD_REQUEST,
+    description: 'Invalid or expired reset code',
+  })
   async resetPassword(
     @Body() dto: ResetPasswordDto,
   ): Promise<{ message: string }> {
@@ -207,10 +241,20 @@ export class AuthController {
     description: 'Login successful',
     type: TokenResponseDto,
   })
-  @ApiResponse({ status: HttpStatus.UNAUTHORIZED, description: 'Invalid Google token' })
+  @ApiResponse({
+    status: HttpStatus.UNAUTHORIZED,
+    description: 'Invalid Google token or authentication failed',
+  })
+  @ApiResponse({
+    status: HttpStatus.BAD_REQUEST,
+    description: 'Missing idToken',
+  })
   async googleAuthMobile(
     @Body('idToken') idToken: string,
   ): Promise<TokenResponseDto> {
+    if (!idToken || idToken.trim() === '') {
+      throw new BadRequestException('Google idToken is required');
+    }
     return this.authService.validateGoogleIdToken(idToken);
   }
 

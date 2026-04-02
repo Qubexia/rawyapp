@@ -15,7 +15,7 @@ import { useUpdateMe, useUpdateAvatar } from '@/hooks/queries/use-users';
 import { useAuthContext } from '@/context/auth-context';
 import { Palette, Spacing, Radius } from '@/constants/theme';
 import { pickImage } from '@/utils/image-picker';
-import { SERVER_URL } from '@/services/axios-client';
+import { resolveImageUrl } from '@/utils/url';
 
 type EditProfileFormData = { name: string };
 
@@ -59,9 +59,8 @@ export default function EditProfileScreen() {
     }
   });
 
-  const avatarSource = user.avatarUrl 
-    ? { uri: `${SERVER_URL}/${user.avatarUrl.replace(/\\/g, '/')}` } 
-    : null;
+  const avatarUri = resolveImageUrl(user.avatarUrl);
+  const avatarSource = avatarUri ? { uri: avatarUri } : null;
 
   return (
     <SafeAreaView style={[s.root, { backgroundColor: theme.colors.background }]}>
@@ -72,20 +71,22 @@ export default function EditProfileScreen() {
       </View>
       <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
         <ScrollView contentContainerStyle={{ padding: Spacing.lg }} keyboardShouldPersistTaps="handled">
-          
+
           <TouchableOpacity onPress={handlePickImage} disabled={updateAvatar.isPending} style={s.avatarContainer}>
-            <Surface style={[s.iconBox, { backgroundColor: Palette.primary[50] }]} elevation={2}>
-              {updateAvatar.isPending ? (
-                <ActivityIndicator size="small" color={theme.colors.primary} />
-              ) : avatarSource ? (
-                <Image source={avatarSource} style={s.avatarImage} />
-              ) : (
-                <User size={48} color={Palette.primary[500]} strokeWidth={1.5} />
-              )}
+            <View style={s.avatarWrapper}>
+              <View style={[s.avatarClip, { backgroundColor: Palette.primary[50] }]}>
+                {updateAvatar.isPending ? (
+                  <ActivityIndicator size="small" color={theme.colors.primary} />
+                ) : avatarSource ? (
+                  <Image source={avatarSource} style={s.avatarImage} />
+                ) : (
+                  <User size={48} color={Palette.primary[500]} strokeWidth={1.5} />
+                )}
+              </View>
               <View style={[s.cameraBadge, { backgroundColor: theme.colors.primary }]}>
                 <Camera size={14} color={Palette.white.pure} />
               </View>
-            </Surface>
+            </View>
           </TouchableOpacity>
 
           <FormInput name="name" control={control} label="Full Name" placeholder="e.g. John Doe" autoCapitalize="words" icon={<User size={20} color={theme.colors.onSurfaceVariant} />} />
@@ -105,8 +106,9 @@ const s = StyleSheet.create({
   root: { flex: 1 },
   topBar: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: Spacing.xs },
   avatarContainer: { alignSelf: 'center', marginBottom: Spacing.xl },
-  iconBox: { width: 110, height: 110, borderRadius: Radius.full, alignItems: 'center', justifyContent: 'center', overflow: 'visible' },
-  avatarImage: { width: '100%', height: '100%', borderRadius: Radius.full },
+  avatarWrapper: { width: 110, height: 110, position: 'relative' },
+  avatarClip: { width: 110, height: 110, borderRadius: Radius.full, alignItems: 'center', justifyContent: 'center', overflow: 'hidden' },
+  avatarImage: { width: '100%', height: '100%' },
   cameraBadge: { position: 'absolute', bottom: 2, right: 2, width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center', borderWidth: 3, borderColor: Palette.white.pure },
   submitBtn: { borderRadius: Radius.md, marginTop: Spacing.lg },
 });
