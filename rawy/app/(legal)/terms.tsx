@@ -93,15 +93,6 @@ export default function TermsScreen() {
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: theme.colors.background }}>
-      <View style={styles.header}>
-        <IconButton
-          icon={() => <ArrowLeft size={24} color={theme.colors.onBackground} />}
-          onPress={() => router.back()}
-        />
-        <Text variant="titleLarge" style={{ color: theme.colors.onBackground, fontWeight: '700' }}>
-          Terms & Conditions
-        </Text>
-      </View>
       <ScrollView
         style={[styles.scroll, { backgroundColor: theme.colors.background }]}
         contentContainerStyle={styles.content}
@@ -115,14 +106,8 @@ export default function TermsScreen() {
 
 const styles = StyleSheet.create({
   scroll: { flex: 1 },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: Spacing.sm,
-    paddingTop: Spacing.md,
-  },
   content: {
-    padding: Spacing.lg,
+    paddingHorizontal: Spacing.lg,
     paddingBottom: Spacing.xxl,
   },
   mainTitle: {

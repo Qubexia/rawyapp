@@ -79,7 +79,7 @@ export default function LoginPage() {
               placeholder="AdminPassword123!"
               required 
             />
-            {error && <div className="text-sm text-red-500">{error}</div>}
+            {error && <div className="text-sm text-red-500" role="alert">{error}</div>}
             <Button type="submit" className="w-full" disabled={loading}>
               {loading ? 'Signing in...' : 'Sign In'}
             </Button>

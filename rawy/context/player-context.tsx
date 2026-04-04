@@ -39,11 +39,10 @@ function disableLockScreen(player: { setActiveForLockScreen?: (active: boolean) 
       player.setActiveForLockScreen(false);
     }
   } catch { }
-}
-
-interface PlayerContextType {
+}interface PlayerContextType {
   currentEpisode: Episode | null;
   isPlaying: boolean;
+  isDismissed: boolean;
   position: number;        // milliseconds
   duration: number;        // milliseconds
   playEpisode: (episode: Episode) => Promise<void>;
@@ -64,6 +63,7 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
   const queryClient = useQueryClient();
   const [currentEpisode, setCurrentEpisode] = useState<Episode | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
+  const [isDismissed, setIsDismissed] = useState(false);
   const [position, setPosition] = useState(0);
   const [duration, setDuration] = useState(0);
   const viewedEpisodeIds = useRef(new Set<string>());
@@ -123,6 +123,7 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
 
   const playEpisode = async (episode: Episode) => {
     try {
+      setIsDismissed(false);
       if (currentEpisode?._id === episode._id) {
         if (!player.playing) {
           enableLockScreen(player, episode);
@@ -144,6 +145,7 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
       player.pause();
       setIsPlaying(false);
     } else {
+      setIsDismissed(false);
       if (currentEpisode) enableLockScreen(player, currentEpisode);
       player.play();
       setIsPlaying(true);
@@ -174,11 +176,10 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
       }
       player?.pause();
     } catch { }
-    setCurrentEpisode(null);
+    // HACK: To hide the miniplayer, set isDismissed to true
+    // DO NOT clear currentEpisode so it persists in the Home Hero
+    setIsDismissed(true);
     setIsPlaying(false);
-    setPosition(0);
-    setDuration(0);
-    prevEpisodeId.current = null;
   };
 
   return (
@@ -186,6 +187,7 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
       value={{
         currentEpisode,
         isPlaying,
+        isDismissed,
         position,
         duration,
         playEpisode,

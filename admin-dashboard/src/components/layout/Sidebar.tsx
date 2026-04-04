@@ -24,7 +24,7 @@ export function Sidebar() {
       <div className="flex h-16 items-center px-6 border-b border-gray-200">
         <h1 className="text-xl font-bold text-gray-900">Rawy Admin</h1>
       </div>
-      <nav className="flex-1 space-y-1 px-4 py-4 overflow-y-auto">
+      <nav className="flex-1 space-y-1 px-4 py-4 overflow-y-auto" aria-label="Main navigation">
         {navigation.map((item) => {
           const isActive = pathname === item.href || (item.href !== '/' && pathname.startsWith(item.href));
           return (

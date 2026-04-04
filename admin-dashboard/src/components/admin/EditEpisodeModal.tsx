@@ -4,12 +4,21 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Modal } from '@/components/ui/Modal';
 import { Input } from '@/components/ui/Input';
 import { Button } from '@/components/ui/Button';
-import { Episode, UpdateEpisodeDto } from '@/types/episode';
+import { UpdateEpisodeDto } from '@/types/episode';
+
+interface EpisodeLike {
+  _id?: string;
+  id?: string;
+  title: string;
+  description: string;
+  audioFileUrl?: string;
+  imageUrl?: string;
+}
 
 interface EditEpisodeModalProps {
   isOpen: boolean;
   onClose: () => void;
-  episode: Episode | null;
+  episode: EpisodeLike | null;
   onSave: (id: string, data: UpdateEpisodeDto, imageFile?: File | null) => Promise<void>;
 }
 
@@ -64,10 +73,12 @@ export function EditEpisodeModal({ isOpen, onClose, episode, onSave }: EditEpiso
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!episode) return;
+    const episodeId = episode.id || episode._id;
+    if (!episodeId) return;
     setLoading(true);
     try {
       await onSave(
-        episode.id,
+        episodeId,
         { title, description },
         imageFile,
       );
@@ -90,8 +101,9 @@ export function EditEpisodeModal({ isOpen, onClose, episode, onSave }: EditEpiso
         />
         
         <div className="flex flex-col space-y-1.5">
-          <label className="text-sm font-medium text-gray-700">Description</label>
+          <label htmlFor="edit-episode-description" className="text-sm font-medium text-gray-700">Description</label>
           <textarea 
+            id="edit-episode-description"
             value={description}
             onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setDescription(e.target.value)}
             required
@@ -116,13 +128,14 @@ export function EditEpisodeModal({ isOpen, onClose, episode, onSave }: EditEpiso
             <div className="relative w-28 h-28 rounded-lg overflow-hidden border border-gray-200">
               <img 
                 src={imagePreview} 
-                alt="Cover preview" 
+                alt={`${title} cover image`} 
                 className="w-full h-full object-cover"
               />
               <button
                 type="button"
                 onClick={handleRemoveImage}
                 className="absolute top-1 right-1 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs hover:bg-red-600 transition-colors"
+                aria-label="Remove cover image"
               >
                 ×
               </button>

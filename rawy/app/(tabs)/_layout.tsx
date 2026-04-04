@@ -46,7 +46,7 @@ export default function TabLayout() {
   const theme = useTheme();
   const router = useRouter();
   const { user } = useAuthContext();
-  const { currentEpisode } = usePlayer();
+  const { currentEpisode, isDismissed } = usePlayer();
   const { data: unreadData } = useUnreadCount({ enabled: !!user });
 
   const unreadCount = unreadData?.unreadCount || 0;
@@ -56,14 +56,18 @@ export default function TabLayout() {
 
   const progress = useSharedValue(0);
 
+  // Unified visibility flag for the mini-player UI components
+  const isPlayerVisible = !!currentEpisode && !isDismissed;
+
   // MiniPlayer slide-up animation
   const miniY = useSharedValue(100);
   useEffect(() => {
     miniY.value = withSpring(
-      currentEpisode ? 0 : 100,
+      isPlayerVisible ? 0 : 100,
       { damping: 18, stiffness: 200, overshootClamping: false },
     );
-  }, [currentEpisode, miniY]);
+  }, [isPlayerVisible, miniY]);
+
   const miniPlayerStyle = useAnimatedStyle(() => ({
     transform: [{ translateY: miniY.value }],
     opacity: interpolate(miniY.value, [0, 60], [1, 0]),
@@ -117,7 +121,7 @@ export default function TabLayout() {
     ],
   }));
 
-  const bottomOffset = currentEpisode
+  const bottomOffset = isPlayerVisible
     ? TAB_BAR_HEIGHT + 8 + MINI_PLAYER_HEIGHT + FAB_SIZE / 2 + 8
     : TAB_BAR_HEIGHT;
 
@@ -196,7 +200,7 @@ export default function TabLayout() {
                         {unreadCount > 9 ? '9+' : unreadCount}
                       </Text>
                     </View>
-                      )}
+                  )}
                 </View>
               ),
               tabBarAccessibilityLabel: "Profile tab",
@@ -207,7 +211,7 @@ export default function TabLayout() {
 
       {/* Floating MiniPlayer — zIndex 25, always BELOW the FAB (zIndex 999999) */}
       <Animated.View
-        pointerEvents={currentEpisode ? 'box-none' : 'none'}
+        pointerEvents={isPlayerVisible ? 'box-none' : 'none'}
         style={[styles.miniPlayerWrapper, miniPlayerStyle]}
       >
         <MiniPlayer />
@@ -272,11 +276,11 @@ export default function TabLayout() {
             style={[
               styles.fabContainer,
               { bottom: bottomOffset - FAB_SIZE / 2 },
-              currentEpisode ? styles.fabRight : styles.fabCenter,
+              isPlayerVisible ? styles.fabRight : styles.fabCenter,
             ]}
           >
-            <TouchableOpacity 
-              activeOpacity={0.85} 
+            <TouchableOpacity
+              activeOpacity={0.85}
               onPress={toggleFab}
               accessibilityLabel="Create new"
               accessibilityHint="Create a new podcast or upload an episode"
@@ -298,7 +302,6 @@ export default function TabLayout() {
     </View>
   );
 }
-
 
 const styles = StyleSheet.create({
   fabContainer: {

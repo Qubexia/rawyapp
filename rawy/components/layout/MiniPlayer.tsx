@@ -10,7 +10,7 @@ import { resolveImageUrl } from '@/utils/url';
 import { Spacing, Radius, Palette } from '@/constants/theme';
 
 export default function MiniPlayer() {
-  const { currentEpisode, isPlaying, togglePlay, position, duration, dismiss, skipForward, skipBackward } = usePlayer();
+  const { currentEpisode, isPlaying, isDismissed, togglePlay, position, duration, dismiss, skipForward, skipBackward } = usePlayer();
   const theme = useTheme();
   const router = useRouter();
   const [imgError, setImgError] = useState(false);
@@ -57,7 +57,7 @@ export default function MiniPlayer() {
     ]
   }));
 
-  if (!currentEpisode) return null;
+  if (!currentEpisode || isDismissed) return null;
 
   const coverUri = resolveImageUrl(currentEpisode.podcast.coverImageUrl);
   const progress = duration > 0 ? Math.min(position / duration, 1) : 0;

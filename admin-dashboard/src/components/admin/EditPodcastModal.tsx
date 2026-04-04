@@ -108,8 +108,9 @@ export function EditPodcastModal({ isOpen, onClose, podcast, onSave }: EditPodca
         />
         
         <div className="flex flex-col space-y-1.5">
-          <label className="text-sm font-medium text-gray-700">Description</label>
+          <label htmlFor="edit-podcast-description" className="text-sm font-medium text-gray-700">Description</label>
           <textarea 
+            id="edit-podcast-description"
             value={description}
             onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setDescription(e.target.value)}
             required
@@ -118,8 +119,9 @@ export function EditPodcastModal({ isOpen, onClose, podcast, onSave }: EditPodca
         </div>
 
         <div className="flex flex-col space-y-1.5">
-          <label className="text-sm font-medium text-gray-700">Category</label>
+          <label htmlFor="edit-podcast-category" className="text-sm font-medium text-gray-700">Category</label>
           <select 
+            id="edit-podcast-category"
             value={category} 
             onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setCategory(e.target.value as PodcastCategory)}
             className="flex h-10 w-full rounded-md border border-gray-300 bg-transparent px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -132,8 +134,9 @@ export function EditPodcastModal({ isOpen, onClose, podcast, onSave }: EditPodca
         </div>
 
         <div className="flex flex-col space-y-1.5">
-          <label className="text-sm font-medium text-gray-700">Status</label>
+          <label htmlFor="edit-podcast-status" className="text-sm font-medium text-gray-700">Status</label>
           <select 
+            id="edit-podcast-status"
             value={status} 
             onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setStatus(e.target.value as 'draft' | 'published')}
             className="flex h-10 w-full rounded-md border border-gray-300 bg-transparent px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -151,13 +154,14 @@ export function EditPodcastModal({ isOpen, onClose, podcast, onSave }: EditPodca
             <div className="relative w-32 h-32 rounded-lg overflow-hidden border border-gray-200">
               <img 
                 src={imagePreview} 
-                alt="Cover preview" 
+                alt={`${title} cover image`} 
                 className="w-full h-full object-cover"
               />
               <button
                 type="button"
                 onClick={handleRemoveImage}
                 className="absolute top-1 right-1 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs hover:bg-red-600 transition-colors"
+                aria-label="Remove cover image"
               >
                 ×
               </button>

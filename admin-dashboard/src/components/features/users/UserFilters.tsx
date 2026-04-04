@@ -18,16 +18,20 @@ export function UserFilters({ role, setRole, search, setSearch }: UserFiltersPro
         className="max-w-xs" 
         disabled
       />
-      <select 
-        value={role} 
-        onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setRole(e.target.value)}
-        className="flex h-10 w-[200px] rounded-md border border-gray-300 bg-transparent px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-      >
-        <option value="">All Roles</option>
-        <option value="USER">User</option>
-        <option value="CREATOR">Creator</option>
-        <option value="ADMIN">Admin</option>
-      </select>
+      <div className="flex flex-col space-y-1.5">
+        <label htmlFor="user-role-filter" className="sr-only">Filter by role</label>
+        <select 
+          id="user-role-filter"
+          value={role} 
+          onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setRole(e.target.value)}
+          className="flex h-10 w-full sm:w-[200px] rounded-md border border-gray-300 bg-transparent px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+        >
+          <option value="">All Roles</option>
+          <option value="USER">User</option>
+          <option value="CREATOR">Creator</option>
+          <option value="ADMIN">Admin</option>
+        </select>
+      </div>
     </div>
   );
 }

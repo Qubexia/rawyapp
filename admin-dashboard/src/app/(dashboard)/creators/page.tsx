@@ -6,7 +6,7 @@ import { CreatorTable } from '../../../components/features/creators/CreatorTable
 
 export default function CreatorsPage() {
   const [page, setPage] = useState(1);
-  const { data, isLoading, error, deleteCreator } = useCreators(page, 20);
+  const { data, isLoading, error, refetch, deleteCreator } = useCreators(page, 20);
 
   return (
     <div className="space-y-6">
@@ -14,7 +14,17 @@ export default function CreatorsPage() {
         <h1 className="text-3xl font-bold tracking-tight text-gray-900">Creators</h1>
       </div>
 
-      {error && <div className="text-red-500">Failed to load creators</div>}
+      {error && (
+        <div className="flex items-center gap-3 text-red-500" role="alert">
+          <span>Failed to load creators</span>
+          <button
+            onClick={() => refetch()}
+            className="text-sm font-medium text-red-700 underline hover:text-red-900"
+          >
+            Try again
+          </button>
+        </div>
+      )}
       
       {isLoading ? (
         <div className="animate-pulse flex flex-col space-y-4">
@@ -36,14 +46,16 @@ export default function CreatorsPage() {
               <button 
                 disabled={page === 1}
                 onClick={() => setPage(p => Math.max(1, p - 1))}
-                className="px-3 py-1 border rounded disabled:opacity-50"
+                className="px-3 py-1 border rounded disabled:opacity-50 min-h-[44px] min-w-[44px] flex items-center justify-center"
+                aria-label="Go to previous page"
               >
                 Previous
               </button>
               <button 
                 disabled={!data || page >= data.totalPages}
                 onClick={() => setPage(p => p + 1)}
-                className="px-3 py-1 border rounded disabled:opacity-50"
+                className="px-3 py-1 border rounded disabled:opacity-50 min-h-[44px] min-w-[44px] flex items-center justify-center"
+                aria-label="Go to next page"
               >
                 Next
               </button>

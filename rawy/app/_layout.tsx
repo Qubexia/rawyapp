@@ -233,18 +233,20 @@ const MINI_PLAYER_HEIGHT = 77;
 const TAB_ROUTES = ['/', '/explore', '/library', '/profile'];
 
 function GlobalMiniPlayer() {
-  const { currentEpisode } = usePlayer();
+  const { currentEpisode, isDismissed } = usePlayer();
   const insets = useSafeAreaInsets();
   const pathname = usePathname();
 
+  const isVisible = !!currentEpisode && !isDismissed;
+
   // Always call hooks unconditionally
-  const slideY = useSharedValue(currentEpisode ? 0 : 120);
+  const slideY = useSharedValue(isVisible ? 0 : 120);
   useEffect(() => {
     slideY.value = withSpring(
-      currentEpisode ? 0 : 120,
+      isVisible ? 0 : 120,
       { damping: 18, stiffness: 200, overshootClamping: false },
     );
-  }, [currentEpisode, slideY]);
+  }, [isVisible, slideY]);
 
   const animStyle = useAnimatedStyle(() => ({
     transform: [{ translateY: slideY.value }],
@@ -271,7 +273,7 @@ function GlobalMiniPlayer() {
 
   return (
     <Animated.View
-      pointerEvents={currentEpisode ? 'box-none' : 'none'}
+      pointerEvents={isVisible ? 'box-none' : 'none'}
       style={[
         {
           position: 'absolute',

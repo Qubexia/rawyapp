@@ -27,19 +27,23 @@ export function PodcastFilters({ search, setSearch, category, setCategory }: Pod
         onChange={(e: React.ChangeEvent<HTMLInputElement>) => setLocalSearch(e.target.value)} 
         className="max-w-xs" 
       />
-      <select 
-        value={category} 
-        onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setCategory(e.target.value)}
-        className="flex h-10 w-[200px] rounded-md border border-gray-300 bg-transparent px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-      >
-        <option value="">All Categories</option>
-        <option value="Education">Education</option>
-        <option value="Technology">Technology</option>
-        <option value="Health">Health</option>
-        <option value="Business">Business</option>
-        <option value="Comedy">Comedy</option>
-        <option value="Other">Other</option>
-      </select>
+      <div className="flex flex-col space-y-1.5">
+        <label htmlFor="podcast-category-filter" className="sr-only">Filter by category</label>
+        <select 
+          id="podcast-category-filter"
+          value={category} 
+          onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setCategory(e.target.value)}
+          className="flex h-10 w-full sm:w-[200px] rounded-md border border-gray-300 bg-transparent px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+        >
+          <option value="">All Categories</option>
+          <option value="Education">Education</option>
+          <option value="Technology">Technology</option>
+          <option value="Health">Health</option>
+          <option value="Business">Business</option>
+          <option value="Comedy">Comedy</option>
+          <option value="Other">Other</option>
+        </select>
+      </div>
     </div>
   );
 }

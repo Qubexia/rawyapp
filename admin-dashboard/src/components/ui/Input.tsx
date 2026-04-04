@@ -21,7 +21,7 @@ export const Input = React.forwardRef<HTMLInputElement, InputProps>(
           ref={ref}
           {...props}
         />
-        {error && <span className="text-sm text-red-500">{error}</span>}
+        {error && <span className="text-sm text-red-500" role="alert">{error}</span>}
       </div>
     );
   }

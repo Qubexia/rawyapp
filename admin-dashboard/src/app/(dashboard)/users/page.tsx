@@ -13,7 +13,7 @@ export default function UsersPage() {
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
-  const { data, isLoading, error, activateUser, deactivateUser, deleteUser, promoteUser, updateUser } = useUsers(page, 20, role || undefined);
+  const { data, isLoading, error, refetch, activateUser, deactivateUser, deleteUser, promoteUser, updateUser } = useUsers(page, 20, role || undefined);
 
   const handleEdit = (user: User) => {
     setSelectedUser(user);
@@ -41,7 +41,17 @@ export default function UsersPage() {
 
       <UserFilters role={role} setRole={setRole} search={search} setSearch={setSearch} />
 
-      {error && <div className="text-red-500">Failed to load users</div>}
+      {error && (
+        <div className="flex items-center gap-3 text-red-500" role="alert">
+          <span>Failed to load users</span>
+          <button
+            onClick={() => refetch()}
+            className="text-sm font-medium text-red-700 underline hover:text-red-900"
+          >
+            Try again
+          </button>
+        </div>
+      )}
       
       {isLoading ? (
         <div className="animate-pulse flex flex-col space-y-4">
@@ -66,14 +76,16 @@ export default function UsersPage() {
               <button 
                 disabled={page === 1}
                 onClick={() => setPage(p => Math.max(1, p - 1))}
-                className="px-3 py-1 border rounded disabled:opacity-50"
+                className="px-3 py-1 border rounded disabled:opacity-50 min-h-[44px] min-w-[44px] flex items-center justify-center"
+                aria-label="Go to previous page"
               >
                 Previous
               </button>
               <button 
                 disabled={!data || page >= data.totalPages}
                 onClick={() => setPage(p => p + 1)}
-                className="px-3 py-1 border rounded disabled:opacity-50"
+                className="px-3 py-1 border rounded disabled:opacity-50 min-h-[44px] min-w-[44px] flex items-center justify-center"
+                aria-label="Go to next page"
               >
                 Next
               </button>

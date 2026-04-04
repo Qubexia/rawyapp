@@ -86,8 +86,9 @@ export function PodcastModal({ isOpen, onClose, podcast, onSave }: PodcastModalP
         <Input label="Title" value={title} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setTitle(e.target.value)} required />
         
         <div className="flex flex-col space-y-1.5">
-          <label className="text-sm font-medium text-gray-700">Description</label>
+          <label htmlFor="podcast-description" className="text-sm font-medium text-gray-700">Description</label>
           <textarea 
+            id="podcast-description"
             value={description}
             onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setDescription(e.target.value)}
             required
@@ -96,8 +97,9 @@ export function PodcastModal({ isOpen, onClose, podcast, onSave }: PodcastModalP
         </div>
 
         <div className="flex flex-col space-y-1.5">
-          <label className="text-sm font-medium text-gray-700">Category</label>
+          <label htmlFor="podcast-category" className="text-sm font-medium text-gray-700">Category</label>
           <select 
+            id="podcast-category"
             value={category} 
             onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setCategory(e.target.value as PodcastCategory | '')}
             className="flex h-10 w-full rounded-md border border-gray-300 bg-transparent px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -129,6 +131,7 @@ export function PodcastModal({ isOpen, onClose, podcast, onSave }: PodcastModalP
                 type="button"
                 onClick={handleRemoveImage}
                 className="absolute top-1 right-1 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs hover:bg-red-600 transition-colors"
+                aria-label="Remove cover image"
               >
                 ×
               </button>

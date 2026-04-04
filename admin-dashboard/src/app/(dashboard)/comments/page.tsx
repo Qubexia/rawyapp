@@ -3,18 +3,19 @@
 import React, { useState } from 'react';
 import { useComments } from '../../../hooks/useComments';
 import { CommentTable } from '../../../components/features/comments/CommentTable';
+import { DeleteConfirmDialog } from '../../../components/admin/DeleteConfirmDialog';
 import { Input } from '../../../components/ui/Input';
 
 export default function CommentsPage() {
   const [page, setPage] = useState(1);
   const [episodeId, setEpisodeId] = useState('');
+  const [commentToDelete, setCommentToDelete] = useState<string | null>(null);
 
-  const { data, isLoading, error, deleteComment } = useComments(page, 20, episodeId || undefined);
+  const { data, isLoading, error, refetch, deleteComment } = useComments(page, 20, episodeId || undefined);
 
   const handleDelete = async (id: string) => {
-    if (confirm("Are you sure you want to delete this comment? This will also remove any nested replies!")) {
-      await deleteComment(id);
-    }
+    await deleteComment(id);
+    setCommentToDelete(null);
   };
 
   return (
@@ -31,11 +32,21 @@ export default function CommentsPage() {
             setEpisodeId(e.target.value);
             setPage(1); // reset to page 1 on filter
           }} 
-          className="max-w-[300px]" 
+          className="w-full sm:max-w-[300px]" 
         />
       </div>
 
-      {error && <div className="text-red-500">Failed to load comments</div>}
+      {error && (
+        <div className="flex items-center gap-3 text-red-500" role="alert">
+          <span>Failed to load comments</span>
+          <button
+            onClick={() => refetch()}
+            className="text-sm font-medium text-red-700 underline hover:text-red-900"
+          >
+            Try again
+          </button>
+        </div>
+      )}
       
       {isLoading ? (
         <div className="animate-pulse flex flex-col space-y-4">
@@ -47,7 +58,7 @@ export default function CommentsPage() {
         <>
           <CommentTable 
             comments={data?.data || []} 
-            onDelete={handleDelete}
+            onDelete={(id) => setCommentToDelete(id)}
           />
           <div className="flex justify-between items-center mt-4">
             <span className="text-sm text-gray-600">
@@ -57,14 +68,16 @@ export default function CommentsPage() {
               <button 
                 disabled={page === 1}
                 onClick={() => setPage(p => Math.max(1, p - 1))}
-                className="px-3 py-1 border rounded disabled:opacity-50"
+                className="px-3 py-1 border rounded disabled:opacity-50 min-h-[44px] min-w-[44px] flex items-center justify-center"
+                aria-label="Go to previous page"
               >
                 Previous
               </button>
               <button 
                 disabled={!data || page >= data.totalPages}
                 onClick={() => setPage(p => p + 1)}
-                className="px-3 py-1 border rounded disabled:opacity-50"
+                className="px-3 py-1 border rounded disabled:opacity-50 min-h-[44px] min-w-[44px] flex items-center justify-center"
+                aria-label="Go to next page"
               >
                 Next
               </button>
@@ -72,6 +85,14 @@ export default function CommentsPage() {
           </div>
         </>
       )}
+
+      <DeleteConfirmDialog
+        isOpen={commentToDelete !== null}
+        onClose={() => setCommentToDelete(null)}
+        onConfirm={() => commentToDelete && handleDelete(commentToDelete)}
+        title="Delete Comment"
+        message="Are you sure you want to delete this comment? This will also remove any nested replies. This action cannot be undone."
+      />
     </div>
   );
 }

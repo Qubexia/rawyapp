@@ -1,7 +1,12 @@
-import React from 'react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../../ui/Table';
 import { Button } from '../../ui/Button';
 import { Comment } from '../../../hooks/useComments';
+
+const dateFormatter = new Intl.DateTimeFormat('en-US', {
+  year: 'numeric',
+  month: 'short',
+  day: 'numeric',
+});
 
 interface CommentTableProps {
   comments: Comment[];
@@ -23,16 +28,16 @@ export function CommentTable({ comments, onDelete }: CommentTableProps) {
       <TableBody>
         {comments.map((comment) => (
           <TableRow key={comment._id}>
-            <TableCell className="font-medium whitespace-nowrap overflow-hidden text-ellipsis max-w-[150px]">
+            <TableCell className="font-medium max-w-[150px] truncate" title={comment.user?.name || 'Unknown User'}>
               {comment.user?.name || 'Unknown User'}
             </TableCell>
-            <TableCell className="text-gray-500 text-sm whitespace-nowrap overflow-hidden text-ellipsis max-w-[150px]">
+            <TableCell className="text-gray-500 text-sm max-w-[150px] truncate" title={comment.episode?.title || 'Unknown Episode'}>
               {comment.episode?.title || 'Unknown Episode'}
             </TableCell>
-            <TableCell className="text-gray-600 text-sm italic max-w-xs break-words">
-              {comment.text.length > 80 ? `${comment.text.substring(0, 80)}...` : comment.text}
+            <TableCell className="text-gray-600 text-sm italic max-w-[300px] truncate" title={comment.text}>
+              {comment.text}
             </TableCell>
-            <TableCell className="text-sm">{new Date(comment.createdAt).toLocaleDateString()}</TableCell>
+            <TableCell className="text-sm">{dateFormatter.format(new Date(comment.createdAt))}</TableCell>
             <TableCell className="text-right space-x-2">
               <Button variant="ghost" size="sm" className="text-red-600" onClick={() => onDelete(comment._id)}>Delete</Button>
             </TableCell>

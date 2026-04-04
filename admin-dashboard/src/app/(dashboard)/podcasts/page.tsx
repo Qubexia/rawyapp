@@ -5,6 +5,7 @@ import { usePodcasts, Podcast } from '../../../hooks/usePodcasts';
 import { PodcastTable } from '../../../components/features/podcasts/PodcastTable';
 import { PodcastFilters } from '../../../components/features/podcasts/PodcastFilters';
 import { PodcastModal } from '../../../components/features/podcasts/PodcastModal';
+import { DeleteConfirmDialog } from '../../../components/admin/DeleteConfirmDialog';
 import { adminPodcastService } from '../../../services/adminPodcastService';
 import { UpdatePodcastDto } from '../../../types/podcast';
 
@@ -14,6 +15,7 @@ export default function PodcastsPage() {
   const [category, setCategory] = useState('');
   const [selectedPodcast, setSelectedPodcast] = useState<Podcast | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [podcastToDelete, setPodcastToDelete] = useState<string | null>(null);
 
   const { data, isLoading, error, refetch, deletePodcast } = usePodcasts(page, 20, search || undefined, category || undefined);
 
@@ -40,9 +42,8 @@ export default function PodcastsPage() {
   };
 
   const handleDelete = async (id: string) => {
-    if (confirm("Are you sure you want to delete this podcast?")) {
-      await deletePodcast(id);
-    }
+    await deletePodcast(id);
+    setPodcastToDelete(null);
   };
 
   return (
@@ -53,7 +54,17 @@ export default function PodcastsPage() {
 
       <PodcastFilters search={search} setSearch={setSearch} category={category} setCategory={setCategory} />
 
-      {error && <div className="text-red-500">Failed to load podcasts</div>}
+      {error && (
+        <div className="flex items-center gap-3 text-red-500" role="alert">
+          <span>Failed to load podcasts</span>
+          <button
+            onClick={() => refetch()}
+            className="text-sm font-medium text-red-700 underline hover:text-red-900"
+          >
+            Try again
+          </button>
+        </div>
+      )}
       
       {isLoading ? (
         <div className="animate-pulse flex flex-col space-y-4">
@@ -66,7 +77,7 @@ export default function PodcastsPage() {
           <PodcastTable 
             podcasts={data?.data || []} 
             onEdit={handleEdit}
-            onDelete={handleDelete}
+            onDelete={(id) => setPodcastToDelete(id)}
           />
           <div className="flex justify-between items-center mt-4">
             <span className="text-sm text-gray-600">
@@ -76,14 +87,16 @@ export default function PodcastsPage() {
               <button 
                 disabled={page === 1}
                 onClick={() => setPage(p => Math.max(1, p - 1))}
-                className="px-3 py-1 border rounded disabled:opacity-50"
+                className="px-3 py-1 border rounded disabled:opacity-50 min-h-[44px] min-w-[44px] flex items-center justify-center"
+                aria-label="Go to previous page"
               >
                 Previous
               </button>
               <button 
                 disabled={!data || page >= data.totalPages}
                 onClick={() => setPage(p => p + 1)}
-                className="px-3 py-1 border rounded disabled:opacity-50"
+                className="px-3 py-1 border rounded disabled:opacity-50 min-h-[44px] min-w-[44px] flex items-center justify-center"
+                aria-label="Go to next page"
               >
                 Next
               </button>
@@ -97,6 +110,14 @@ export default function PodcastsPage() {
         onClose={handleCloseModal} 
         podcast={selectedPodcast} 
         onSave={handleSavePodcast}
+      />
+
+      <DeleteConfirmDialog
+        isOpen={podcastToDelete !== null}
+        onClose={() => setPodcastToDelete(null)}
+        onConfirm={() => podcastToDelete && handleDelete(podcastToDelete)}
+        title="Delete Podcast"
+        message="Are you sure you want to delete this podcast? This will also delete all episodes and cannot be undone."
       />
     </div>
   );

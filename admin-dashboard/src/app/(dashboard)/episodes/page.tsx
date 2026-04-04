@@ -6,6 +6,7 @@ import { useEpisodes, Episode } from '../../../hooks/useEpisodes';
 import { usePodcasts } from '../../../hooks/usePodcasts';
 import { EpisodeTable } from '../../../components/features/episodes/EpisodeTable';
 import { EditEpisodeModal } from '../../../components/admin/EditEpisodeModal';
+import { DeleteConfirmDialog } from '../../../components/admin/DeleteConfirmDialog';
 import { Input } from '../../../components/ui/Input';
 import { Button } from '../../../components/ui/Button';
 import { adminEpisodeService } from '../../../services/adminEpisodeService';
@@ -19,6 +20,7 @@ export default function EpisodesPage() {
   const [selectedEpisode, setSelectedEpisode] = useState<Episode | null>(null);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [showPodcastPicker, setShowPodcastPicker] = useState(false);
+  const [episodeToDelete, setEpisodeToDelete] = useState<string | null>(null);
 
   const { data, isLoading, error, refetch, deleteEpisode } = useEpisodes(page, 20, podcastId || undefined, creatorId || undefined);
   const { data: podcastsData } = usePodcasts(1, 100);
@@ -43,9 +45,8 @@ export default function EpisodesPage() {
   };
 
   const handleDelete = async (id: string) => {
-    if (confirm("Are you sure you want to delete this episode? Everything inside it will be cascaded.")) {
-      await deleteEpisode(id);
-    }
+    await deleteEpisode(id);
+    setEpisodeToDelete(null);
   };
 
   const handleCreateEpisode = (podcastId: string) => {
@@ -104,7 +105,17 @@ export default function EpisodesPage() {
         />
       </div>
 
-      {error && <div className="text-red-500">Failed to load episodes</div>}
+      {error && (
+        <div className="flex items-center gap-3 text-red-500" role="alert">
+          <span>Failed to load episodes</span>
+          <button
+            onClick={() => refetch()}
+            className="text-sm font-medium text-red-700 underline hover:text-red-900"
+          >
+            Try again
+          </button>
+        </div>
+      )}
       
       {isLoading ? (
         <div className="animate-pulse flex flex-col space-y-4">
@@ -117,7 +128,7 @@ export default function EpisodesPage() {
           <EpisodeTable 
             episodes={data?.data || []} 
             onEdit={handleEdit}
-            onDelete={handleDelete}
+            onDelete={(id) => setEpisodeToDelete(id)}
           />
           <div className="flex justify-between items-center mt-4">
             <span className="text-sm text-gray-600">
@@ -127,14 +138,16 @@ export default function EpisodesPage() {
               <button 
                 disabled={page === 1}
                 onClick={() => setPage(p => Math.max(1, p - 1))}
-                className="px-3 py-1 border rounded disabled:opacity-50"
+                className="px-3 py-1 border rounded disabled:opacity-50 min-h-[44px] min-w-[44px] flex items-center justify-center"
+                aria-label="Go to previous page"
               >
                 Previous
               </button>
               <button 
                 disabled={!data || page >= data.totalPages}
                 onClick={() => setPage(p => p + 1)}
-                className="px-3 py-1 border rounded disabled:opacity-50"
+                className="px-3 py-1 border rounded disabled:opacity-50 min-h-[44px] min-w-[44px] flex items-center justify-center"
+                aria-label="Go to next page"
               >
                 Next
               </button>
@@ -146,8 +159,16 @@ export default function EpisodesPage() {
       <EditEpisodeModal
         isOpen={isEditModalOpen}
         onClose={handleCloseEditModal}
-        episode={selectedEpisode as any}
+        episode={selectedEpisode}
         onSave={handleSaveEpisode}
+      />
+
+      <DeleteConfirmDialog
+        isOpen={episodeToDelete !== null}
+        onClose={() => setEpisodeToDelete(null)}
+        onConfirm={() => episodeToDelete && handleDelete(episodeToDelete)}
+        title="Delete Episode"
+        message="Are you sure you want to delete this episode? This will also delete all likes, comments, and views. This action cannot be undone."
       />
     </div>
   );

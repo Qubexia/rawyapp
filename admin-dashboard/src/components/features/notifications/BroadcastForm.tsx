@@ -71,10 +71,11 @@ export function BroadcastForm() {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label htmlFor="broadcast-target" className="block text-sm font-medium text-gray-700 mb-1">
               Target Audience
             </label>
             <select
+              id="broadcast-target"
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
               value={targetRole}
               onChange={(e) => setTargetRole(e.target.value)}

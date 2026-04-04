@@ -18,6 +18,7 @@
  */
 
 import { AppState, AppStateStatus } from 'react-native';
+import { AudioModule, requestRecordingPermissionsAsync, AudioQuality, type RecordingOptions } from 'expo-audio';
 
 // ─── Constants ───────────────────────────────────────────────────────────────
 
@@ -65,13 +66,18 @@ export interface RecordingSession {
  * expo-audio recording options for M4A output.
  * These are passed to useAudioRecorder or Recording.createAsync.
  */
-export const RECORDING_OPTIONS = {
+export const RECORDING_OPTIONS: Partial<RecordingOptions> = {
   extension: '.m4a',
-  outputFormat: 'aac',        // AAC codec
-  audioEncoder: 'aac',
   sampleRate: 44100,
   numberOfChannels: 2,
   bitRate: 128000,
+  android: {
+    outputFormat: 'mpeg4',
+    audioEncoder: 'aac',
+  },
+  ios: {
+    audioQuality: AudioQuality.HIGH,
+  },
 };
 
 // ─── Session Factory ─────────────────────────────────────────────────────────
@@ -154,21 +160,18 @@ export function createRecordingSession(): RecordingSession {
     }
 
     try {
-      const ExpoAudio = require('expo-audio');
-
-      // Request microphone permission
-      const permissionResponse = await ExpoAudio.requestRecordingPermission();
+      // Request microphone permission - exact name from expo-audio 1.1
+      const permissionResponse = await requestRecordingPermissionsAsync();
       if (!permissionResponse.granted) {
         throw new Error('Microphone permission was denied');
       }
 
       // Create and start recording
-      recorder = new ExpoAudio.AudioRecorder({
-        ...RECORDING_OPTIONS,
-      });
+      // In expo-audio 1.1, AudioRecorder is obtained through AudioModule.
+      recorder = new AudioModule.AudioRecorder(RECORDING_OPTIONS);
 
       await recorder.prepareToRecordAsync();
-      await recorder.startAsync();
+      recorder.record();
 
       accumulatedDuration = 0;
       emitStatus('recording');
@@ -176,8 +179,7 @@ export function createRecordingSession(): RecordingSession {
       startDurationTimer();
       setupAppStateListener();
     } catch (err) {
-      // If expo-audio fails at module level, try the fallback approach
-      console.warn('[audio-recording] Primary recording approach failed, trying fallback:', err);
+      console.error('[audio-recording] Primary recording approach failed:', err);
       throw err;
     }
   }
@@ -187,7 +189,8 @@ export function createRecordingSession(): RecordingSession {
 
     try {
       if (recorder) {
-        await recorder.pauseAsync?.();
+        // pause() is sync in expo-audio 1.1
+        recorder.pause();
       }
     } catch (err) {
       console.warn('[audio-recording] pause error:', err);
@@ -202,7 +205,8 @@ export function createRecordingSession(): RecordingSession {
 
     try {
       if (recorder) {
-        await recorder.startAsync?.();
+        // record() is used to resume or start in expo-audio 1.1
+        recorder.record();
       }
     } catch (err) {
       console.warn('[audio-recording] resume error:', err);
@@ -225,8 +229,9 @@ export function createRecordingSession(): RecordingSession {
 
     try {
       if (recorder) {
-        await recorder.stopAsync?.();
-        uri = recorder.uri || recorder.getURI?.() || '';
+        // stop() is async in expo-audio 1.1
+        await recorder.stop();
+        uri = recorder.uri || '';
       }
     } catch (err) {
       console.warn('[audio-recording] stop error:', err);
