@@ -118,7 +118,6 @@ const AVATAR_SIZE = 72;
 const styles = StyleSheet.create({
   card: {
     width: 140,
-    maxWidth: '35%',
     alignItems: "center",
     paddingHorizontal: Spacing.md,
     paddingTop: Spacing.md,

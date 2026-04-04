@@ -56,6 +56,9 @@ export default function PodcastDetailScreen() {
     data: episodesData,
     isLoading: episodesLoading,
     refetch: refetchEpisodes,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
   } = useEpisodes(id);
   const { data: followStatus, refetch: refetchFollowStatus } = useFollowStatus(
     podcast?.creator?._id || '',
@@ -112,7 +115,7 @@ export default function PodcastDetailScreen() {
   }
 
   const renderEpisode = ({ item }: { item: Episode }) => (
-    <View style={{ marginBottom: Spacing.sm }}>
+    <View style={{ marginBottom: Spacing.sm, paddingHorizontal: Spacing.md }}>
       <EpisodeRow
         episode={item}
         showPodcastName={false}
@@ -349,10 +352,10 @@ export default function PodcastDetailScreen() {
       {/* Dynamic Background Blur */}
       {podcast?.coverImageUrl && (
         <View style={StyleSheet.absoluteFill} pointerEvents="none">
-          <Image 
-            source={{ uri: resolveImageUrl(podcast.coverImageUrl) }} 
-            style={StyleSheet.absoluteFill} 
-            blurRadius={80} 
+          <Image
+            source={{ uri: resolveImageUrl(podcast.coverImageUrl) }}
+            style={StyleSheet.absoluteFill}
+            blurRadius={80}
           />
           <View style={[
             StyleSheet.absoluteFill,
@@ -390,12 +393,25 @@ export default function PodcastDetailScreen() {
         ListHeaderComponent={ListHeader}
         contentContainerStyle={styles.listContent}
         showsVerticalScrollIndicator={false}
+        onEndReached={() => {
+          if (hasNextPage && !isFetchingNextPage) {
+            fetchNextPage();
+          }
+        }}
+        onEndReachedThreshold={0.5}
         refreshControl={
           <RefreshControl
             refreshing={refreshing}
             onRefresh={onRefresh}
             tintColor={theme.colors.primary}
           />
+        }
+        ListFooterComponent={() =>
+          isFetchingNextPage ? (
+            <View style={{ paddingVertical: Spacing.md, alignItems: 'center' }}>
+              <ActivityIndicator size="small" color={theme.colors.primary} />
+            </View>
+          ) : null
         }
         ListEmptyComponent={() =>
           !episodesLoading ? (

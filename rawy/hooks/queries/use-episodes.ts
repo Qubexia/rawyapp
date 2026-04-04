@@ -12,6 +12,7 @@ import {
   deleteEpisode,
 } from '../../services/episodes.service';
 import { creatorKeys } from './use-creators';
+import { podcastKeys } from './use-podcasts';
 import { useAuthContext } from '@/context/auth-context';
 
 export const episodeKeys = {
@@ -62,9 +63,13 @@ export function useCreateEpisode() {
       imageFile?: { uri: string; name: string; type: string } | null;
       onUploadProgress?: (progressEvent: any) => void;
     }) => createEpisode(data, audioFile, imageFile, onUploadProgress),
-    onSuccess: () => {
+    onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: episodeKeys.lists() });
       queryClient.invalidateQueries({ queryKey: creatorKeys.me() });
+      if (variables.data.podcastId) {
+        queryClient.invalidateQueries({ queryKey: podcastKeys.detail(variables.data.podcastId) });
+      }
+      queryClient.invalidateQueries({ queryKey: podcastKeys.lists() });
     },
   });
 }
@@ -88,9 +93,13 @@ export function useRecordEpisode() {
       imageFile?: { uri: string; name: string; type: string } | null;
       onUploadProgress?: (progressEvent: any) => void;
     }) => createRecordingEpisode(data, recordingUri, imageFile, onUploadProgress),
-    onSuccess: () => {
+    onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: episodeKeys.lists() });
       queryClient.invalidateQueries({ queryKey: creatorKeys.me() });
+      if (variables.data.podcastId) {
+        queryClient.invalidateQueries({ queryKey: podcastKeys.detail(variables.data.podcastId) });
+      }
+      queryClient.invalidateQueries({ queryKey: podcastKeys.lists() });
     },
   });
 }
@@ -121,6 +130,7 @@ export function useDeleteEpisode() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: episodeKeys.lists() });
       queryClient.invalidateQueries({ queryKey: creatorKeys.me() });
+      queryClient.invalidateQueries({ queryKey: podcastKeys.all });
     },
   });
 }

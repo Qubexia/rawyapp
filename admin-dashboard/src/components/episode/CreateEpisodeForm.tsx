@@ -58,6 +58,17 @@ export function CreateEpisodeForm({ podcastId, podcastTitle, onSubmit, onCancel 
       if (!title.trim()) {
         setTitle(extractTitleFromFilename(file.name));
       }
+      
+      // Extract duration
+      const url = URL.createObjectURL(file);
+      const audio = new Audio(url);
+      audio.onloadedmetadata = () => {
+        setDuration(Math.round(audio.duration).toString());
+        URL.revokeObjectURL(url);
+      };
+      audio.onerror = () => {
+        URL.revokeObjectURL(url);
+      };
     }
   };
 
@@ -210,7 +221,7 @@ export function CreateEpisodeForm({ podcastId, podcastTitle, onSubmit, onCancel 
         type="number"
         value={duration}
         onChange={(e: React.ChangeEvent<HTMLInputElement>) => setDuration(e.target.value)}
-        placeholder="Optional: duration in seconds"
+        placeholder="Auto-calculated from audio file"
       />
 
       {/* Cover Image Upload */}

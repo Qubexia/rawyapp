@@ -129,6 +129,10 @@ export class EpisodesService {
     };
   }
 
+  async countByPodcastId(podcastId: Types.ObjectId): Promise<number> {
+    return this.episodeModel.countDocuments({ podcastId }).exec();
+  }
+
   /**
    * Find an episode by ID
    */
@@ -209,7 +213,9 @@ export class EpisodesService {
     }
 
     // Decrement Podcast.episodeCount
-    // TODO: Use PodcastsService.decrementEpisodeCount when circular dependency is resolved
+    if (this.podcastsService) {
+      await this.podcastsService.decrementEpisodeCount(episode.podcastId);
+    }
 
     await this.episodeModel.findByIdAndDelete(id).exec();
   }

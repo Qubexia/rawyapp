@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, ForbiddenException, BadRequestException, Inject, forwardRef } from '@nestjs/common';
+import { Injectable, NotFoundException, ForbiddenException, BadRequestException, Inject, forwardRef, OnModuleInit } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { Podcast, PodcastDocument } from './schemas/podcast.schema';
@@ -11,13 +11,34 @@ import { CreatorsService } from '../creators/creators.service';
 import { EpisodesService } from '../episodes/episodes.service';
 
 @Injectable()
-export class PodcastsService {
+export class PodcastsService implements OnModuleInit {
   constructor(
     @InjectModel(Podcast.name) private podcastModel: Model<PodcastDocument>,
     private creatorsService: CreatorsService,
     @Inject(forwardRef(() => EpisodesService))
     private episodesService: EpisodesService,
   ) {}
+
+  async onModuleInit() {
+    // Perform a one-time sync of episode counts when the module starts
+    // This fixes counts that went out of sync before the decrement logic was added
+    console.log('Syncing all podcast episode counts...');
+    await this.syncAllEpisodeCounts();
+    console.log('Podcast episode count sync complete.');
+  }
+
+  async syncAllEpisodeCounts() {
+    const podcasts = await this.podcastModel.find({}).exec();
+    for (const podcast of podcasts) {
+      const realCount = await this.episodesService.countByPodcastId(podcast._id as Types.ObjectId);
+      if (podcast.episodeCount !== realCount) {
+        await this.podcastModel.updateOne(
+          { _id: podcast._id },
+          { $set: { episodeCount: realCount } }
+        ).exec();
+      }
+    }
+  }
 
   /**
    * Create a new podcast
