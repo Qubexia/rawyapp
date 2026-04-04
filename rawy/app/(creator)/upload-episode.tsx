@@ -25,7 +25,7 @@ import {
 import { useRouter } from "expo-router";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { ArrowLeft, Upload, Music, ChevronDown, Sparkles, CheckCircle2, FileAudio } from "lucide-react-native";
+import { ArrowLeft, Upload, Music, ChevronDown, Sparkles, CheckCircle2, FileAudio, Mic } from "lucide-react-native";
 import { FormInput } from "@/components/ui";
 import {
   createEpisodeSchema,
@@ -81,7 +81,7 @@ export default function UploadEpisodeScreen() {
   const [durationExtractionFailed, setDurationExtractionFailed] =
     React.useState(false);
 
-  const { data: creator } = useMyCreatorProfile({
+  const { data: creator } = useMyCreatorProfile(user?._id, {
     enabled: !!user && isCreator(user),
   });
   const { data: podcastsData } = usePodcasts({ creatorId: creator?._id }, {
@@ -268,88 +268,132 @@ export default function UploadEpisodeScreen() {
               <Text style={{ color: Palette.white.pure, fontWeight: '800', fontSize: 13 }}>1</Text>
             </View>
             <Text variant="titleSmall" style={{ color: theme.colors.onBackground, fontWeight: '700' }}>
-              Choose Audio File
+              Provide Audio
             </Text>
           </View>
-          <TouchableOpacity
-            onPress={pickAudio}
-            activeOpacity={0.8}
-            disabled={isUploading}
-          >
-            <Surface
-              style={[
-                s.uploadArea,
-                {
-                  backgroundColor: audioFile ? Palette.primary[50] : Palette.light.surfaceVariant,
-                  borderColor: audioFile ? theme.colors.primary : Palette.light.border,
-                  borderStyle: audioFile ? 'solid' : 'dashed',
-                  opacity: isUploading ? 0.7 : 1,
-                },
-              ]}
-              elevation={0}
+
+          <View style={s.audioOptionsRow}>
+            {/* Record Audio Button */}
+            <TouchableOpacity
+              onPress={() => router.push("/(creator)/record-episode" as any)}
+              activeOpacity={0.8}
+              disabled={isUploading}
+              style={{ flex: 1 }}
             >
-              {audioFile ? (
-                <>
-                  <View style={[s.audioIconBox, { backgroundColor: theme.colors.primary }]}>
-                    <FileAudio size={28} color={Palette.white.pure} />
-                  </View>
-                  <Text
-                    variant="bodyMedium"
-                    style={{
-                      color: theme.colors.primary,
-                      marginTop: Spacing.sm,
-                      fontWeight: '700',
-                      textAlign: 'center',
-                    }}
-                  >
-                    {audioFile.name}
-                  </Text>
-                  <Text
-                    variant="labelSmall"
-                    style={{ color: theme.colors.onSurfaceVariant, marginTop: 4 }}
-                  >
-                    {audioFile.size ? (audioFile.size / (1024 * 1024)).toFixed(2) : 0} MB
-                    {extractedDurationSec != null && <> · {formatDuration(extractedDurationSec)}</>}
-                  </Text>
-                  {durationExtractionFailed && (
+              <Surface
+                style={[
+                  s.uploadArea,
+                  {
+                    backgroundColor: Palette.light.surfaceVariant,
+                    borderColor: Palette.light.border,
+                    borderStyle: 'solid',
+                    opacity: isUploading ? 0.7 : 1,
+                    padding: Spacing.md,
+                    minHeight: 140,
+                  },
+                ]}
+                elevation={0}
+              >
+                <View style={[s.audioIconBox, { backgroundColor: '#EF4444' }]}>
+                  <Mic size={24} color={Palette.white.pure} />
+                </View>
+                <Text
+                  variant="bodyMedium"
+                  style={{ color: theme.colors.onSurface, marginTop: Spacing.sm, fontWeight: '600', textAlign: 'center' }}
+                >
+                  Record Audio
+                </Text>
+                <Text
+                  variant="labelSmall"
+                  style={{ color: theme.colors.onSurfaceVariant, marginTop: 4, textAlign: 'center' }}
+                >
+                  In-app studio
+                </Text>
+              </Surface>
+            </TouchableOpacity>
+
+            {/* Choose File Button */}
+            <TouchableOpacity
+              onPress={pickAudio}
+              activeOpacity={0.8}
+              disabled={isUploading}
+              style={{ flex: 1 }}
+            >
+              <Surface
+                style={[
+                  s.uploadArea,
+                  {
+                    backgroundColor: audioFile ? Palette.primary[50] : Palette.light.surfaceVariant,
+                    borderColor: audioFile ? theme.colors.primary : Palette.light.border,
+                    borderStyle: audioFile ? 'solid' : 'dashed',
+                    opacity: isUploading ? 0.7 : 1,
+                    padding: Spacing.md,
+                    minHeight: 140,
+                  },
+                ]}
+                elevation={0}
+              >
+                {audioFile ? (
+                  <>
+                    <View style={[s.audioIconBox, { backgroundColor: theme.colors.primary, width: 48, height: 48 }]}>
+                      <FileAudio size={24} color={Palette.white.pure} />
+                    </View>
+                    <Text
+                      variant="bodyMedium"
+                      numberOfLines={2}
+                      style={{
+                        color: theme.colors.primary,
+                        marginTop: Spacing.sm,
+                        fontWeight: '700',
+                        textAlign: 'center',
+                        fontSize: 12,
+                      }}
+                    >
+                      {audioFile.name}
+                    </Text>
                     <Text
                       variant="labelSmall"
-                      style={{ color: theme.colors.onSurfaceVariant, marginTop: 4, fontStyle: 'italic' }}
+                      style={{ color: theme.colors.primary, marginTop: 4, fontWeight: '600' }}
                     >
-                      Could not extract duration. Duration will be omitted.
+                      Tap to change
                     </Text>
-                  )}
-                  <Text variant="labelSmall" style={{ color: theme.colors.primary, marginTop: Spacing.sm, fontWeight: '600' }}>
-                    Tap to change
-                  </Text>
-                </>
-              ) : (
-                <>
-                  <View style={[s.audioIconBox, { backgroundColor: Palette.primary[100] }]}>
-                    <Upload size={28} color={Palette.primary[500]} />
-                  </View>
-                  <Text
-                    variant="bodyMedium"
-                    style={{ color: theme.colors.onSurface, marginTop: Spacing.sm, fontWeight: '600' }}
-                  >
-                    Tap to select audio file
-                  </Text>
-                  <Text
-                    variant="labelSmall"
-                    style={{ color: theme.colors.onSurfaceVariant, marginTop: 4 }}
-                  >
-                    MP3, M4A, WAV, OGG, FLAC
-                  </Text>
-                  <View style={[s.autoFillHint, { backgroundColor: Palette.primary[50], borderColor: Palette.primary[200] }]}>
-                    <Sparkles size={13} color={Palette.primary[500]} />
-                    <Text variant="labelSmall" style={{ color: Palette.primary[600], marginLeft: 6, fontWeight: '600', flex: 1 }}>
-                      Episode title will be filled automatically from the file metadata
+                  </>
+                ) : (
+                  <>
+                    <View style={[s.audioIconBox, { backgroundColor: Palette.primary[100] }]}>
+                      <Upload size={24} color={Palette.primary[500]} />
+                    </View>
+                    <Text
+                      variant="bodyMedium"
+                      style={{ color: theme.colors.onSurface, marginTop: Spacing.sm, fontWeight: '600', textAlign: 'center' }}
+                    >
+                      Upload File
                     </Text>
-                  </View>
-                </>
-              )}
-            </Surface>
-          </TouchableOpacity>
+                    <Text
+                      variant="labelSmall"
+                      style={{ color: theme.colors.onSurfaceVariant, marginTop: 4, textAlign: 'center' }}
+                    >
+                      MP3, M4A...
+                    </Text>
+                  </>
+                )}
+              </Surface>
+            </TouchableOpacity>
+          </View>
+
+          {/* Expanded file info if selected */}
+          {audioFile && (
+            <View style={{ marginBottom: Spacing.md, paddingHorizontal: Spacing.sm }}>
+               <Text
+                 variant="labelSmall"
+                 style={{ color: theme.colors.onSurfaceVariant }}
+               >
+                 Size: {audioFile.size ? (audioFile.size / (1024 * 1024)).toFixed(2) : 0} MB
+                 {extractedDurationSec != null && <> · Duration: {formatDuration(extractedDurationSec)}</>}
+                 {durationExtractionFailed && " · (Duration unknown)"}
+               </Text>
+            </View>
+          )}
 
           {/* ── Step 2: Episode Info ── */}
           <View style={[s.stepHeader, { marginTop: Spacing.lg }]}>
@@ -451,7 +495,7 @@ export default function UploadEpisodeScreen() {
               </View>
             ) : !audioFile ? (
               <Text variant="labelSmall" style={[s.hintText, { color: theme.colors.onSurfaceVariant }]}>
-                ✨ Title will be filled automatically after selecting the audio file
+                Title will be filled automatically after selecting the audio file
               </Text>
             ) : null}
           </View>
@@ -630,6 +674,11 @@ const s = StyleSheet.create({
     alignItems: "center",
     justifyContent: "space-between",
     padding: 14,
+  },
+  audioOptionsRow: {
+    flexDirection: 'row',
+    gap: Spacing.md,
+    marginBottom: Spacing.sm,
   },
   uploadArea: {
     borderWidth: 1.5,

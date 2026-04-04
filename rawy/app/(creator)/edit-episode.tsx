@@ -9,7 +9,7 @@ import { Text, Button, IconButton, Surface, useTheme, ActivityIndicator } from '
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { ArrowLeft, Play, Save } from 'lucide-react-native';
+import { ArrowLeft, Play, Save, Mic, Info } from 'lucide-react-native';
 import { z } from 'zod';
 
 import { FormInput } from '@/components/ui';
@@ -102,6 +102,34 @@ export default function EditEpisodeScreen() {
             )}
           </Surface>
 
+          {/* Audio Info Section */}
+          <View style={s.audioSection}>
+            <View style={s.audioHeader}>
+              <Text variant="titleSmall" style={{ color: theme.colors.onBackground, fontWeight: '700' }}>
+                Audio Source
+              </Text>
+              <Info size={16} color={theme.colors.onSurfaceVariant} />
+            </View>
+            <Surface style={[s.audioCard, { backgroundColor: theme.colors.surfaceVariant }]} elevation={0}>
+              <Play size={20} color={theme.colors.onSurface} style={{ marginRight: Spacing.sm }} />
+              <Text variant="bodyMedium" style={{ flex: 1, color: theme.colors.onSurface }}>
+                 {episode?.title || 'Episode Audio'}
+              </Text>
+            </Surface>
+            <Text variant="labelSmall" style={{ color: theme.colors.onSurfaceVariant, marginTop: Spacing.xs }}>
+              Audio files cannot be altered after publishing.
+            </Text>
+            <Button 
+              mode="outlined" 
+              onPress={() => Alert.alert('Re-record Episode', 'To replace the audio, please delete this episode and record a new one.')}
+              style={{ marginTop: Spacing.sm, borderColor: theme.colors.primary }}
+              textColor={theme.colors.primary}
+              icon={() => <Mic size={16} color={theme.colors.primary} />}
+            >
+              Re-record Episode
+            </Button>
+          </View>
+
           <FormInput name="title" control={control} label="Episode Title" autoCapitalize="words" icon={<Play size={20} color={theme.colors.onSurfaceVariant} />} />
           <FormInput name="description" control={control} label="Description" multiline numberOfLines={4} />
 
@@ -122,4 +150,7 @@ const s = StyleSheet.create({
   topBar: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: Spacing.xs },
   iconBox: { width: 96, height: 96, borderRadius: Radius.xl, alignItems: 'center', justifyContent: 'center', alignSelf: 'center', marginBottom: Spacing.lg },
   submitBtn: { borderRadius: Radius.md, marginTop: Spacing.lg },
+  audioSection: { marginBottom: Spacing.lg },
+  audioHeader: { flexDirection: 'row', alignItems: 'center', gap: Spacing.xs, marginBottom: Spacing.sm },
+  audioCard: { flexDirection: 'row', alignItems: 'center', padding: Spacing.md, borderRadius: Radius.md },
 });

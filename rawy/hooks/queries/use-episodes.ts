@@ -7,6 +7,7 @@ import {
   getEpisodes,
   getEpisode,
   createEpisode,
+  createRecordingEpisode,
   updateEpisode,
   deleteEpisode,
 } from '../../services/episodes.service';
@@ -61,6 +62,32 @@ export function useCreateEpisode() {
       imageFile?: { uri: string; name: string; type: string } | null;
       onUploadProgress?: (progressEvent: any) => void;
     }) => createEpisode(data, audioFile, imageFile, onUploadProgress),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: episodeKeys.lists() });
+      queryClient.invalidateQueries({ queryKey: creatorKeys.me() });
+    },
+  });
+}
+
+export function useRecordEpisode() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({
+      data,
+      recordingUri,
+      imageFile,
+      onUploadProgress,
+    }: {
+      data: {
+        title: string;
+        description?: string;
+        podcastId: string;
+        duration?: number;
+      };
+      recordingUri: string;
+      imageFile?: { uri: string; name: string; type: string } | null;
+      onUploadProgress?: (progressEvent: any) => void;
+    }) => createRecordingEpisode(data, recordingUri, imageFile, onUploadProgress),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: episodeKeys.lists() });
       queryClient.invalidateQueries({ queryKey: creatorKeys.me() });

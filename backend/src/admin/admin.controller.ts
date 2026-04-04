@@ -8,19 +8,27 @@ import {
   Query,
   Body,
   UseGuards,
+  UseInterceptors,
+  UploadedFiles,
+  BadRequestException,
 } from '@nestjs/common';
 import {
   ApiTags,
   ApiOperation,
   ApiResponse,
   ApiBearerAuth,
+  ApiConsumes,
+  ApiBody,
 } from '@nestjs/swagger';
+import { FileFieldsInterceptor } from '@nestjs/platform-express';
+import { diskStorage } from 'multer';
 import { AdminService } from './admin.service';
 import { AdminQueryDto } from './dto/admin-query.dto';
 import { PromoteUserDto } from './dto/promote-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { UpdateCreatorDto } from './dto/update-creator.dto';
 import { UpdatePodcastDto } from '../podcasts/dto/update-podcast.dto';
+import { CreateEpisodeDto } from '../episodes/dto/create-episode.dto';
 import { UpdateEpisodeDto } from '../episodes/dto/update-episode.dto';
 import { BroadcastNotificationDto } from './dto/broadcast-notification.dto';
 import { Roles } from '../common/decorators/roles.decorator';
@@ -28,6 +36,12 @@ import { Role } from '../common/constants/roles.enum';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
 import { ApiCommonErrorResponses } from '../common/decorators/api-error-responses.decorator';
+import {
+  generateFileName,
+  audioFileFilter,
+  imageFileFilter,
+  getRelativeUrl,
+} from '../common/utils/file-upload.util';
 
 @ApiTags('admin')
 @ApiBearerAuth()
@@ -170,13 +184,53 @@ export class AdminController {
   }
 
   @Patch('podcasts/:podcastId')
-  @ApiOperation({ summary: 'Update a podcast' })
+  @ApiOperation({ summary: 'Update a podcast (supports cover image upload)' })
   @ApiResponse({ status: 200, description: 'Podcast updated' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   @ApiResponse({ status: 403, description: 'Forbidden' })
   @ApiResponse({ status: 404, description: 'Podcast not found' })
-  updatePodcast(@Param('podcastId') podcastId: string, @Body() dto: UpdatePodcastDto) {
-    return this.adminService.updatePodcast(podcastId, dto);
+  @ApiConsumes('multipart/form-data', 'application/json')
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        title: { type: 'string', example: 'Updated Podcast Title' },
+        description: { type: 'string', example: 'Updated description' },
+        category: { type: 'string', example: 'Technology' },
+        status: { type: 'string', example: 'published' },
+        imageFile: { type: 'string', format: 'binary' },
+      },
+    },
+  })
+  @UseInterceptors(
+    FileFieldsInterceptor(
+      [
+        { name: 'imageFile', maxCount: 1 },
+      ],
+      {
+        storage: diskStorage({
+          destination: './uploads/images',
+          filename: generateFileName,
+        }),
+        fileFilter: imageFileFilter,
+        limits: { fileSize: 500 * 1024 * 1024 },
+      },
+    ),
+  )
+  async updatePodcast(
+    @Param('podcastId') podcastId: string,
+    @Body() dto: UpdatePodcastDto,
+    @UploadedFiles() files: { imageFile?: Express.Multer.File[] },
+  ) {
+    const imageFile = files?.imageFile?.[0];
+    const coverImageUrl = imageFile ? getRelativeUrl(imageFile.path) : undefined;
+
+    const podcast = await this.adminService.updatePodcast(podcastId, dto, coverImageUrl);
+
+    return {
+      statusCode: 200,
+      data: podcast,
+    };
   }
 
   @Delete('podcasts/:podcastId')
@@ -198,6 +252,84 @@ export class AdminController {
     return this.adminService.listEpisodes(query);
   }
 
+  @Post('episodes')
+  @ApiOperation({ summary: 'Create an episode for any podcast (admin)' })
+  @ApiResponse({ status: 201, description: 'Episode created' })
+  @ApiResponse({ status: 400, description: 'Bad request - missing audio file or invalid data' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @ApiResponse({ status: 403, description: 'Forbidden' })
+  @ApiResponse({ status: 404, description: 'Podcast not found' })
+  @ApiConsumes('multipart/form-data')
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        title: { type: 'string', example: 'Introduction to AI' },
+        description: {
+          type: 'string',
+          example: 'In this episode, we explore the basics of artificial intelligence',
+        },
+        podcastId: { type: 'string', example: '507f1f77bcf86cd799439011' },
+        duration: { type: 'number', example: 1800 },
+        audioFile: { type: 'string', format: 'binary' },
+        imageFile: { type: 'string', format: 'binary' },
+      },
+    },
+  })
+  @UseInterceptors(
+    FileFieldsInterceptor(
+      [
+        { name: 'audioFile', maxCount: 1 },
+        { name: 'imageFile', maxCount: 1 },
+      ],
+      {
+        storage: diskStorage({
+          destination: (req, file, cb) => {
+            if (file.fieldname === 'audioFile') {
+              cb(null, './uploads/audio');
+            } else {
+              cb(null, './uploads/images');
+            }
+          },
+          filename: generateFileName,
+        }),
+        fileFilter: (req, file, cb) => {
+          if (file.fieldname === 'audioFile') {
+            audioFileFilter(req, file, cb);
+          } else {
+            imageFileFilter(req, file, cb);
+          }
+        },
+        limits: { fileSize: 500 * 1024 * 1024 },
+      },
+    ),
+  )
+  async createEpisode(
+    @Body() createEpisodeDto: CreateEpisodeDto,
+    @UploadedFiles() files: { audioFile?: Express.Multer.File[]; imageFile?: Express.Multer.File[] },
+  ) {
+    const audioFile = files?.audioFile?.[0];
+    const imageFile = files?.imageFile?.[0];
+
+    if (!audioFile) {
+      throw new BadRequestException('Audio file is required');
+    }
+
+    const audioFileUrl = getRelativeUrl(audioFile.path);
+    const imageUrl = imageFile ? getRelativeUrl(imageFile.path) : undefined;
+
+    const episode = await this.adminService.createEpisode(
+      createEpisodeDto,
+      audioFileUrl,
+      imageUrl,
+    );
+
+    return {
+      statusCode: 201,
+      data: episode,
+    };
+  }
+
   @Get('episodes/:episodeId')
   @ApiOperation({ summary: 'Get episode details' })
   @ApiResponse({ status: 200, description: 'Episode data' })
@@ -209,13 +341,55 @@ export class AdminController {
   }
 
   @Patch('episodes/:episodeId')
-  @ApiOperation({ summary: 'Update an episode' })
+  @ApiOperation({ summary: 'Update episode metadata (no audio replacement)' })
   @ApiResponse({ status: 200, description: 'Episode updated' })
+  @ApiResponse({ status: 400, description: 'Bad request - audio file change not allowed' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   @ApiResponse({ status: 403, description: 'Forbidden' })
   @ApiResponse({ status: 404, description: 'Episode not found' })
-  updateEpisode(@Param('episodeId') episodeId: string, @Body() dto: UpdateEpisodeDto) {
-    return this.adminService.updateEpisode(episodeId, dto);
+  @ApiConsumes('multipart/form-data', 'application/json')
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        title: { type: 'string', example: 'Updated Episode Title' },
+        description: {
+          type: 'string',
+          example: 'Updated episode description text',
+        },
+        imageFile: { type: 'string', format: 'binary' },
+      },
+    },
+  })
+  @UseInterceptors(
+    FileFieldsInterceptor(
+      [
+        { name: 'imageFile', maxCount: 1 },
+      ],
+      {
+        storage: diskStorage({
+          destination: './uploads/images',
+          filename: generateFileName,
+        }),
+        fileFilter: imageFileFilter,
+        limits: { fileSize: 500 * 1024 * 1024 },
+      },
+    ),
+  )
+  async updateEpisode(
+    @Param('episodeId') episodeId: string,
+    @Body() dto: UpdateEpisodeDto,
+    @UploadedFiles() files: { imageFile?: Express.Multer.File[] },
+  ) {
+    const imageFile = files?.imageFile?.[0];
+    const imageUrl = imageFile ? getRelativeUrl(imageFile.path) : undefined;
+
+    const episode = await this.adminService.updateEpisode(episodeId, dto, imageUrl);
+
+    return {
+      statusCode: 200,
+      data: episode,
+    };
   }
 
   @Delete('episodes/:episodeId')

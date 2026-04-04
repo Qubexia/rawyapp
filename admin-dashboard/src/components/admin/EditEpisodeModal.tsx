@@ -1,46 +1,76 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Modal } from '@/components/ui/Modal';
 import { Input } from '@/components/ui/Input';
 import { Button } from '@/components/ui/Button';
-import { Episode } from '@/types/episode';
+import { Episode, UpdateEpisodeDto } from '@/types/episode';
 
 interface EditEpisodeModalProps {
   isOpen: boolean;
   onClose: () => void;
   episode: Episode | null;
-  onSave: (id: string, data: Partial<Episode>) => Promise<void>;
+  onSave: (id: string, data: UpdateEpisodeDto, imageFile?: File | null) => Promise<void>;
 }
 
 export function EditEpisodeModal({ isOpen, onClose, episode, onSave }: EditEpisodeModalProps) {
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
-  const [duration, setDuration] = useState('');
   const [loading, setLoading] = useState(false);
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (episode) {
       setTitle(episode.title);
       setDescription(episode.description);
-      setDuration(episode.duration?.toString() || '');
+      setImageFile(null);
+      // Show existing cover image as preview
+      if (episode.imageUrl) {
+        const baseUrl = process.env.NEXT_PUBLIC_API_URL?.replace('/api/v1', '') || 'http://localhost:3000';
+        setImagePreview(`${baseUrl}/${episode.imageUrl}`);
+      } else {
+        setImagePreview(null);
+      }
     } else {
       setTitle('');
       setDescription('');
-      setDuration('');
+      setImageFile(null);
+      setImagePreview(null);
     }
   }, [episode]);
+
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setImageFile(file);
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setImagePreview(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleRemoveImage = () => {
+    setImageFile(null);
+    setImagePreview(null);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!episode) return;
     setLoading(true);
     try {
-      await onSave(episode.id, {
-        title,
-        description,
-        duration: duration ? parseInt(duration, 10) : undefined,
-      });
+      await onSave(
+        episode.id,
+        { title, description },
+        imageFile,
+      );
       onClose();
     } catch (err) {
       console.error(err);
@@ -69,13 +99,45 @@ export function EditEpisodeModal({ isOpen, onClose, episode, onSave }: EditEpiso
           />
         </div>
 
-        <Input
-          label="Duration (seconds)"
-          type="number"
-          value={duration}
-          onChange={(e: React.ChangeEvent<HTMLInputElement>) => setDuration(e.target.value)}
-          placeholder="Duration in seconds"
-        />
+        {/* Audio file info (read-only) */}
+        {episode?.audioFileUrl && (
+          <div className="bg-gray-50 rounded-lg p-3 border border-gray-200">
+            <p className="text-xs text-gray-500 uppercase tracking-wider">Audio File</p>
+            <p className="text-sm text-gray-700 mt-0.5 truncate">{episode.audioFileUrl}</p>
+            <p className="text-xs text-gray-400 mt-1">Audio cannot be changed after creation</p>
+          </div>
+        )}
+
+        {/* Cover Image Upload */}
+        <div className="flex flex-col space-y-1.5">
+          <label className="text-sm font-medium text-gray-700">Cover Image</label>
+          
+          {imagePreview && (
+            <div className="relative w-28 h-28 rounded-lg overflow-hidden border border-gray-200">
+              <img 
+                src={imagePreview} 
+                alt="Cover preview" 
+                className="w-full h-full object-cover"
+              />
+              <button
+                type="button"
+                onClick={handleRemoveImage}
+                className="absolute top-1 right-1 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs hover:bg-red-600 transition-colors"
+              >
+                ×
+              </button>
+            </div>
+          )}
+
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/jpeg,image/jpg,image/png,image/webp"
+            onChange={handleImageChange}
+            className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 cursor-pointer"
+          />
+          <p className="text-xs text-gray-400">Accepts JPEG, PNG, WebP. Max 100MB.</p>
+        </div>
 
         <div className="flex justify-end gap-2 pt-4 border-t">
           <Button type="button" variant="ghost" onClick={onClose}>Cancel</Button>

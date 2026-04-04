@@ -22,7 +22,32 @@ export const adminPodcastService = {
     return response.data;
   },
 
+  /**
+   * Update podcast metadata with optional cover image file upload.
+   * Sends multipart/form-data when an imageFile is provided.
+   */
+  async updateWithImage(
+    id: string,
+    data: UpdatePodcastDto,
+    imageFile?: File | null,
+  ): Promise<Podcast> {
+    const formData = new FormData();
+    if (data.title) formData.append('title', data.title);
+    if (data.description) formData.append('description', data.description);
+    if (data.category) formData.append('category', data.category);
+    if (data.status) formData.append('status', data.status);
+    if (imageFile) {
+      formData.append('imageFile', imageFile);
+    }
+
+    const response = await apiClient.patch<Podcast>(`/admin/podcasts/${id}`, formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
+    return response.data;
+  },
+
   async delete(id: string): Promise<void> {
     await apiClient.delete(`/admin/podcasts/${id}`);
   },
 };
+

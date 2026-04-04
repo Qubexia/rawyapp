@@ -5,10 +5,11 @@ import { Episode } from '../../../hooks/useEpisodes';
 
 interface EpisodeTableProps {
   episodes: Episode[];
+  onEdit?: (episode: Episode) => void;
   onDelete: (episodeId: string) => void;
 }
 
-export function EpisodeTable({ episodes, onDelete }: EpisodeTableProps) {
+export function EpisodeTable({ episodes, onEdit, onDelete }: EpisodeTableProps) {
   return (
     <Table>
       <TableHeader>
@@ -34,6 +35,9 @@ export function EpisodeTable({ episodes, onDelete }: EpisodeTableProps) {
             </TableCell>
             <TableCell>{new Date(episode.createdAt).toLocaleDateString()}</TableCell>
             <TableCell className="text-right space-x-2">
+              {onEdit && (
+                <Button variant="ghost" size="sm" onClick={() => onEdit(episode)}>Edit</Button>
+              )}
               <Button variant="ghost" size="sm" className="text-red-600" onClick={() => onDelete(episode._id)}>Delete</Button>
             </TableCell>
           </TableRow>

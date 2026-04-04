@@ -89,6 +89,40 @@ export async function createEpisode(
   return data;
 }
 
+/**
+ * Create an episode from an in-app recording.
+ * Converts the local recording URI into a FormData-compatible blob
+ * and calls the same POST /episodes endpoint used by file-pick uploads.
+ *
+ * @param payload  Episode metadata (title, description, podcastId, duration).
+ * @param recordingUri  Local file URI from expo-audio (e.g. file:///…/recording.m4a).
+ * @param imageFile  Optional cover image picked by the creator.
+ * @param onUploadProgress  Optional Axios progress callback.
+ */
+export async function createRecordingEpisode(
+  payload: {
+    title: string;
+    description?: string;
+    podcastId: string;
+    duration?: number;
+  },
+  recordingUri: string,
+  imageFile?: { uri: string; name: string; type: string } | null,
+  onUploadProgress?: (progressEvent: any) => void,
+): Promise<Episode> {
+  // Derive a filename from the URI; default to .m4a (expo-audio default output)
+  const uriParts = recordingUri.split('/');
+  const fileName = uriParts[uriParts.length - 1] || 'recording.m4a';
+
+  const audioFile = {
+    uri: recordingUri,
+    name: fileName,
+    type: 'audio/mp4', // M4A MIME type
+  };
+
+  return createEpisode(payload, audioFile, imageFile, onUploadProgress);
+}
+
 export async function updateEpisode(
   id: string,
   payload: { title?: string; description?: string },

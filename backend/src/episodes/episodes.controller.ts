@@ -104,7 +104,7 @@ export class EpisodesController {
             imageFileFilter(req, file, cb);
           }
         },
-        limits: { fileSize: 100 * 1024 * 1024 },
+        limits: { fileSize: 500 * 1024 * 1024 },
       },
     ),
   )

@@ -2,6 +2,7 @@ import {
   Injectable,
   NotFoundException,
   BadRequestException,
+  Logger,
 } from '@nestjs/common';
 import { Types } from 'mongoose';
 import { UsersService } from '../users/users.service';
@@ -11,6 +12,8 @@ import { EpisodesService } from '../episodes/episodes.service';
 import { CommentsService } from '../comments/comments.service';
 import { NotificationsService } from '../notifications/notifications.service';
 import { AdminQueryDto } from './dto/admin-query.dto';
+import { CreateEpisodeDto } from '../episodes/dto/create-episode.dto';
+import { UpdateEpisodeDto } from '../episodes/dto/update-episode.dto';
 import { Role } from '../common/constants/roles.enum';
 import { PaginatedResponseDto } from '../common/dto/paginated-response.dto';
 import { UserDocument } from '../users/schemas/user.schema';
@@ -18,6 +21,8 @@ import { NotificationDocument } from '../notifications/schemas/notification.sche
 
 @Injectable()
 export class AdminService {
+  private readonly logger = new Logger(AdminService.name);
+
   constructor(
     private usersService: UsersService,
     private creatorsService: CreatorsService,
@@ -125,13 +130,13 @@ export class AdminService {
     return this.podcastsService.findById(podcastId);
   }
 
-  async updatePodcast(podcastId: string, dto: any) {
+  async updatePodcast(podcastId: string, dto: any, coverImageUrl?: string) {
     const podcast = await this.podcastsService.findById(podcastId);
     let creatorId = podcast.creator;
     if (podcast.creator && podcast.creator._id) {
         creatorId = podcast.creator._id;
     }
-    return this.podcastsService.update(podcastId, dto, creatorId, 'ADMIN');
+    return this.podcastsService.update(podcastId, dto, creatorId, 'ADMIN', coverImageUrl);
   }
 
   async removePodcast(podcastId: string): Promise<void> {
@@ -155,8 +160,62 @@ export class AdminService {
     return this.episodesService.findById(episodeId);
   }
 
-  async updateEpisode(episodeId: string, dto: any) {
-    return this.episodesService.update(episodeId, dto, new Types.ObjectId(), 'ADMIN');
+  /**
+   * Create an episode for any podcast, attributed to the podcast's original creator.
+   * Used by admin dashboard to add episodes on behalf of creators.
+   */
+  async createEpisode(
+    createEpisodeDto: CreateEpisodeDto,
+    audioFileUrl: string,
+    imageUrl?: string,
+  ) {
+    // Resolve the podcast to get the original creator
+    const podcast = await this.podcastsService.findById(createEpisodeDto.podcastId);
+    if (!podcast) {
+      throw new NotFoundException('Podcast not found');
+    }
+
+    // Auto-fill title from filename if not provided
+    if (!createEpisodeDto.title || createEpisodeDto.title.trim() === '') {
+      throw new BadRequestException('Episode title is required');
+    }
+
+    // Get creator ID from the podcast — podcast.creator is the populated user object
+    const creatorId = podcast.creator?._id;
+    if (!creatorId) {
+      throw new BadRequestException('Podcast has no associated creator');
+    }
+
+    const episode = await this.episodesService.create(
+      new Types.ObjectId(creatorId),
+      createEpisodeDto,
+      audioFileUrl,
+      imageUrl,
+    );
+
+    this.logger.log(`Admin created episode ${(episode as any)._id || episode.title} for podcast ${createEpisodeDto.podcastId}`);
+    
+    return episode;
+  }
+
+  /**
+   * Update episode metadata (title, description, imageUrl).
+   * Does NOT allow audioFileUrl changes.
+   */
+  async updateEpisode(episodeId: string, dto: UpdateEpisodeDto, imageUrl?: string) {
+    // Guard: reject any attempt to change audioFileUrl
+    if ((dto as any).audioFileUrl !== undefined) {
+      throw new BadRequestException('Audio file cannot be changed after creation');
+    }
+
+    // If a new image was uploaded, set imageUrl in the DTO
+    if (imageUrl) {
+      dto.imageUrl = imageUrl;
+    }
+
+    const updated = await this.episodesService.update(episodeId, dto, new Types.ObjectId(), 'ADMIN');
+    this.logger.log(`Admin updated episode ${episodeId} metadata`);
+    return updated;
   }
 
   async removeEpisode(episodeId: string): Promise<void> {

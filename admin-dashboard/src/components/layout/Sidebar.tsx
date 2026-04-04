@@ -11,7 +11,6 @@ const navigation = [
   { name: 'Podcasts', href: '/podcasts', icon: Podcast },
   { name: 'Episodes', href: '/episodes', icon: Radio },
   { name: 'Comments', href: '/comments', icon: MessageSquare },
-  { name: 'My Podcasts', href: '/creator-podcasts', icon: Podcast },
   { name: 'Analytics', href: '/analytics', icon: BarChart },
   { name: 'Notifications', href: '/notifications', icon: Bell },
   { name: 'System', href: '/system', icon: Settings },

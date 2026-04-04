@@ -5,6 +5,7 @@ import {
   MinLength,
   MaxLength,
   IsOptional,
+  IsUrl,
 } from 'class-validator';
 
 export class UpdateEpisodeDto {
@@ -35,4 +36,13 @@ export class UpdateEpisodeDto {
   @MinLength(10, { message: 'Description must be at least 10 characters long' })
   @MaxLength(5000, { message: 'Description must not exceed 5000 characters' })
   description?: string;
+
+  @ApiProperty({
+    description: 'Episode cover image URL (relative path)',
+    example: 'uploads/images/uuid-cover.jpg',
+    required: false,
+  })
+  @IsString()
+  @IsOptional()
+  imageUrl?: string;
 }

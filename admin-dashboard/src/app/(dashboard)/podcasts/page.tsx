@@ -5,6 +5,8 @@ import { usePodcasts, Podcast } from '../../../hooks/usePodcasts';
 import { PodcastTable } from '../../../components/features/podcasts/PodcastTable';
 import { PodcastFilters } from '../../../components/features/podcasts/PodcastFilters';
 import { PodcastModal } from '../../../components/features/podcasts/PodcastModal';
+import { adminPodcastService } from '../../../services/adminPodcastService';
+import { UpdatePodcastDto } from '../../../types/podcast';
 
 export default function PodcastsPage() {
   const [page, setPage] = useState(1);
@@ -13,7 +15,7 @@ export default function PodcastsPage() {
   const [selectedPodcast, setSelectedPodcast] = useState<Podcast | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
-  const { data, isLoading, error, updatePodcast, deletePodcast } = usePodcasts(page, 20, search || undefined, category || undefined);
+  const { data, isLoading, error, refetch, deletePodcast } = usePodcasts(page, 20, search || undefined, category || undefined);
 
   const handleEdit = (podcast: Podcast) => {
     setSelectedPodcast(podcast);
@@ -25,8 +27,16 @@ export default function PodcastsPage() {
     setIsModalOpen(false);
   };
 
-  const handleSavePodcast = async (id: string, updateData: Partial<Podcast>) => {
-    await updatePodcast({ podcastId: id, data: updateData });
+  const handleSavePodcast = async (id: string, updateData: UpdatePodcastDto, imageFile?: File | null) => {
+    if (imageFile) {
+      // Use multipart/form-data upload when image file is provided
+      await adminPodcastService.updateWithImage(id, updateData, imageFile);
+    } else {
+      // Use regular JSON PATCH for metadata-only changes
+      await adminPodcastService.update(id, updateData);
+    }
+    // Refetch the podcasts list to reflect the changes
+    refetch();
   };
 
   const handleDelete = async (id: string) => {
