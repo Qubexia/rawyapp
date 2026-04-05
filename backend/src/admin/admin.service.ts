@@ -123,7 +123,13 @@ export class AdminService {
     const limit = dto.limit ?? 20;
     const search = (dto as any).search;
     const category = (dto as any).category;
-    return this.podcastsService.findAll(page, limit, undefined, search, category);
+    return this.podcastsService.findAll(
+      page,
+      limit,
+      undefined,
+      search,
+      category,
+    );
   }
 
   async getPodcastById(podcastId: string) {
@@ -134,9 +140,15 @@ export class AdminService {
     const podcast = await this.podcastsService.findById(podcastId);
     let creatorId = podcast.creator;
     if (podcast.creator && podcast.creator._id) {
-        creatorId = podcast.creator._id;
+      creatorId = podcast.creator._id;
     }
-    return this.podcastsService.update(podcastId, dto, creatorId, 'ADMIN', coverImageUrl);
+    return this.podcastsService.update(
+      podcastId,
+      dto,
+      creatorId,
+      'ADMIN',
+      coverImageUrl,
+    );
   }
 
   async removePodcast(podcastId: string): Promise<void> {
@@ -170,7 +182,9 @@ export class AdminService {
     imageUrl?: string,
   ) {
     // Resolve the podcast to get the original creator
-    const podcast = await this.podcastsService.findById(createEpisodeDto.podcastId);
+    const podcast = await this.podcastsService.findById(
+      createEpisodeDto.podcastId,
+    );
     if (!podcast) {
       throw new NotFoundException('Podcast not found');
     }
@@ -193,8 +207,10 @@ export class AdminService {
       imageUrl,
     );
 
-    this.logger.log(`Admin created episode ${(episode as any)._id || episode.title} for podcast ${createEpisodeDto.podcastId}`);
-    
+    this.logger.log(
+      `Admin created episode ${(episode as any)._id || episode.title} for podcast ${createEpisodeDto.podcastId}`,
+    );
+
     return episode;
   }
 
@@ -202,10 +218,16 @@ export class AdminService {
    * Update episode metadata (title, description, imageUrl).
    * Does NOT allow audioFileUrl changes.
    */
-  async updateEpisode(episodeId: string, dto: UpdateEpisodeDto, imageUrl?: string) {
+  async updateEpisode(
+    episodeId: string,
+    dto: UpdateEpisodeDto,
+    imageUrl?: string,
+  ) {
     // Guard: reject any attempt to change audioFileUrl
     if ((dto as any).audioFileUrl !== undefined) {
-      throw new BadRequestException('Audio file cannot be changed after creation');
+      throw new BadRequestException(
+        'Audio file cannot be changed after creation',
+      );
     }
 
     // If a new image was uploaded, set imageUrl in the DTO
@@ -213,7 +235,12 @@ export class AdminService {
       dto.imageUrl = imageUrl;
     }
 
-    const updated = await this.episodesService.update(episodeId, dto, new Types.ObjectId(), 'ADMIN');
+    const updated = await this.episodesService.update(
+      episodeId,
+      dto,
+      new Types.ObjectId(),
+      'ADMIN',
+    );
     this.logger.log(`Admin updated episode ${episodeId} metadata`);
     return updated;
   }
@@ -235,10 +262,12 @@ export class AdminService {
   }
 
   async getCommentById(commentId: string) {
-    const comment = await this.commentsService.findById(new Types.ObjectId(commentId));
+    const comment = await this.commentsService.findById(
+      new Types.ObjectId(commentId),
+    );
     await comment.populate('userId', 'name avatarUrl');
     await comment.populate('episodeId', 'title');
-    const { userId: user, episodeId: episode, ...rest } = comment.toObject() as any;
+    const { userId: user, episodeId: episode, ...rest } = comment.toObject();
     return { ...rest, user, episode };
   }
 
@@ -259,12 +288,14 @@ export class AdminService {
     podcasts: number;
     episodes: number;
   }> {
-    const [usersRes, creatorsRes, podcastsRes, episodesRes] = await Promise.all([
-      this.usersService.findAllPaginated(1, 1),
-      this.creatorsService.listCreators(1, 1),
-      this.podcastsService.findAll(1, 1),
-      this.episodesService.findAll(1, 1),
-    ]);
+    const [usersRes, creatorsRes, podcastsRes, episodesRes] = await Promise.all(
+      [
+        this.usersService.findAllPaginated(1, 1),
+        this.creatorsService.listCreators(1, 1),
+        this.podcastsService.findAll(1, 1),
+        this.episodesService.findAll(1, 1),
+      ],
+    );
     return {
       users: usersRes.total,
       creators: creatorsRes.total,
@@ -301,35 +332,40 @@ export class AdminService {
   async listBroadcastNotifications(dto: AdminQueryDto) {
     const page = dto.page ?? 1;
     const limit = dto.limit ?? 20;
-    const notifications = await this.notificationsService.findAll(page, limit, 'admin');
+    const notifications = await this.notificationsService.findAll(
+      page,
+      limit,
+      'admin',
+    );
     return notifications;
   }
 
   async broadcastNotification(dto: any, targetRole?: Role) {
     const { title, body } = dto;
-    
+
     let userIds: Types.ObjectId[] = [];
-    
+
     if (targetRole) {
       const users = await this.usersService.findByRole(targetRole);
-      userIds = users.map(u => u._id as Types.ObjectId);
+      userIds = users.map((u) => u._id);
     } else {
       const result = await this.usersService.findAllPaginated(1, 1000);
-      userIds = result.data.map(u => u._id as Types.ObjectId);
+      userIds = result.data.map((u) => u._id);
     }
 
     const results: NotificationDocument[] = [];
     for (const userId of userIds) {
       try {
-        const notification = await this.notificationsService.createOrAggregateNotification(
-          userId,
-          'admin_broadcast',
-          new Types.ObjectId(),
-          new Types.ObjectId(),
-          'User',
-          undefined,
-          body,
-        );
+        const notification =
+          await this.notificationsService.createOrAggregateNotification(
+            userId,
+            'admin_broadcast',
+            new Types.ObjectId(),
+            new Types.ObjectId(),
+            'User',
+            undefined,
+            body,
+          );
         results.push(notification);
       } catch (error) {
         console.error(`Failed to send notification to ${userId}:`, error);

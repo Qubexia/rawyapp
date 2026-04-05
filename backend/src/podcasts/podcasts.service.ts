@@ -1,4 +1,12 @@
-import { Injectable, NotFoundException, ForbiddenException, BadRequestException, Inject, forwardRef, OnModuleInit } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  ForbiddenException,
+  BadRequestException,
+  Inject,
+  forwardRef,
+  OnModuleInit,
+} from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { Podcast, PodcastDocument } from './schemas/podcast.schema';
@@ -9,6 +17,10 @@ import { unlink } from 'fs/promises';
 import { join } from 'path';
 import { CreatorsService } from '../creators/creators.service';
 import { EpisodesService } from '../episodes/episodes.service';
+import { AppleApiService } from './services/apple-api.service';
+import { SyncService } from '../sync/services/sync.service';
+import { UsersService } from '../users/users.service';
+import { Role } from '../common/constants/roles.enum';
 
 @Injectable()
 export class PodcastsService implements OnModuleInit {
@@ -17,6 +29,12 @@ export class PodcastsService implements OnModuleInit {
     private creatorsService: CreatorsService,
     @Inject(forwardRef(() => EpisodesService))
     private episodesService: EpisodesService,
+    @Inject(forwardRef(() => AppleApiService))
+    private appleApiService: AppleApiService,
+    @Inject(forwardRef(() => SyncService))
+    private syncService: SyncService,
+    @Inject(forwardRef(() => UsersService))
+    private usersService: UsersService,
   ) {}
 
   async onModuleInit() {
@@ -30,12 +48,16 @@ export class PodcastsService implements OnModuleInit {
   async syncAllEpisodeCounts() {
     const podcasts = await this.podcastModel.find({}).exec();
     for (const podcast of podcasts) {
-      const realCount = await this.episodesService.countByPodcastId(podcast._id as Types.ObjectId);
+      const realCount = await this.episodesService.countByPodcastId(
+        podcast._id,
+      );
       if (podcast.episodeCount !== realCount) {
-        await this.podcastModel.updateOne(
-          { _id: podcast._id },
-          { $set: { episodeCount: realCount } }
-        ).exec();
+        await this.podcastModel
+          .updateOne(
+            { _id: podcast._id },
+            { $set: { episodeCount: realCount } },
+          )
+          .exec();
       }
     }
   }
@@ -56,6 +78,10 @@ export class PodcastsService implements OnModuleInit {
     });
 
     const savedPodcast = await podcast.save();
+
+    console.log(
+      `[PodcastsService] Created internal podcast: ${savedPodcast._id} by creator ${creatorId}`,
+    );
 
     // Increment CreatorProfile.podcastCount
     await this.creatorsService.incrementPodcastCount(creatorId);
@@ -134,6 +160,47 @@ export class PodcastsService implements OnModuleInit {
   }
 
   /**
+   * Find an external podcast by appleId, auto-importing if missing
+   */
+  async findOrImportApplePodcast(appleId: string): Promise<any> {
+    // 1. Check if we already imported it
+    let podcast = await this.podcastModel.findOne({ appleId }).exec();
+    
+    // 2. If not found, import it!
+    if (!podcast) {
+      const discoverPodcast = await this.appleApiService.lookupPodcast(appleId);
+      if (!discoverPodcast) {
+        throw new NotFoundException(`Podcast with Apple ID ${appleId} not found`);
+      }
+
+      // Assign to ADMIN user
+      const admins = await this.usersService.findByRole(Role.ADMIN);
+      const systemUserId = admins.length > 0 ? admins[0]._id : new Types.ObjectId();
+
+      const newPodcast = new this.podcastModel({
+        title: discoverPodcast.title,
+        description: discoverPodcast.description,
+        coverImageUrl: discoverPodcast.artworkUrl,
+        creatorId: systemUserId,
+        episodeCount: 0,
+        source: 'external',
+        feedUrl: discoverPodcast.feedUrl,
+        autoSync: true,
+        appleId: appleId,
+      });
+
+      podcast = await newPodcast.save();
+      
+      // Trigger initial sync in background (fire & forget to avoid blocking UI)
+      this.syncService.syncPodcast(podcast as any).catch((err: any) => {
+        console.error(`Background sync failed for ${podcast?.title}:`, err.message);
+      });
+    }
+
+    return this.findById(podcast._id.toString());
+  }
+
+  /**
    * Update a podcast (owner only)
    */
   async update(
@@ -147,7 +214,9 @@ export class PodcastsService implements OnModuleInit {
 
     // Check ownership or admin access
     if (userRole !== 'ADMIN' && !podcast.creator._id.equals(userId)) {
-      throw new ForbiddenException('You do not have permission to update this podcast');
+      throw new ForbiddenException(
+        'You do not have permission to update this podcast',
+      );
     }
 
     const updateData: any = { ...updatePodcastDto };
@@ -167,11 +236,11 @@ export class PodcastsService implements OnModuleInit {
     const updatedPodcast = await this.podcastModel
       .findByIdAndUpdate(id, updateData, { new: true })
       .exec();
-    
+
     if (!updatedPodcast) {
       throw new NotFoundException(`Podcast with ID ${id} not found`);
     }
-    
+
     return updatedPodcast;
   }
 
@@ -187,7 +256,9 @@ export class PodcastsService implements OnModuleInit {
 
     // Check ownership or admin access
     if (userRole !== 'ADMIN' && !podcast.creator._id.equals(userId)) {
-      throw new ForbiddenException('You do not have permission to delete this podcast');
+      throw new ForbiddenException(
+        'You do not have permission to delete this podcast',
+      );
     }
 
     // Cascade delete all episodes (likes, comments, views, files)
@@ -230,13 +301,15 @@ export class PodcastsService implements OnModuleInit {
   /**
    * Find all podcast IDs for a creator (used for cascade delete)
    */
-  async findPodcastIdsByCreatorId(creatorId: Types.ObjectId): Promise<Types.ObjectId[]> {
+  async findPodcastIdsByCreatorId(
+    creatorId: Types.ObjectId,
+  ): Promise<Types.ObjectId[]> {
     const podcasts = await this.podcastModel
       .find({ creatorId })
       .select('_id')
       .lean()
       .exec();
-    return podcasts.map((p) => p._id as Types.ObjectId);
+    return podcasts.map((p) => p._id);
   }
 
   /**

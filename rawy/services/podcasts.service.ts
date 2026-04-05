@@ -20,6 +20,14 @@ export interface Podcast {
   };
   episodeCount: number;
   subscriberCount: number;
+  /** 'external' = synced from RSS, 'internal' = hosted on Rawy */
+  source?: 'external' | 'internal';
+  /** Whether RSS auto-sync is enabled (external only) */
+  autoSync?: boolean;
+  /** RSS feed URL for external podcasts */
+  feedUrl?: string;
+  /** Apple Podcasts ID for external podcasts */
+  appleId?: string;
   createdAt: string;
   updatedAt: string;
 }
@@ -52,6 +60,11 @@ export async function getPodcasts(
 
 export async function getPodcast(id: string): Promise<Podcast> {
   const { data } = await axiosClient.get<Podcast>(`/podcasts/${id}`);
+  return data;
+}
+
+export async function resolvePodcast(appleId: string): Promise<Podcast> {
+  const { data } = await axiosClient.get<Podcast>(`/podcasts/resolve/${appleId}`);
   return data;
 }
 
@@ -104,4 +117,21 @@ export async function updatePodcast(
 
 export async function deletePodcast(id: string): Promise<void> {
   await axiosClient.delete(`/podcasts/${id}`);
+}
+
+// ─── Subscription API calls ──────────────────────────────────────────────────
+
+export async function subscribeToPodcast(id: string): Promise<void> {
+  await axiosClient.post(`/podcasts/${id}/subscribe`);
+}
+
+export async function unsubscribeFromPodcast(id: string): Promise<void> {
+  await axiosClient.delete(`/podcasts/${id}/subscribe`);
+}
+
+// ─── Sync API calls ─────────────────────────────────────────────────────────
+
+export async function syncPodcast(id: string): Promise<{ message: string }> {
+  const { data } = await axiosClient.patch<{ message: string }>(`/podcasts/${id}/sync`);
+  return data;
 }

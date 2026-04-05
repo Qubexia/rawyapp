@@ -130,6 +130,33 @@ export class CreatorsController {
     };
   }
 
+  @Get('top')
+  @Public()
+  @ApiOperation({
+    summary: 'Get top creators based on follower count and podcast count',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Top creators retrieved successfully',
+  })
+  @ApiQuery({
+    name: 'limit',
+    required: false,
+    type: Number,
+    example: 10,
+    description: 'Number of top creators to return',
+  })
+  async getTopCreators(
+    @Query('limit', new DefaultValuePipe(10), ParseIntPipe) limit: number,
+  ) {
+    const topCreators = await this.creatorsService.getTopCreators(limit);
+
+    return {
+      statusCode: 200,
+      data: topCreators,
+    };
+  }
+
   @Get(':id')
   @Public()
   @ApiOperation({ summary: 'Get a creator profile by ID (public)' })
@@ -207,22 +234,6 @@ export class CreatorsController {
     return {
       statusCode: 200,
       data: profile,
-    };
-  }
-
-  @Get('top')
-  @Public()
-  @ApiOperation({ summary: 'Get top creators based on follower count and podcast count' })
-  @ApiResponse({ status: 200, description: 'Top creators retrieved successfully' })
-  @ApiQuery({ name: 'limit', required: false, type: Number, example: 10, description: 'Number of top creators to return' })
-  async getTopCreators(
-    @Query('limit', new DefaultValuePipe(10), ParseIntPipe) limit: number,
-  ) {
-    const topCreators = await this.creatorsService.getTopCreators(limit);
-    
-    return {
-      statusCode: 200,
-      data: topCreators,
     };
   }
 }

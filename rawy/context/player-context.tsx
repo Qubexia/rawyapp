@@ -23,11 +23,16 @@ function resolveAudioUrl(path?: string): string {
 function enableLockScreen(player: { setActiveForLockScreen?: (active: boolean, metadata?: object) => void }, episode: Episode) {
   try {
     if (typeof player.setActiveForLockScreen === 'function') {
+      // Prefer episode-level artwork (common for external RSS episodes), fall back to podcast cover
+      const artwork = episode.artworkUrl
+        ? resolveImageUrl(episode.artworkUrl)
+        : resolveImageUrl(episode.podcast?.coverImageUrl);
+
       player.setActiveForLockScreen(true, {
         title: episode.title,
         artist: episode.creator?.name ?? 'Rawy',
         albumTitle: episode.podcast?.title ?? '',
-        artworkUrl: resolveImageUrl(episode.podcast?.coverImageUrl),
+        artworkUrl: artwork,
       });
     }
   } catch { }

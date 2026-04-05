@@ -1,7 +1,15 @@
-import { Injectable, NotFoundException, BadRequestException, ForbiddenException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+  ForbiddenException,
+} from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
-import { CreatorProfile, CreatorProfileDocument } from './schemas/creator-profile.schema';
+import {
+  CreatorProfile,
+  CreatorProfileDocument,
+} from './schemas/creator-profile.schema';
 import { UpdateCreatorProfileDto } from './dto/update-creator-profile.dto';
 import { PaginatedResponseDto } from '../common/dto/paginated-response.dto';
 import { unlink } from 'fs/promises';
@@ -10,7 +18,8 @@ import { join } from 'path';
 @Injectable()
 export class CreatorsService {
   constructor(
-    @InjectModel(CreatorProfile.name) private creatorProfileModel: Model<CreatorProfileDocument>,
+    @InjectModel(CreatorProfile.name)
+    private creatorProfileModel: Model<CreatorProfileDocument>,
   ) {}
 
   /**
@@ -23,7 +32,9 @@ export class CreatorsService {
     avatarUrl?: string,
   ): Promise<CreatorProfile> {
     // Check if creator profile already exists
-    const existingProfile = await this.creatorProfileModel.findOne({ userId }).exec();
+    const existingProfile = await this.creatorProfileModel
+      .findOne({ userId })
+      .exec();
     if (existingProfile) {
       throw new BadRequestException('You are already a creator');
     }
@@ -43,8 +54,13 @@ export class CreatorsService {
   /**
    * Get creator profile by user ID or profile ID
    */
-  async getProfile(id: string, byUserId: boolean = true): Promise<CreatorProfile> {
-    const filter = byUserId ? { userId: new Types.ObjectId(id) } : { _id: new Types.ObjectId(id) };
+  async getProfile(
+    id: string,
+    byUserId: boolean = true,
+  ): Promise<CreatorProfile> {
+    const filter = byUserId
+      ? { userId: new Types.ObjectId(id) }
+      : { _id: new Types.ObjectId(id) };
     const profile = await this.creatorProfileModel.findOne(filter).exec();
 
     if (!profile) {
@@ -172,14 +188,18 @@ export class CreatorsService {
   /**
    * Find creator profile by user ID
    */
-  async findByUserId(userId: Types.ObjectId): Promise<CreatorProfileDocument | null> {
+  async findByUserId(
+    userId: Types.ObjectId,
+  ): Promise<CreatorProfileDocument | null> {
     return this.creatorProfileModel.findOne({ userId }).exec();
   }
 
   /**
    * Find creator profiles by user IDs (for follow lists)
    */
-  async getProfilesByUserIds(userIds: Types.ObjectId[]): Promise<CreatorProfileDocument[]> {
+  async getProfilesByUserIds(
+    userIds: Types.ObjectId[],
+  ): Promise<CreatorProfileDocument[]> {
     if (userIds.length === 0) return [];
     return this.creatorProfileModel.find({ userId: { $in: userIds } }).exec();
   }
@@ -221,10 +241,10 @@ export class CreatorsService {
   async getTopCreators(limit: number = 10): Promise<CreatorProfile[]> {
     return this.creatorProfileModel
       .find()
-      .sort({ 
-        followerCount: -1, 
+      .sort({
+        followerCount: -1,
         podcastCount: -1,
-        createdAt: -1 
+        createdAt: -1,
       })
       .limit(limit)
       .exec();

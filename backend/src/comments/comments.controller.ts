@@ -29,14 +29,17 @@ import { ApiCommonErrorResponses } from '../common/decorators/api-error-response
 @ApiCommonErrorResponses()
 @Controller('comments')
 export class CommentsController {
-  constructor(private readonly commentsService: CommentsService) { }
+  constructor(private readonly commentsService: CommentsService) {}
 
   @Post('episodes/:episodeId')
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Post a comment on an episode' })
   @ApiParam({ name: 'episodeId', description: 'Episode ID' })
   @ApiResponse({ status: 201, description: 'Comment created' })
-  @ApiResponse({ status: 400, description: 'Invalid episode ID or validation error' })
+  @ApiResponse({
+    status: 400,
+    description: 'Invalid episode ID or validation error',
+  })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   @ApiResponse({ status: 404, description: 'Episode not found' })
   async create(
@@ -57,7 +60,9 @@ export class CommentsController {
 
   @Get('episodes/:episodeId')
   @Public()
-  @ApiOperation({ summary: 'Get comments for an episode (paginated, oldest first)' })
+  @ApiOperation({
+    summary: 'Get comments for an episode (paginated, oldest first)',
+  })
   @ApiParam({ name: 'episodeId', description: 'Episode ID' })
   @ApiResponse({ status: 200, description: 'Paginated comments' })
   @ApiResponse({ status: 400, description: 'Invalid episode ID' })
@@ -81,7 +86,9 @@ export class CommentsController {
 
   @Get(':commentId/replies')
   @Public()
-  @ApiOperation({ summary: 'Get replies for a comment (paginated, oldest first)' })
+  @ApiOperation({
+    summary: 'Get replies for a comment (paginated, oldest first)',
+  })
   @ApiParam({ name: 'commentId', description: 'Comment ID' })
   @ApiResponse({ status: 200, description: 'Paginated replies' })
   @ApiResponse({ status: 400, description: 'Invalid comment ID' })

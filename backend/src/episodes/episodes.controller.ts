@@ -27,6 +27,7 @@ import { FileFieldsInterceptor } from '@nestjs/platform-express';
 import { diskStorage } from 'multer';
 import { ConfigService } from '@nestjs/config';
 import { EpisodesService } from './episodes.service';
+import { PodcastsService } from '../podcasts/podcasts.service';
 import { CreateEpisodeDto } from './dto/create-episode.dto';
 import { UpdateEpisodeDto } from './dto/update-episode.dto';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
@@ -48,8 +49,16 @@ import { ApiCommonErrorResponses } from '../common/decorators/api-error-response
 export class EpisodesController {
   constructor(
     private readonly episodesService: EpisodesService,
+    private readonly podcastsService: PodcastsService,
     private readonly configService: ConfigService,
   ) {}
+
+  private toRequesterObjectId(userId: string): Types.ObjectId {
+    if (Types.ObjectId.isValid(userId)) {
+      return new Types.ObjectId(userId);
+    }
+    return new Types.ObjectId();
+  }
 
   @Post()
   @Roles(Role.CREATOR)
@@ -104,7 +113,7 @@ export class EpisodesController {
             imageFileFilter(req, file, cb);
           }
         },
-        limits: { fileSize: 500 * 1024 * 1024 },
+        limits: { fileSize: 100 * 1024 * 1024 }, // 100MB
       },
     ),
   )
@@ -112,7 +121,11 @@ export class EpisodesController {
     @CurrentUser('id') userId: string,
     @CurrentUser('role') userRole: string,
     @Body() createEpisodeDto: CreateEpisodeDto,
-    @UploadedFiles() files: { audioFile?: Express.Multer.File[]; imageFile?: Express.Multer.File[] },
+    @UploadedFiles()
+    files: {
+      audioFile?: Express.Multer.File[];
+      imageFile?: Express.Multer.File[];
+    },
   ) {
     const audioFile = files?.audioFile?.[0];
     const imageFile = files?.imageFile?.[0];
@@ -121,11 +134,23 @@ export class EpisodesController {
       throw new BadRequestException('Audio file is required');
     }
 
+    if (userRole !== 'ADMIN') {
+      const isOwner = await this.podcastsService.isOwner(
+        createEpisodeDto.podcastId,
+        this.toRequesterObjectId(userId),
+      );
+      if (!isOwner) {
+        throw new BadRequestException(
+          'You do not have permission to add episodes to this podcast',
+        );
+      }
+    }
+
     const audioFileUrl = getRelativeUrl(audioFile.path);
     const imageFileUrl = imageFile ? getRelativeUrl(imageFile.path) : undefined;
 
     const episode = await this.episodesService.create(
-      new Types.ObjectId(userId),
+      this.toRequesterObjectId(userId),
       createEpisodeDto,
       audioFileUrl,
       imageFileUrl,
@@ -222,15 +247,20 @@ export class EpisodesController {
   ) {
     // Ensure the requester actually owns this episode (unless ADMIN)
     if (userRole !== 'ADMIN') {
-      const isOwner = await this.episodesService.isOwner(id, new Types.ObjectId(userId));
+      const isOwner = await this.episodesService.isOwner(
+        id,
+        this.toRequesterObjectId(userId),
+      );
       if (!isOwner) {
-        throw new BadRequestException('You do not have permission to update this episode');
+        throw new BadRequestException(
+          'You do not have permission to update this episode',
+        );
       }
     }
     const episode = await this.episodesService.update(
       id,
       updateEpisodeDto,
-      new Types.ObjectId(userId),
+      this.toRequesterObjectId(userId),
       userRole,
     );
 
@@ -258,13 +288,22 @@ export class EpisodesController {
   ) {
     // Ensure the requester actually owns this episode (unless ADMIN)
     if (userRole !== 'ADMIN') {
-      const isOwner = await this.episodesService.isOwner(id, new Types.ObjectId(userId));
+      const isOwner = await this.episodesService.isOwner(
+        id,
+        this.toRequesterObjectId(userId),
+      );
       if (!isOwner) {
-        throw new BadRequestException('You do not have permission to delete this episode');
+        throw new BadRequestException(
+          'You do not have permission to delete this episode',
+        );
       }
     }
 
-    await this.episodesService.delete(id, new Types.ObjectId(userId), userRole);
+    await this.episodesService.delete(
+      id,
+      this.toRequesterObjectId(userId),
+      userRole,
+    );
 
     return {
       statusCode: 200,

@@ -21,8 +21,28 @@ export class ViewsController {
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Record episode view (idempotent)' })
   @ApiParam({ name: 'episodeId', description: 'Episode ID' })
-  @ApiResponse({ status: 201, description: 'View recorded (first time)', schema: { properties: { message: { type: 'string' }, viewsCount: { type: 'number' }, isNewView: { type: 'boolean' } } } })
-  @ApiResponse({ status: 200, description: 'View already recorded', schema: { properties: { message: { type: 'string' }, viewsCount: { type: 'number' }, isNewView: { type: 'boolean' } } } })
+  @ApiResponse({
+    status: 201,
+    description: 'View recorded (first time)',
+    schema: {
+      properties: {
+        message: { type: 'string' },
+        viewsCount: { type: 'number' },
+        isNewView: { type: 'boolean' },
+      },
+    },
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'View already recorded',
+    schema: {
+      properties: {
+        message: { type: 'string' },
+        viewsCount: { type: 'number' },
+        isNewView: { type: 'boolean' },
+      },
+    },
+  })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   @ApiResponse({ status: 404, description: 'Episode not found' })
   async recordView(

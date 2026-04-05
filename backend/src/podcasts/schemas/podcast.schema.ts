@@ -41,13 +41,27 @@ export class Podcast {
     default: 'draft',
   })
   status?: 'draft' | 'published';
+
+  @Prop({ required: true, enum: ['external', 'internal'], default: 'internal' })
+  source: 'external' | 'internal';
+
+  @Prop({ required: false })
+  feedUrl?: string;
+
+  @Prop({ required: true, default: true })
+  autoSync: boolean;
+
+  @Prop({ required: false })
+  appleId?: string;
 }
 
 export const PodcastSchema = SchemaFactory.createForClass(Podcast);
 
 // Indexes
 PodcastSchema.index({ creatorId: 1 });
+PodcastSchema.index({ creatorId: 1, source: 1 });
 PodcastSchema.index({ createdAt: -1 });
 PodcastSchema.index({ category: 1 });
 PodcastSchema.index({ title: 'text', description: 'text' });
 PodcastSchema.index({ status: 1 });
+PodcastSchema.index({ feedUrl: 1 }, { unique: true, sparse: true });

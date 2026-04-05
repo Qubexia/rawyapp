@@ -88,10 +88,7 @@ export class AdminController {
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   @ApiResponse({ status: 403, description: 'Forbidden' })
   @ApiResponse({ status: 404, description: 'User not found' })
-  promoteUser(
-    @Param('userId') userId: string,
-    @Body() dto: PromoteUserDto,
-  ) {
+  promoteUser(@Param('userId') userId: string, @Body() dto: PromoteUserDto) {
     return this.adminService.promoteUser(userId, dto.role);
   }
 
@@ -150,7 +147,10 @@ export class AdminController {
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   @ApiResponse({ status: 403, description: 'Forbidden' })
   @ApiResponse({ status: 404, description: 'Creator not found' })
-  updateCreator(@Param('creatorId') creatorId: string, @Body() dto: UpdateCreatorDto) {
+  updateCreator(
+    @Param('creatorId') creatorId: string,
+    @Body() dto: UpdateCreatorDto,
+  ) {
     return this.adminService.updateCreator(creatorId, dto);
   }
 
@@ -203,19 +203,14 @@ export class AdminController {
     },
   })
   @UseInterceptors(
-    FileFieldsInterceptor(
-      [
-        { name: 'imageFile', maxCount: 1 },
-      ],
-      {
-        storage: diskStorage({
-          destination: './uploads/images',
-          filename: generateFileName,
-        }),
-        fileFilter: imageFileFilter,
-        limits: { fileSize: 500 * 1024 * 1024 },
-      },
-    ),
+    FileFieldsInterceptor([{ name: 'imageFile', maxCount: 1 }], {
+      storage: diskStorage({
+        destination: './uploads/images',
+        filename: generateFileName,
+      }),
+      fileFilter: imageFileFilter,
+      limits: { fileSize: 500 * 1024 * 1024 },
+    }),
   )
   async updatePodcast(
     @Param('podcastId') podcastId: string,
@@ -223,9 +218,15 @@ export class AdminController {
     @UploadedFiles() files: { imageFile?: Express.Multer.File[] },
   ) {
     const imageFile = files?.imageFile?.[0];
-    const coverImageUrl = imageFile ? getRelativeUrl(imageFile.path) : undefined;
+    const coverImageUrl = imageFile
+      ? getRelativeUrl(imageFile.path)
+      : undefined;
 
-    const podcast = await this.adminService.updatePodcast(podcastId, dto, coverImageUrl);
+    const podcast = await this.adminService.updatePodcast(
+      podcastId,
+      dto,
+      coverImageUrl,
+    );
 
     return {
       statusCode: 200,
@@ -255,7 +256,10 @@ export class AdminController {
   @Post('episodes')
   @ApiOperation({ summary: 'Create an episode for any podcast (admin)' })
   @ApiResponse({ status: 201, description: 'Episode created' })
-  @ApiResponse({ status: 400, description: 'Bad request - missing audio file or invalid data' })
+  @ApiResponse({
+    status: 400,
+    description: 'Bad request - missing audio file or invalid data',
+  })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   @ApiResponse({ status: 403, description: 'Forbidden' })
   @ApiResponse({ status: 404, description: 'Podcast not found' })
@@ -267,7 +271,8 @@ export class AdminController {
         title: { type: 'string', example: 'Introduction to AI' },
         description: {
           type: 'string',
-          example: 'In this episode, we explore the basics of artificial intelligence',
+          example:
+            'In this episode, we explore the basics of artificial intelligence',
         },
         podcastId: { type: 'string', example: '507f1f77bcf86cd799439011' },
         duration: { type: 'number', example: 1800 },
@@ -306,7 +311,11 @@ export class AdminController {
   )
   async createEpisode(
     @Body() createEpisodeDto: CreateEpisodeDto,
-    @UploadedFiles() files: { audioFile?: Express.Multer.File[]; imageFile?: Express.Multer.File[] },
+    @UploadedFiles()
+    files: {
+      audioFile?: Express.Multer.File[];
+      imageFile?: Express.Multer.File[];
+    },
   ) {
     const audioFile = files?.audioFile?.[0];
     const imageFile = files?.imageFile?.[0];
@@ -343,7 +352,10 @@ export class AdminController {
   @Patch('episodes/:episodeId')
   @ApiOperation({ summary: 'Update episode metadata (no audio replacement)' })
   @ApiResponse({ status: 200, description: 'Episode updated' })
-  @ApiResponse({ status: 400, description: 'Bad request - audio file change not allowed' })
+  @ApiResponse({
+    status: 400,
+    description: 'Bad request - audio file change not allowed',
+  })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   @ApiResponse({ status: 403, description: 'Forbidden' })
   @ApiResponse({ status: 404, description: 'Episode not found' })
@@ -362,19 +374,14 @@ export class AdminController {
     },
   })
   @UseInterceptors(
-    FileFieldsInterceptor(
-      [
-        { name: 'imageFile', maxCount: 1 },
-      ],
-      {
-        storage: diskStorage({
-          destination: './uploads/images',
-          filename: generateFileName,
-        }),
-        fileFilter: imageFileFilter,
-        limits: { fileSize: 500 * 1024 * 1024 },
-      },
-    ),
+    FileFieldsInterceptor([{ name: 'imageFile', maxCount: 1 }], {
+      storage: diskStorage({
+        destination: './uploads/images',
+        filename: generateFileName,
+      }),
+      fileFilter: imageFileFilter,
+      limits: { fileSize: 500 * 1024 * 1024 },
+    }),
   )
   async updateEpisode(
     @Param('episodeId') episodeId: string,
@@ -384,7 +391,11 @@ export class AdminController {
     const imageFile = files?.imageFile?.[0];
     const imageUrl = imageFile ? getRelativeUrl(imageFile.path) : undefined;
 
-    const episode = await this.adminService.updateEpisode(episodeId, dto, imageUrl);
+    const episode = await this.adminService.updateEpisode(
+      episodeId,
+      dto,
+      imageUrl,
+    );
 
     return {
       statusCode: 200,
@@ -432,7 +443,9 @@ export class AdminController {
   }
 
   @Get('stats')
-  @ApiOperation({ summary: 'Get platform stats (users, creators, podcasts, episodes)' })
+  @ApiOperation({
+    summary: 'Get platform stats (users, creators, podcasts, episodes)',
+  })
   @ApiResponse({ status: 200, description: 'Stats object' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   @ApiResponse({ status: 403, description: 'Forbidden' })

@@ -24,7 +24,11 @@ export const episodeKeys = {
   detail: (id: string) => [...episodeKeys.details(), id] as const,
 };
 
-export function useEpisodes(podcastId?: string, creatorId?: string) {
+export function useEpisodes(
+  podcastId?: string,
+  creatorId?: string,
+  options?: { enabled?: boolean },
+) {
   const { user } = useAuthContext();
   return useInfiniteQuery({
     queryKey: episodeKeys.list({ podcastId, creatorId }, user?._id),
@@ -33,6 +37,7 @@ export function useEpisodes(podcastId?: string, creatorId?: string) {
     getNextPageParam: (lastPage) =>
       lastPage.page < lastPage.totalPages ? lastPage.page + 1 : undefined,
     initialPageParam: 1,
+    enabled: options?.enabled !== undefined ? options.enabled : true,
   });
 }
 

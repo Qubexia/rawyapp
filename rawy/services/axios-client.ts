@@ -17,19 +17,42 @@ import axios, {
   AxiosResponse,
 } from 'axios';
 import { Platform } from 'react-native';
+import Constants from 'expo-constants';
 import { getItem, setItem, deleteItem } from './token-storage';
 
 // ─── Constants ───────────────────────────────────────────────────────────────
 
-// Use environment variable for API URL or fallback to local IP for development
+// Use environment variable for API URL or derive host IP for real-device development.
 // In Expo, variables starting with EXPO_PUBLIC_ are available in the client
-const DEFAULT_LOCAL_IP = '192.168.1.3'; // Fallback for local dev
-
-export const SERVER_URL = process.env.EXPO_PUBLIC_API_URL || Platform.select({
-  android: `http://${DEFAULT_LOCAL_IP}:3000`,
-  ios: `http://${DEFAULT_LOCAL_IP}:3000`,
-  default: `http://${DEFAULT_LOCAL_IP}:3000`,
+const EMULATOR_FALLBACK_SERVER_URL = Platform.select({
+  // Android emulator maps host machine localhost to 10.0.2.2
+  android: 'http://10.0.2.2:3000',
+  // iOS simulator can reach host machine via 127.0.0.1
+  ios: 'http://127.0.0.1:3000',
+  default: 'http://localhost:3000',
 }) as string;
+
+function deriveServerUrl(): string {
+  const explicit = process.env.EXPO_PUBLIC_API_URL?.trim();
+  if (explicit) return explicit;
+
+  // In Expo Go/dev client on a physical device, hostUri usually looks like "192.168.x.x:8081".
+  const hostUri =
+    Constants.expoConfig?.hostUri ||
+    (Constants as any)?.manifest2?.extra?.expoGo?.debuggerHost ||
+    (Constants as any)?.manifest?.debuggerHost;
+
+  if (typeof hostUri === 'string' && hostUri.length > 0) {
+    const host = hostUri.split(':')[0];
+    if (host) {
+      return `http://${host}:3000`;
+    }
+  }
+
+  return EMULATOR_FALLBACK_SERVER_URL;
+}
+
+export const SERVER_URL = deriveServerUrl();
 
 export const API_BASE_URL = `${SERVER_URL}/api/v1`;
 
@@ -270,7 +293,7 @@ axiosClient.interceptors.response.use(
       return Promise.reject(
         new ApiError({
           statusCode: 0,
-          message: 'Unable to connect to server. Check your connection.',
+          message: `Unable to connect to server (${SERVER_URL}). Check your connection.`,
           error: 'NetworkError',
         }),
       );

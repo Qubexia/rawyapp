@@ -27,13 +27,22 @@ import { ApiCommonErrorResponses } from '../common/decorators/api-error-response
 @ApiCommonErrorResponses()
 @Controller('follows')
 export class FollowsController {
-  constructor(private readonly followsService: FollowsService) { }
+  constructor(private readonly followsService: FollowsService) {}
 
   @Post('users/:targetId')
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Follow a user' })
   @ApiParam({ name: 'targetId', description: 'Target user ID' })
-  @ApiResponse({ status: 201, description: 'Now following', schema: { properties: { message: { type: 'string' }, followerCount: { type: 'number' } } } })
+  @ApiResponse({
+    status: 201,
+    description: 'Now following',
+    schema: {
+      properties: {
+        message: { type: 'string' },
+        followerCount: { type: 'number' },
+      },
+    },
+  })
   @ApiResponse({ status: 400, description: 'Self-follow not allowed' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   @ApiResponse({ status: 404, description: 'User not found' })
@@ -59,7 +68,16 @@ export class FollowsController {
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Unfollow a user' })
   @ApiParam({ name: 'targetId', description: 'Target user ID' })
-  @ApiResponse({ status: 200, description: 'Unfollowed', schema: { properties: { message: { type: 'string' }, followerCount: { type: 'number' } } } })
+  @ApiResponse({
+    status: 200,
+    description: 'Unfollowed',
+    schema: {
+      properties: {
+        message: { type: 'string' },
+        followerCount: { type: 'number' },
+      },
+    },
+  })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   @ApiResponse({ status: 404, description: 'Not following this user' })
   async unfollow(
@@ -83,7 +101,16 @@ export class FollowsController {
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Check if current user follows a user' })
   @ApiParam({ name: 'targetId', description: 'Target user ID' })
-  @ApiResponse({ status: 200, description: 'Status', schema: { properties: { isFollowing: { type: 'boolean' }, followerCount: { type: 'number' } } } })
+  @ApiResponse({
+    status: 200,
+    description: 'Status',
+    schema: {
+      properties: {
+        isFollowing: { type: 'boolean' },
+        followerCount: { type: 'number' },
+      },
+    },
+  })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   @ApiResponse({ status: 404, description: 'User not found' })
   async getStatus(
@@ -152,7 +179,9 @@ export class FollowsController {
 
   @Get('users/:targetId/following')
   @Public()
-  @ApiOperation({ summary: 'List users the target user follows (public, paginated)' })
+  @ApiOperation({
+    summary: 'List users the target user follows (public, paginated)',
+  })
   @ApiParam({ name: 'targetId', description: 'Target user ID' })
   @ApiQuery({ name: 'page', required: false, type: Number, example: 1 })
   @ApiQuery({ name: 'limit', required: false, type: Number, example: 20 })

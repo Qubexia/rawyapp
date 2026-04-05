@@ -18,7 +18,7 @@ export class CommentsService {
     @InjectModel(Comment.name) private commentModel: Model<CommentDocument>,
     private episodesService: EpisodesService,
     private notificationsService: NotificationsService,
-  ) { }
+  ) {}
 
   /**
    * Create a comment and atomically increment Episode.commentsCount.
@@ -32,8 +32,11 @@ export class CommentsService {
 
     let parentCommentId: Types.ObjectId | null = null;
     if (dto.parentCommentId) {
-      const parentComment = await this.commentModel.findById(dto.parentCommentId);
-      if (!parentComment) throw new NotFoundException('Parent comment not found');
+      const parentComment = await this.commentModel.findById(
+        dto.parentCommentId,
+      );
+      if (!parentComment)
+        throw new NotFoundException('Parent comment not found');
       // Enforce one-level nesting
       parentCommentId = parentComment.parentCommentId || parentComment._id;
     }
@@ -50,7 +53,9 @@ export class CommentsService {
     const comment = await this.commentModel.create(commentData);
 
     if (dto.parentCommentId) {
-      const parentComment = await this.commentModel.findById(dto.parentCommentId);
+      const parentComment = await this.commentModel.findById(
+        dto.parentCommentId,
+      );
       if (parentComment && !userId.equals(parentComment.userId)) {
         await this.notificationsService.createOrAggregateNotification(
           parentComment.userId,
@@ -80,7 +85,14 @@ export class CommentsService {
     episodeId: Types.ObjectId,
     page: number = 1,
     limit: number = 20,
-  ): Promise<PaginatedResponseDto<Comment & { user?: { _id: Types.ObjectId; name: string }; replyCount?: number }>> {
+  ): Promise<
+    PaginatedResponseDto<
+      Comment & {
+        user?: { _id: Types.ObjectId; name: string };
+        replyCount?: number;
+      }
+    >
+  > {
     await this.episodesService.findById(episodeId.toString());
 
     const skip = (page - 1) * limit;
@@ -88,23 +100,39 @@ export class CommentsService {
 
     const [rawData, total] = await Promise.all([
       this.commentModel
-        .find({ ...filter, $or: [{ parentCommentId: null }, { parentCommentId: { $exists: false } }] })
+        .find({
+          ...filter,
+          $or: [
+            { parentCommentId: null },
+            { parentCommentId: { $exists: false } },
+          ],
+        })
         .sort({ createdAt: 1 })
         .skip(skip)
         .limit(limit)
         .populate('userId', 'name avatarUrl')
         .lean()
         .exec(),
-      this.commentModel.countDocuments({ ...filter, $or: [{ parentCommentId: null }, { parentCommentId: { $exists: false } }] }).exec(),
+      this.commentModel
+        .countDocuments({
+          ...filter,
+          $or: [
+            { parentCommentId: null },
+            { parentCommentId: { $exists: false } },
+          ],
+        })
+        .exec(),
     ]);
 
     // Gather reply counts
     const commentIds = rawData.map((c: any) => c._id);
     const repliesAggr = await this.commentModel.aggregate([
       { $match: { parentCommentId: { $in: commentIds } } },
-      { $group: { _id: '$parentCommentId', count: { $sum: 1 } } }
+      { $group: { _id: '$parentCommentId', count: { $sum: 1 } } },
     ]);
-    const replyCountMap = new Map(repliesAggr.map((r: any) => [r._id.toString(), r.count]));
+    const replyCountMap = new Map(
+      repliesAggr.map((r: any) => [r._id.toString(), r.count]),
+    );
 
     // Map userId -> user
     const data = rawData.map(({ userId: user, ...rest }: any) => ({
@@ -121,7 +149,11 @@ export class CommentsService {
     commentId: Types.ObjectId,
     page: number = 1,
     limit: number = 20,
-  ): Promise<PaginatedResponseDto<Comment & { user?: { _id: Types.ObjectId; name: string } }>> {
+  ): Promise<
+    PaginatedResponseDto<
+      Comment & { user?: { _id: Types.ObjectId; name: string } }
+    >
+  > {
     const skip = (page - 1) * limit;
     const filter = { parentCommentId: commentId };
 
@@ -170,11 +202,13 @@ export class CommentsService {
       this.commentModel.countDocuments(filter).exec(),
     ]);
 
-    const data = rawData.map(({ userId: user, episodeId: episode, ...rest }: any) => ({
-      ...rest,
-      user,
-      episode,
-    }));
+    const data = rawData.map(
+      ({ userId: user, episodeId: episode, ...rest }: any) => ({
+        ...rest,
+        user,
+        episode,
+      }),
+    );
 
     return {
       data,
@@ -204,12 +238,17 @@ export class CommentsService {
       throw new ForbiddenException('You can only delete your own comments');
     }
 
-    const childRepliesCount = await this.commentModel.countDocuments({ parentCommentId: commentId });
+    const childRepliesCount = await this.commentModel.countDocuments({
+      parentCommentId: commentId,
+    });
     await this.commentModel.deleteMany({ parentCommentId: commentId }).exec();
     await this.commentModel.findByIdAndDelete(commentId).exec();
 
     const countToDecrement = 1 + childRepliesCount;
-    await this.episodesService.decrementCommentsCountBy(comment.episodeId, countToDecrement);
+    await this.episodesService.decrementCommentsCountBy(
+      comment.episodeId,
+      countToDecrement,
+    );
   }
 
   /**

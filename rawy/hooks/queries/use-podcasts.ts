@@ -6,6 +6,7 @@ import { useQuery, useInfiniteQuery, useMutation, useQueryClient } from '@tansta
 import {
   getPodcasts,
   getPodcast,
+  resolvePodcast,
   createPodcast,
   updatePodcast,
   deletePodcast,
@@ -20,6 +21,7 @@ export const podcastKeys = {
     [...podcastKeys.lists(userId), filters] as const,
   details: () => [...podcastKeys.all, 'detail'] as const,
   detail: (id: string) => [...podcastKeys.details(), id] as const,
+  resolving: (appleId: string) => [...podcastKeys.all, 'resolve', appleId] as const,
 };
 
 export function usePodcasts(
@@ -39,11 +41,20 @@ export function usePodcasts(
   });
 }
 
-export function usePodcast(id: string) {
+export function usePodcast(id: string, options?: { enabled?: boolean }) {
   return useQuery({
     queryKey: podcastKeys.detail(id),
     queryFn: () => getPodcast(id),
-    enabled: !!id,
+    enabled: !!id && (options?.enabled ?? true),
+  });
+}
+
+export function useResolvePodcast(appleId: string, options?: { enabled?: boolean }) {
+  return useQuery({
+    queryKey: podcastKeys.resolving(appleId),
+    queryFn: () => resolvePodcast(appleId),
+    enabled: !!appleId && (options?.enabled ?? true),
+    staleTime: Infinity,
   });
 }
 

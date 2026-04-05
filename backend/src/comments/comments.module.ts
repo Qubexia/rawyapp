@@ -18,4 +18,4 @@ import { NotificationsModule } from '../notifications/notifications.module';
   providers: [CommentsService],
   exports: [CommentsService],
 })
-export class CommentsModule { }
+export class CommentsModule {}

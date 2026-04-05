@@ -25,7 +25,8 @@ export class UpdateEpisodeDto {
 
   @ApiProperty({
     description: 'Episode description',
-    example: 'In this episode, we explore the basics of artificial intelligence',
+    example:
+      'In this episode, we explore the basics of artificial intelligence',
     minLength: 10,
     maxLength: 5000,
     required: false,

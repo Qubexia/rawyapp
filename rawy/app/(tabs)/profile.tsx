@@ -114,9 +114,9 @@ export default function ProfileScreen() {
       : [
           {
             icon: Mic,
-            label: "Become a Creator",
-            subtitle: "Start your podcast journey",
-            onPress: () => router.push("/(creator)/become-creator" as any),
+            label: "Claim a Podcast",
+            subtitle: "Verify ownership to unlock creator tools",
+            onPress: () => router.push("/claim" as any),
           },
         ]),
     {

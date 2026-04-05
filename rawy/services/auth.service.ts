@@ -20,6 +20,7 @@ export interface UserProfile {
   createdAt: string;
   updatedAt: string;
   avatarUrl?: string;
+  subscriptions?: string[];
 }
 
 export interface AuthTokens {

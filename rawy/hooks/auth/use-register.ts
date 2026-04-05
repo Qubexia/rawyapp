@@ -12,18 +12,15 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { STORAGE_KEYS } from '@/utils/constants';
 import {
   registerUserSchema,
-  registerCreatorSchema,
   RegisterUserFormData,
 } from '@/validation/auth.schemas';
-import { registerUser, registerCreator } from '@/services/auth.service';
+import { registerUser } from '@/services/auth.service';
 import { useAuthContext } from '@/context/auth-context';
 import { ApiError } from '@/services/axios-client';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
-export type RegisterTab = 'user' | 'creator';
-
-type RegisterFormData = RegisterUserFormData & { showName?: string };
+type RegisterFormData = RegisterUserFormData;
 
 // ─── Hook ────────────────────────────────────────────────────────────────────
 
@@ -31,26 +28,14 @@ export function useRegister() {
   const router = useRouter();
   const { setSession } = useAuthContext();
 
-  const [activeTab, setActiveTabState] = useState<RegisterTab>('user');
   const [serverError, setServerError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
   const form = useForm<RegisterFormData>({
-    resolver: zodResolver(
-      activeTab === 'creator' ? registerCreatorSchema : registerUserSchema,
-    ),
-    defaultValues: { name: '', email: '', password: '', showName: '' },
+    resolver: zodResolver(registerUserSchema),
+    defaultValues: { name: '', email: '', password: '' },
     mode: 'onSubmit',
   });
-
-  const setActiveTab = useCallback(
-    (tab: RegisterTab) => {
-      setActiveTabState(tab);
-      form.clearErrors();
-      setServerError(null);
-    },
-    [form],
-  );
 
   const handleSubmit = form.handleSubmit(
     useCallback(
@@ -59,22 +44,11 @@ export function useRegister() {
         setServerError(null);
 
         try {
-          let tokens;
-
-          if (activeTab === 'user') {
-            tokens = await registerUser({
-              name: data.name,
-              email: data.email,
-              password: data.password,
-            });
-          } else {
-            tokens = await registerCreator({
-              name: data.name,
-              email: data.email,
-              password: data.password,
-              showName: data.showName || '',
-            });
-          }
+          const tokens = await registerUser({
+            name: data.name,
+            email: data.email,
+            password: data.password,
+          });
 
           setSession(tokens);
           await AsyncStorage.setItem(STORAGE_KEYS.HAS_SEEN_ONBOARDING, 'true').catch(() => {});
@@ -99,9 +73,6 @@ export function useRegister() {
                 } else if (lower.includes('password')) {
                   form.setError('password', { message: msg });
                   hasFieldError = true;
-                } else if (lower.includes('show')) {
-                  form.setError('showName', { message: msg });
-                  hasFieldError = true;
                 }
               });
 
@@ -122,13 +93,11 @@ export function useRegister() {
           setIsLoading(false);
         }
       },
-      [activeTab, setSession, router, form],
+      [setSession, router, form],
     ),
   );
 
   return {
-    activeTab,
-    setActiveTab,
     control: form.control,
     errors: form.formState.errors,
     isLoading,

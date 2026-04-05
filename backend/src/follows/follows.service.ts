@@ -24,14 +24,17 @@ export class FollowsService {
     private usersService: UsersService,
     @Inject(forwardRef(() => NotificationsService))
     private notificationsService: NotificationsService,
-  ) { }
+  ) {}
 
   /**
    * Follow a user/creator. Prevents self-follow and duplicate follows.
    * Atomically increments User.followerCount and User.followingCount.
    * Also increments CreatorProfile.followerCount if applicable.
    */
-  async follow(followerId: Types.ObjectId, creatorId: Types.ObjectId): Promise<{ followerCount: number }> {
+  async follow(
+    followerId: Types.ObjectId,
+    creatorId: Types.ObjectId,
+  ): Promise<{ followerCount: number }> {
     if (followerId.equals(creatorId)) {
       throw new BadRequestException('Cannot follow yourself');
     }
@@ -45,7 +48,11 @@ export class FollowsService {
     try {
       await this.followModel.create({ followerId, creatorId });
     } catch (err: unknown) {
-      if (err && typeof err === 'object' && (err as { code?: number }).code === 11000) {
+      if (
+        err &&
+        typeof err === 'object' &&
+        (err as { code?: number }).code === 11000
+      ) {
         throw new ConflictException('Already following this user');
       }
       throw err;
@@ -67,17 +74,22 @@ export class FollowsService {
       'new_follower',
       followerId,
       followerId,
-      'User'
+      'User',
     );
 
-    const updatedUser = await this.usersService.getPublicProfile(creatorId.toString());
+    const updatedUser = await this.usersService.getPublicProfile(
+      creatorId.toString(),
+    );
     return { followerCount: updatedUser.followerCount };
   }
 
   /**
    * Unfollow a user/creator. Decrements counts.
    */
-  async unfollow(followerId: Types.ObjectId, creatorId: Types.ObjectId): Promise<{ followerCount: number }> {
+  async unfollow(
+    followerId: Types.ObjectId,
+    creatorId: Types.ObjectId,
+  ): Promise<{ followerCount: number }> {
     const deleted = await this.followModel
       .findOneAndDelete({ followerId, creatorId })
       .exec();
@@ -96,7 +108,9 @@ export class FollowsService {
       await this.creatorsService.decrementFollowerCount(creatorId);
     }
 
-    const updatedUser = await this.usersService.getPublicProfile(creatorId.toString());
+    const updatedUser = await this.usersService.getPublicProfile(
+      creatorId.toString(),
+    );
     return { followerCount: updatedUser.followerCount };
   }
 
@@ -117,7 +131,7 @@ export class FollowsService {
       .exec();
 
     // Prefer User.followerCount, but check CreatorProfile for fallback/sync if needed
-    let followerCount = user.followerCount;
+    const followerCount = user.followerCount;
 
     return {
       isFollowing: !!follow,
@@ -133,7 +147,14 @@ export class FollowsService {
     followerId: Types.ObjectId,
     page: number = 1,
     limit: number = 20,
-  ): Promise<PaginatedResponseDto<{ id: string; name: string; avatarUrl?: string; followerCount: number }>> {
+  ): Promise<
+    PaginatedResponseDto<{
+      id: string;
+      name: string;
+      avatarUrl?: string;
+      followerCount: number;
+    }>
+  > {
     const skip = (page - 1) * limit;
 
     const followDocs = await this.followModel
@@ -147,9 +168,13 @@ export class FollowsService {
     const total = await this.followModel.countDocuments({ followerId }).exec();
     const creatorIds = followDocs.map((f) => f.creatorId);
 
-    const users = await this.usersService.findByIds(creatorIds, 'name avatarUrl followerCount');
+    const users = await this.usersService.findByIds(
+      creatorIds,
+      'name avatarUrl followerCount',
+    );
 
-    const creatorProfiles = await this.creatorsService.getProfilesWithAvatarByUserIds(creatorIds);
+    const creatorProfiles =
+      await this.creatorsService.getProfilesWithAvatarByUserIds(creatorIds);
     const creatorAvatarByUserId = new Map(
       creatorProfiles.map((p) => [p.userId.toString(), p.avatarUrl]),
     );
@@ -158,7 +183,8 @@ export class FollowsService {
     const data = users.map((u) => ({
       id: u._id.toString(),
       name: (u as any).name,
-      avatarUrl: creatorAvatarByUserId.get(u._id.toString()) || (u as any).avatarUrl,
+      avatarUrl:
+        creatorAvatarByUserId.get(u._id.toString()) || (u as any).avatarUrl,
       followerCount: (u as any).followerCount || 0,
     }));
     data.sort((a, b) => orderMap.get(a.id)! - orderMap.get(b.id)!);
@@ -176,13 +202,15 @@ export class FollowsService {
   /**
    * Get all creator IDs the user follows.
    */
-  async getAllFollowingIds(followerId: Types.ObjectId): Promise<Types.ObjectId[]> {
+  async getAllFollowingIds(
+    followerId: Types.ObjectId,
+  ): Promise<Types.ObjectId[]> {
     const docs = await this.followModel
       .find({ followerId })
       .select('creatorId')
       .lean()
       .exec();
-    return docs.map((d) => d.creatorId as Types.ObjectId);
+    return docs.map((d) => d.creatorId);
   }
 
   /**
@@ -194,7 +222,7 @@ export class FollowsService {
       .select('followerId')
       .lean()
       .exec();
-    return docs.map((d) => d.followerId as Types.ObjectId);
+    return docs.map((d) => d.followerId);
   }
 
   /**
@@ -205,7 +233,14 @@ export class FollowsService {
     targetId: Types.ObjectId,
     page: number = 1,
     limit: number = 20,
-  ): Promise<PaginatedResponseDto<{ id: string; name: string; avatarUrl?: string; followerCount: number }>> {
+  ): Promise<
+    PaginatedResponseDto<{
+      id: string;
+      name: string;
+      avatarUrl?: string;
+      followerCount: number;
+    }>
+  > {
     const user = await this.usersService.findById(targetId.toString());
     if (!user) {
       throw new NotFoundException('User not found');
@@ -221,14 +256,20 @@ export class FollowsService {
       .select('followerId')
       .exec();
 
-    const total = await this.followModel.countDocuments({ creatorId: targetId }).exec();
+    const total = await this.followModel
+      .countDocuments({ creatorId: targetId })
+      .exec();
     const followerIds = followDocs.map((f) => f.followerId);
 
-    const users = await this.usersService.findByIds(followerIds, 'name avatarUrl followerCount');
+    const users = await this.usersService.findByIds(
+      followerIds,
+      'name avatarUrl followerCount',
+    );
 
     // Attempt to get creator profiles for potentially higher quality or specific avatars
     // though now avatars are also on User model.
-    const creatorProfiles = await this.creatorsService.getProfilesWithAvatarByUserIds(followerIds);
+    const creatorProfiles =
+      await this.creatorsService.getProfilesWithAvatarByUserIds(followerIds);
     const creatorAvatarByUserId = new Map(
       creatorProfiles.map((p) => [p.userId.toString(), p.avatarUrl]),
     );
@@ -237,7 +278,8 @@ export class FollowsService {
     const data = users.map((u) => ({
       id: u._id.toString(),
       name: u.name,
-      avatarUrl: creatorAvatarByUserId.get(u._id.toString()) || (u as any).avatarUrl,
+      avatarUrl:
+        creatorAvatarByUserId.get(u._id.toString()) || (u as any).avatarUrl,
       followerCount: (u as any).followerCount || 0,
     }));
     data.sort((a, b) => orderMap.get(a.id)! - orderMap.get(b.id)!);
@@ -252,8 +294,13 @@ export class FollowsService {
     };
   }
 
-  async isFollowing(followerId: Types.ObjectId, creatorId: Types.ObjectId): Promise<boolean> {
-    const follow = await this.followModel.findOne({ followerId, creatorId }).exec();
+  async isFollowing(
+    followerId: Types.ObjectId,
+    creatorId: Types.ObjectId,
+  ): Promise<boolean> {
+    const follow = await this.followModel
+      .findOne({ followerId, creatorId })
+      .exec();
     return !!follow;
   }
 
@@ -264,9 +311,11 @@ export class FollowsService {
    */
   async deleteAllForUser(userId: Types.ObjectId): Promise<void> {
     // Delete follows where user is the follower (user follows X)
-    const following = await this.followModel.find({ followerId: userId }).exec();
+    const following = await this.followModel
+      .find({ followerId: userId })
+      .exec();
     for (const f of following) {
-      await this.usersService.decrementFollowerCount(f.creatorId as Types.ObjectId);
+      await this.usersService.decrementFollowerCount(f.creatorId);
       await this.usersService.decrementFollowingCount(userId);
     }
     await this.followModel.deleteMany({ followerId: userId }).exec();
@@ -275,15 +324,17 @@ export class FollowsService {
     const followers = await this.followModel.find({ creatorId: userId }).exec();
     for (const f of followers) {
       await this.usersService.decrementFollowerCount(userId);
-      await this.usersService.decrementFollowingCount(f.followerId as Types.ObjectId);
+      await this.usersService.decrementFollowingCount(f.followerId);
     }
     await this.followModel.deleteMany({ creatorId: userId }).exec();
 
     // Sync creator profile counts for creators the user followed
     for (const f of following) {
-      const creatorProfile = await this.creatorsService.findByUserId(f.creatorId as Types.ObjectId);
+      const creatorProfile = await this.creatorsService.findByUserId(
+        f.creatorId,
+      );
       if (creatorProfile) {
-        await this.creatorsService.decrementFollowerCount(f.creatorId as Types.ObjectId);
+        await this.creatorsService.decrementFollowerCount(f.creatorId);
       }
     }
   }

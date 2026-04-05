@@ -56,11 +56,11 @@ export async function getCreators(
 export async function getTopCreators(
   limit = 10,
 ): Promise<CreatorProfile[]> {
-  const { data } = await axiosClient.get<PaginatedResponse<CreatorProfile>>(
-    '/creators',
-    { params: { page: 1, limit } },
+  const { data } = await axiosClient.get<CreatorProfile[]>(
+    '/creators/top',
+    { params: { limit } },
   );
-  return data.data;
+  return data ?? [];
 }
 
 export async function getCreator(id: string): Promise<CreatorProfile> {

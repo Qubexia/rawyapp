@@ -7,6 +7,6 @@ export interface ViewResult {
 }
 
 export async function recordView(episodeId: string): Promise<ViewResult> {
-  const { data } = await axiosClient.post<{ data: ViewResult }>(`/views/episodes/${episodeId}`);
-  return data.data;
+  const { data } = await axiosClient.post<ViewResult>(`/views/episodes/${episodeId}`);
+  return data;
 }

@@ -278,6 +278,22 @@ export class AuthService {
     await this.usersService.clearPasswordResetOtp(user._id.toString());
   }
 
+  async upgradeToCreator(userId: string): Promise<UserDocument> {
+    const user = await this.usersService.findById(userId);
+    if (!user) throw new BadRequestException('User not found');
+    if (user.role === Role.CREATOR || user.role === Role.ADMIN) {
+      return user; // already upgraded
+    }
+    const updatedUser = await this.usersService.updateRole(
+      userId,
+      Role.CREATOR,
+    );
+    if (!updatedUser) {
+      throw new BadRequestException('Role update failed');
+    }
+    return updatedUser;
+  }
+
   async generateTokens(
     user: UserDocument,
   ): Promise<{ accessToken: string; refreshToken: string }> {
@@ -390,7 +406,9 @@ export class AuthService {
     // any platform are accepted. The audience in a Google ID token
     // matches the client ID of the OAuth client that created it.
     const validAudiences = [clientId];
-    const androidClientId = this.configService.get<string>('GOOGLE_ANDROID_CLIENT_ID');
+    const androidClientId = this.configService.get<string>(
+      'GOOGLE_ANDROID_CLIENT_ID',
+    );
     const iosClientId = this.configService.get<string>('GOOGLE_IOS_CLIENT_ID');
     if (androidClientId) validAudiences.push(androidClientId);
     if (iosClientId) validAudiences.push(iosClientId);

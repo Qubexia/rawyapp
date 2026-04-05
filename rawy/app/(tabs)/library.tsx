@@ -31,14 +31,17 @@ import {
   Mic,
   UserMinus,
   Compass,
+  Bookmark,
 } from 'lucide-react-native';
 
 import {
   EpisodeRow,
   EmptyState,
+  PodcastCard,
 } from '@/components/ui';
 import { useFollowing, useToggleFollow } from '@/hooks/queries/use-follows';
 import { useLikedEpisodes } from '@/hooks/queries/use-likes';
+import { useMySubscriptions } from '@/hooks/queries/use-subscriptions';
 import { Palette, Spacing, Radius } from '@/constants/theme';
 import { useAuthContext } from '@/context/auth-context';
 import { resolveImageUrl } from '@/utils/url';
@@ -140,6 +143,11 @@ export default function LibraryScreen() {
     refetch: refetchEpisodes,
   } = useLikedEpisodes(1, 20, { enabled: isAuthenticated });
 
+  const {
+    data: subscriptionsData,
+    isLoading: subscriptionsLoading,
+  } = useMySubscriptions();
+
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
     await Promise.all([refetchFollowing(), refetchEpisodes()]);
@@ -148,6 +156,7 @@ export default function LibraryScreen() {
 
   const following = followingData?.pages.flatMap((p) => p.data) ?? [];
   const episodes = episodesData?.data ?? [];
+  const subscriptions = subscriptionsData ?? [];
 
   const renderEpisodeRow = ({ item }: { item: Episode }) => (
     <EpisodeRow episode={item} />
@@ -157,10 +166,19 @@ export default function LibraryScreen() {
     <FollowingCreatorRow creator={item} />
   );
 
-  const isLoading = followingLoading || episodesLoading;
+  const renderPodcastRow = ({ item }: { item: any }) => (
+    <View style={{ marginBottom: Spacing.sm, alignItems: 'center' }}>
+      <PodcastCard 
+        podcast={item} 
+      />
+    </View>
+  );
+
+  const isLoading = followingLoading || episodesLoading || subscriptionsLoading;
 
   const showAuthPrompt = !isAuthenticated && segment === 'following';
   const showEpisodesAuthPrompt = !isAuthenticated && segment === 'episodes';
+  const showSubscriptionsAuthPrompt = !isAuthenticated && segment === 'subscriptions';
 
   const listContent = () => {
     if (showAuthPrompt) {
@@ -213,6 +231,31 @@ export default function LibraryScreen() {
       );
     }
 
+    if (showSubscriptionsAuthPrompt) {
+      return (
+        <View style={styles.authPrompt}>
+          <EmptyState
+            icon={
+              <Bookmark
+                size={48}
+                color={theme.colors.onSurfaceVariant}
+                strokeWidth={1}
+              />
+            }
+            title="Sign in to view subscriptions"
+            message="Your subscribed podcasts will appear here."
+          />
+          <Button
+            mode="contained"
+            onPress={() => router.push('/(auth)/login' as any)}
+            style={styles.signInButton}
+          >
+            Sign In
+          </Button>
+        </View>
+      );
+    }
+
     if (!isAuthenticated) {
       return null;
     }
@@ -225,7 +268,12 @@ export default function LibraryScreen() {
       );
     }
 
-    const data = segment === 'episodes' ? episodes : following;
+    const data = segment === 'episodes' 
+      ? episodes 
+      : segment === 'following' 
+        ? following 
+        : subscriptions;
+        
     const isEmpty = Array.isArray(data) && data.length === 0;
 
     if (segment === 'following' && isEmpty) {
@@ -261,7 +309,9 @@ export default function LibraryScreen() {
         renderItem={
           segment === 'episodes'
             ? (renderEpisodeRow as any)
-            : (renderCreatorRow as any)
+            : segment === 'following'
+              ? (renderCreatorRow as any)
+              : (renderPodcastRow as any)
         }
         contentContainerStyle={styles.listContent}
         showsVerticalScrollIndicator={false}
@@ -272,20 +322,36 @@ export default function LibraryScreen() {
             tintColor={theme.colors.primary}
           />
         }
-        ListEmptyComponent={() =>
-          segment === 'episodes' ? (
-            <EmptyState
-              icon={
-                <Heart
-                  size={32}
-                  color={theme.colors.onSurfaceVariant}
-                  strokeWidth={1}
-                />
-              }
-              message="No liked episodes yet"
-            />
-          ) : null
-        }
+        ListEmptyComponent={() => {
+          if (segment === 'episodes') {
+            return (
+              <EmptyState
+                icon={
+                  <Heart
+                    size={32}
+                    color={theme.colors.onSurfaceVariant}
+                    strokeWidth={1}
+                  />
+                }
+                message="No liked episodes yet"
+              />
+            );
+          } else if (segment === 'subscriptions') {
+            return (
+              <EmptyState
+                icon={
+                  <Bookmark
+                    size={32}
+                    color={theme.colors.onSurfaceVariant}
+                    strokeWidth={1}
+                  />
+                }
+                message="No subscribed podcasts"
+              />
+            );
+          }
+          return null;
+        }}
       />
     );
   };
@@ -315,14 +381,21 @@ export default function LibraryScreen() {
           buttons={[
             {
               value: 'episodes',
-              label: 'Episodes',
+              label: 'Likes',
               icon: () => (
                 <Heart size={16} color={theme.colors.onSurface} />
               ),
             },
             {
+              value: 'subscriptions',
+              label: 'Subs',
+              icon: () => (
+                <Bookmark size={16} color={theme.colors.onSurface} />
+              ),
+            },
+            {
               value: 'following',
-              label: 'Following',
+              label: 'Follows',
               icon: () => (
                 <Users size={16} color={theme.colors.onSurface} />
               ),

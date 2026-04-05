@@ -33,7 +33,16 @@ export class LikesController {
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Like an episode' })
   @ApiParam({ name: 'episodeId', description: 'Episode ID' })
-  @ApiResponse({ status: 201, description: 'Episode liked', schema: { properties: { message: { type: 'string' }, likesCount: { type: 'number' } } } })
+  @ApiResponse({
+    status: 201,
+    description: 'Episode liked',
+    schema: {
+      properties: {
+        message: { type: 'string' },
+        likesCount: { type: 'number' },
+      },
+    },
+  })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   @ApiResponse({ status: 404, description: 'Episode not found' })
   @ApiResponse({ status: 409, description: 'Already liked this episode' })
@@ -50,10 +59,10 @@ export class LikesController {
     );
     return {
       statusCode: 201,
-      data: { 
-        message: 'Episode liked', 
+      data: {
+        message: 'Episode liked',
         isLiked: true,
-        likesCount: result.likesCount 
+        likesCount: result.likesCount,
       },
     };
   }
@@ -62,7 +71,16 @@ export class LikesController {
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Unlike an episode' })
   @ApiParam({ name: 'episodeId', description: 'Episode ID' })
-  @ApiResponse({ status: 200, description: 'Episode unliked', schema: { properties: { message: { type: 'string' }, likesCount: { type: 'number' } } } })
+  @ApiResponse({
+    status: 200,
+    description: 'Episode unliked',
+    schema: {
+      properties: {
+        message: { type: 'string' },
+        likesCount: { type: 'number' },
+      },
+    },
+  })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   @ApiResponse({ status: 404, description: 'Not liked this episode' })
   async unlike(
@@ -78,10 +96,10 @@ export class LikesController {
     );
     return {
       statusCode: 200,
-      data: { 
-        message: 'Episode unliked', 
+      data: {
+        message: 'Episode unliked',
         isLiked: false,
-        likesCount: result.likesCount 
+        likesCount: result.likesCount,
       },
     };
   }
@@ -89,9 +107,20 @@ export class LikesController {
   @Get('episodes/:episodeId/status')
   @Public()
   @ApiBearerAuth()
-  @ApiOperation({ summary: 'Check if current user liked an episode and get like count' })
+  @ApiOperation({
+    summary: 'Check if current user liked an episode and get like count',
+  })
   @ApiParam({ name: 'episodeId', description: 'Episode ID' })
-  @ApiResponse({ status: 200, description: 'Status', schema: { properties: { isLiked: { type: 'boolean' }, likesCount: { type: 'number' } } } })
+  @ApiResponse({
+    status: 200,
+    description: 'Status',
+    schema: {
+      properties: {
+        isLiked: { type: 'boolean' },
+        likesCount: { type: 'number' },
+      },
+    },
+  })
   @ApiResponse({ status: 200, description: 'Status for anonymous' })
   @ApiResponse({ status: 404, description: 'Episode not found' })
   async getStatus(
@@ -110,7 +139,9 @@ export class LikesController {
 
   @Get('me/episodes')
   @ApiBearerAuth()
-  @ApiOperation({ summary: 'Get episodes liked by the current user (paginated)' })
+  @ApiOperation({
+    summary: 'Get episodes liked by the current user (paginated)',
+  })
   @ApiQuery({ name: 'page', required: false, type: Number, example: 1 })
   @ApiQuery({ name: 'limit', required: false, type: Number, example: 20 })
   @ApiResponse({ status: 200, description: 'Paginated liked episodes' })

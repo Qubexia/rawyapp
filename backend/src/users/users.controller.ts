@@ -1,5 +1,26 @@
-import { Controller, Get, Patch, Post, Delete, Body, UseInterceptors, UploadedFile, HttpCode, HttpStatus, Param, Req, BadRequestException } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiConsumes, ApiBody } from '@nestjs/swagger';
+import {
+  Controller,
+  Get,
+  Patch,
+  Post,
+  Delete,
+  Body,
+  UseInterceptors,
+  UploadedFile,
+  HttpCode,
+  HttpStatus,
+  Param,
+  Req,
+  BadRequestException,
+} from '@nestjs/common';
+import {
+  ApiTags,
+  ApiOperation,
+  ApiResponse,
+  ApiBearerAuth,
+  ApiConsumes,
+  ApiBody,
+} from '@nestjs/swagger';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { Types } from 'mongoose';
 import { Request } from 'express';
@@ -14,7 +35,10 @@ import { PushPreferenceDto } from './dto/push-preference.dto';
 import { DeleteAccountDto } from './dto/delete-account.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { UpdateLocationDto } from './dto/update-location.dto';
-import { getImageMulterConfig, getRelativeUrl } from '../common/utils/file-upload.util';
+import {
+  getImageMulterConfig,
+  getRelativeUrl,
+} from '../common/utils/file-upload.util';
 
 @ApiTags('users')
 @ApiCommonErrorResponses()
@@ -23,12 +47,15 @@ export class UsersController {
   constructor(
     private usersService: UsersService,
     private followsService: FollowsService,
-  ) { }
+  ) {}
 
   @Get('me')
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Get current user profile' })
-  @ApiResponse({ status: HttpStatus.OK, description: 'User profile retrieved successfully' })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'User profile retrieved successfully',
+  })
   @ApiResponse({ status: HttpStatus.UNAUTHORIZED, description: 'Unauthorized' })
   async getCurrentUser(@CurrentUser() user: UserDocument) {
     return this.usersService.findById(user._id.toString());
@@ -37,9 +64,15 @@ export class UsersController {
   @Patch('me')
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Update current user profile' })
-  @ApiResponse({ status: HttpStatus.OK, description: 'User profile updated successfully' })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'User profile updated successfully',
+  })
   @ApiResponse({ status: HttpStatus.UNAUTHORIZED, description: 'Unauthorized' })
-  @ApiResponse({ status: HttpStatus.BAD_REQUEST, description: 'Validation error' })
+  @ApiResponse({
+    status: HttpStatus.BAD_REQUEST,
+    description: 'Validation error',
+  })
   async updateCurrentUser(
     @CurrentUser() user: UserDocument,
     @Body() updateData: UpdateUserDto,
@@ -59,9 +92,14 @@ export class UsersController {
       },
     },
   })
-  @ApiResponse({ status: HttpStatus.OK, description: 'Avatar updated successfully' })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'Avatar updated successfully',
+  })
   @ApiResponse({ status: HttpStatus.UNAUTHORIZED, description: 'Unauthorized' })
-  @UseInterceptors(FileInterceptor('avatar', getImageMulterConfig(2 * 1024 * 1024)))
+  @UseInterceptors(
+    FileInterceptor('avatar', getImageMulterConfig(2 * 1024 * 1024)),
+  )
   async updateAvatar(
     @CurrentUser() user: UserDocument,
     @UploadedFile() file: Express.Multer.File,
@@ -69,17 +107,29 @@ export class UsersController {
     if (!file) {
       throw new BadRequestException('Avatar image file is required');
     }
-    return this.usersService.updateAvatar(user._id.toString(), getRelativeUrl(file.path));
+    return this.usersService.updateAvatar(
+      user._id.toString(),
+      getRelativeUrl(file.path),
+    );
   }
 
   @Post('me/device-token')
   @ApiBearerAuth()
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiOperation({ summary: 'Register FCM device token for push notifications' })
-  @ApiResponse({ status: HttpStatus.NO_CONTENT, description: 'Device token registered' })
+  @ApiResponse({
+    status: HttpStatus.NO_CONTENT,
+    description: 'Device token registered',
+  })
   @ApiResponse({ status: HttpStatus.UNAUTHORIZED, description: 'Unauthorized' })
-  @ApiResponse({ status: HttpStatus.BAD_REQUEST, description: 'Validation error' })
-  async addDeviceToken(@CurrentUser() user: UserDocument, @Body() dto: DeviceTokenDto) {
+  @ApiResponse({
+    status: HttpStatus.BAD_REQUEST,
+    description: 'Validation error',
+  })
+  async addDeviceToken(
+    @CurrentUser() user: UserDocument,
+    @Body() dto: DeviceTokenDto,
+  ) {
     await this.usersService.addDeviceToken(user._id.toString(), dto.token);
   }
 
@@ -87,10 +137,19 @@ export class UsersController {
   @ApiBearerAuth()
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiOperation({ summary: 'Remove FCM device token' })
-  @ApiResponse({ status: HttpStatus.NO_CONTENT, description: 'Device token removed' })
+  @ApiResponse({
+    status: HttpStatus.NO_CONTENT,
+    description: 'Device token removed',
+  })
   @ApiResponse({ status: HttpStatus.UNAUTHORIZED, description: 'Unauthorized' })
-  @ApiResponse({ status: HttpStatus.BAD_REQUEST, description: 'Validation error' })
-  async removeDeviceToken(@CurrentUser() user: UserDocument, @Body() dto: DeviceTokenDto) {
+  @ApiResponse({
+    status: HttpStatus.BAD_REQUEST,
+    description: 'Validation error',
+  })
+  async removeDeviceToken(
+    @CurrentUser() user: UserDocument,
+    @Body() dto: DeviceTokenDto,
+  ) {
     await this.usersService.removeDeviceToken(user._id.toString(), dto.token);
   }
 
@@ -98,20 +157,29 @@ export class UsersController {
   @ApiBearerAuth()
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Update push notification preference' })
-  @ApiResponse({ status: HttpStatus.OK, description: 'Push preference updated' })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'Push preference updated',
+  })
   @ApiResponse({ status: HttpStatus.UNAUTHORIZED, description: 'Unauthorized' })
   async updatePushPreference(
     @CurrentUser() user: UserDocument,
     @Body() dto: PushPreferenceDto,
   ) {
-    await this.usersService.updatePushPreference(user._id.toString(), dto.enabled);
+    await this.usersService.updatePushPreference(
+      user._id.toString(),
+      dto.enabled,
+    );
     return { enabled: dto.enabled };
   }
 
   @Patch('me/location')
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Update current user location' })
-  @ApiResponse({ status: HttpStatus.OK, description: 'Location updated successfully' })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'Location updated successfully',
+  })
   @ApiResponse({ status: HttpStatus.UNAUTHORIZED, description: 'Unauthorized' })
   async updateLocation(
     @CurrentUser() user: UserDocument,
@@ -123,8 +191,14 @@ export class UsersController {
   @Delete('me')
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Delete account (requires password re-entry)' })
-  @ApiResponse({ status: HttpStatus.OK, description: 'Account deleted successfully' })
-  @ApiResponse({ status: HttpStatus.UNAUTHORIZED, description: 'Password is incorrect' })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'Account deleted successfully',
+  })
+  @ApiResponse({
+    status: HttpStatus.UNAUTHORIZED,
+    description: 'Password is incorrect',
+  })
   @ApiResponse({ status: HttpStatus.NOT_FOUND, description: 'User not found' })
   async deleteAccount(
     @CurrentUser() user: UserDocument,

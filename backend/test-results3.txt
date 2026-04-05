@@ -1,0 +1,240 @@
+﻿node.exe : PASS tests/unit/
+apple-api.service.spec.ts
+At line:1 char:1
++ & "C:\Program 
+Files\nodejs/node.exe" 
+"C:\Program 
+Files\nodejs/node_mo ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~
+    + CategoryInfo         
+     : NotSpecified: (PAS  
+  S tests/unit...service   
+ .spec.ts:String) [], R    
+emoteException
+    + FullyQualifiedErrorI 
+   d : NativeCommandError
+ 
+  AppleApiService
+    ΓêÜ should be defined 
+(41 ms)
+    fetchTopPodcasts
+      ΓêÜ should fetch and 
+map top podcasts from 
+Apple API (11 ms)
+      ΓêÜ should return 
+empty array if no entries 
+found (5 ms)
+
+PASS tests/unit/ownership.g
+uard.spec.ts
+  OwnershipGuard
+    ΓêÜ should define the 
+guard (14 ms)
+    ΓêÜ should allow 
+access if user is Admin (2 
+ms)
+    ΓêÜ should pass 
+through if no resourceId 
+is present (3 ms)
+
+PASS tests/unit/deduplicati
+on.service.spec.ts
+  DeduplicationService
+    filterNewEpisodes
+      ΓêÜ should return 
+all items if no episodes 
+exist (29 ms)
+      ΓêÜ should filter 
+out existing guids (5 ms)
+      ΓêÜ should return 
+empty array if items is 
+empty (3 ms)
+
+PASS tests/unit/episodes.se
+rvice.spec.ts
+  EpisodesService
+    ΓêÜ should be defined 
+(37 ms)
+    findAll
+      ΓêÜ should return 
+paginated episodes for a 
+specific podcast (8 ms)
+
+PASS tests/unit/sync.servic
+e.spec.ts
+  SyncService
+    syncPodcast
+      ΓêÜ should parse 
+feed, deduplicate, and 
+bulk write (25 ms)
+      ΓêÜ should not bulk 
+write if no new items 
+found (3 ms)
+
+PASS tests/unit/podcast.ser
+vice.spec.ts
+  PodcastsService
+    findAll 
+(getCreatorPodcasts 
+equivalent)
+      ΓêÜ should return 
+paginated podcasts 
+restricted to creator (25 
+ms)
+
+PASS tests/unit/claim.servi
+ce.spec.ts
+  ClaimsService
+    createRequest
+      ΓêÜ should create a 
+new claim request if none 
+exists (27 ms)
+      ΓêÜ should update 
+existing request if one 
+exists (4 ms)
+    verify
+      ΓêÜ should throw 
+NotFoundException if token 
+is invalid or expired (15 
+ms)
+      ΓêÜ should verify 
+and upgrade role (4 ms)
+      ΓêÜ should throw 
+BadRequestException if 
+token has expired (3 ms)
+
+FAIL tests/unit/episodes.co
+ntroller.spec.ts
+  EpisodesController - 
+uploadInternal
+    ├ù should successfully 
+upload an internal episode 
+(23 ms)
+
+  ΓùÅ EpisodesController - 
+uploadInternal ΓÇ║ should 
+successfully upload an 
+internal episode
+
+    BSONError: input must 
+be a 24 character hex 
+string, 12 byte 
+Uint8Array, or an integer
+
+    [0m [90m 125 |[39m
+     [90m 126 |[39m     
+[36mif[39m (userRole 
+[33m!==[39m 
+[32m'ADMIN'[39m) {
+    
+[31m[1m>[22m[39m[90m 
+127 |[39m       
+[36mconst[39m isOwner 
+[33m=[39m 
+[36mawait[39m [36mthis[
+39m[33m.[39mpodcastsServi
+ce[33m.[39misOwner(create
+EpisodeDto[33m.[39mpodcas
+tId[33m,[39m 
+[36mnew[39m [33mTypes[3
+9m[33m.[39m[33mObjectId
+[39m(userId))[33m;[39m
+     [90m     |[39m      
+                           
+                           
+                          
+[31m[1m^[22m[39m
+     [90m 128 |[39m      
+ [36mif[39m 
+([33m![39misOwner) {
+     [90m 129 |[39m      
+   [36mthrow[39m 
+[36mnew[39m [33mBadReque
+stException[39m([32m'You 
+do not have permission to 
+add episodes to this 
+podcast'[39m)[33m;[39m
+     [90m 130 |[39m      
+ }[0m
+
+      at new ObjectId (node
+_modules/bson/src/objectid.
+ts:113:15)
+      at 
+EpisodesController.create (
+src/episodes/episodes.contr
+oller.ts:127:86)
+      at 
+Object.<anonymous> (tests/u
+nit/episodes.controller.spe
+c.ts:37:37)
+
+FAIL tests/unit/podcast.con
+troller.spec.ts
+  PodcastsController - 
+createInternal
+    ├ù should successfully 
+create an internal podcast 
+(24 ms)
+
+  ΓùÅ PodcastsController - 
+createInternal ΓÇ║ should 
+successfully create an 
+internal podcast
+
+    BSONError: input must 
+be a 24 character hex 
+string, 12 byte 
+Uint8Array, or an integer
+
+    [0m [90m  95 |[39m
+     [90m  96 |[39m     
+[36mconst[39m podcast 
+[33m=[39m 
+[36mawait[39m [36mthis[
+39m[33m.[39mpodcastsServi
+ce[33m.[39mcreate(
+    
+[31m[1m>[22m[39m[90m  
+97 |[39m       
+[36mnew[39m [33mTypes[3
+9m[33m.[39m[33mObjectId
+[39m(userId)[33m,[39m
+     [90m     |[39m      
+ [31m[1m^[22m[39m
+     [90m  98 |[39m      
+ 
+createPodcastDto[33m,[39m
+     [90m  99 |[39m      
+ coverImageUrl[33m,[39m
+     [90m 100 |[39m     
+)[33m;[39m[0m
+
+      at new ObjectId (node
+_modules/bson/src/objectid.
+ts:113:15)
+      at 
+PodcastsController.create (
+src/podcasts/podcasts.contr
+oller.ts:97:7)
+      at 
+Object.<anonymous> (tests/u
+nit/podcast.controller.spec
+.ts:34:37)
+
+Test Suites: 2 failed, 7 
+passed, 9 total
+Tests:       2 failed, 19 
+passed, 21 total
+Snapshots:   0 total
+Time:        5.818 s
+Ran all test suites 
+matching tests/unit.
+Force exiting Jest: Have 
+you considered using 
+`--detectOpenHandles` to 
+detect async operations 
+that kept running after 
+all tests finished?

@@ -34,6 +34,24 @@ export class Episode {
 
   @Prop({ required: false })
   imageUrl?: string;
+
+  @Prop({ required: true, enum: ['external', 'internal'], default: 'internal' })
+  source: 'external' | 'internal';
+
+  @Prop({ required: false })
+  audioUrl?: string;
+
+  @Prop({ required: false })
+  audioStoragePath?: string;
+
+  @Prop({ required: false })
+  guid?: string;
+
+  @Prop({ required: true, default: Date.now })
+  pubDate: Date;
+
+  @Prop({ required: false })
+  artworkUrl?: string;
 }
 
 export const EpisodeSchema = SchemaFactory.createForClass(Episode);
@@ -42,9 +60,11 @@ export const EpisodeSchema = SchemaFactory.createForClass(Episode);
 EpisodeSchema.index({ podcastId: 1, createdAt: -1 });
 EpisodeSchema.index({ creatorId: 1 });
 EpisodeSchema.index({ createdAt: -1 });
+EpisodeSchema.index({ podcastId: 1, pubDate: -1 });
+EpisodeSchema.index({ podcastId: 1, guid: 1 }, { unique: true, sparse: true });
 
 // Virtual for full image URL
-EpisodeSchema.virtual('image').get(function() {
+EpisodeSchema.virtual('image').get(function () {
   if (!this.imageUrl) return null;
   return `${process.env.APP_URL || 'http://localhost:3000'}${this.imageUrl}`;
 });

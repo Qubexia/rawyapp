@@ -1,0 +1,1059 @@
+﻿node.exe : PASS tests/unit/
+apple-api.service.spec.ts
+At line:1 char:1
++ & "C:\Program 
+Files\nodejs/node.exe" 
+"C:\Program 
+Files\nodejs/node_mo ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~
+    + CategoryInfo         
+     : NotSpecified: (PAS  
+  S tests/unit...service   
+ .spec.ts:String) [], R    
+emoteException
+    + FullyQualifiedErrorI 
+   d : NativeCommandError
+ 
+  AppleApiService
+    ΓêÜ should be defined 
+(36 ms)
+    fetchTopPodcasts
+      ΓêÜ should fetch and 
+map top podcasts from 
+Apple API (11 ms)
+      ΓêÜ should return 
+empty array if no entries 
+found (4 ms)
+
+FAIL tests/unit/ownership.g
+uard.spec.ts
+  OwnershipGuard
+    ΓêÜ should define the 
+guard (11 ms)
+    ├ù should allow access 
+if user is Admin (1 ms)
+
+  ΓùÅ OwnershipGuard ΓÇ║ 
+should allow access if 
+user is Admin
+
+    TypeError: Cannot read 
+properties of undefined 
+(reading 'id')
+
+    [0m [90m 18 |[39m   
+  
+     [90m 19 |[39m     
+[90m// Support id in 
+params (e.g., 
+/podcasts/:id) or 
+podcastId in 
+body/params[39m
+    
+[31m[1m>[22m[39m[90m 
+20 |[39m     
+[36mconst[39m resourceId 
+[33m=[39m request[33m.[
+39mparams[33m.[39mid 
+[33m||[39m request[33m.
+[39mparams[33m.[39mpodcas
+tId [33m||[39m request[3
+3m.[39mbody[33m.[39mpodc
+astId[33m;[39m
+     [90m    |[39m       
+                           
+     [31m[1m^[22m[39m
+     [90m 21 |[39m
+     [90m 22 |[39m     
+[36mif[39m 
+([33m![39muser) {
+     [90m 23 |[39m       
+[36mthis[39m[33m.[39mlo
+gger[33m.[39mwarn([32m'O
+wnershipGuard requires an 
+authenticated 
+user.'[39m)[33m;[39m[0m
+
+      at 
+OwnershipGuard.canActivate 
+(src/common/guards/ownershi
+p.guard.ts:20:39)
+      at 
+Object.<anonymous> (tests/u
+nit/ownership.guard.spec.ts
+:33:32)
+
+PASS tests/unit/sync.servic
+e.spec.ts
+  SyncService
+    syncPodcast
+      ΓêÜ should parse 
+feed, deduplicate, and 
+bulk write (44 ms)
+      ΓêÜ should not bulk 
+write if no new items 
+found (6 ms)
+
+FAIL tests/unit/podcast.ser
+vice.spec.ts
+  PodcastsService
+    findAll 
+(getCreatorPodcasts 
+equivalent)
+      ├ù should return 
+paginated podcasts 
+restricted to creator (36 
+ms)
+
+  ΓùÅ PodcastsService ΓÇ║ 
+findAll 
+(getCreatorPodcasts 
+equivalent) ΓÇ║ should 
+return paginated podcasts 
+restricted to creator
+
+    TypeError: Cannot read 
+properties of undefined 
+(reading 'exec')
+
+    [0m [90m 100 |[39m  
+       [33m.[39mlean()
+     [90m 101 |[39m      
+   [33m.[39mexec()[33m,
+[39m
+    
+[31m[1m>[22m[39m[90m 
+102 |[39m       [36mthis
+[39m[33m.[39mpodcastModel
+[33m.[39mcountDocuments(f
+ilter)[33m.[39mexec()[33
+m,[39m
+     [90m     |[39m      
+                           
+              
+[31m[1m^[22m[39m
+     [90m 103 |[39m     
+])[33m;[39m
+     [90m 104 |[39m
+     [90m 105 |[39m     
+[90m// Rename creatorId 
+ΓåÆ creator to match 
+frontend 
+expectations[39m[0m
+
+      at 
+PodcastsService.findAll (sr
+c/podcasts/podcasts.service
+.ts:102:47)
+      at 
+Object.<anonymous> (tests/u
+nit/podcast.service.spec.ts
+:48:36)
+
+FAIL tests/unit/deduplicati
+on.service.spec.ts
+  DeduplicationService
+    filterNewEpisodes
+      ├ù should return all 
+items if no episodes exist 
+(31 ms)
+      ├ù should filter out 
+existing guids (6 ms)
+      ΓêÜ should return 
+empty array if items is 
+empty (7 ms)
+
+  ΓùÅ DeduplicationService 
+ΓÇ║ filterNewEpisodes ΓÇ║ 
+should return all items if 
+no episodes exist
+
+    BSONError: input must 
+be a 24 character hex 
+string, 12 byte 
+Uint8Array, or an integer
+
+    [0m [90m 22 |[39m   
+  [36mconst[39m 
+existingEpisodes 
+[33m=[39m 
+[36mawait[39m [36mthis[
+39m[33m.[39mepisodeModel
+[33m.[39mfind(
+     [90m 23 |[39m       
+{ 
+    
+[31m[1m>[22m[39m[90m 
+24 |[39m         
+podcastId[33m:[39m 
+[36mnew[39m [33mTypes[3
+9m[33m.[39m[33mObjectId
+[39m(podcastId)[33m,[39m
+     [90m    |[39m       
+             
+[31m[1m^[22m[39m
+     [90m 25 |[39m       
+  guid[33m:[39m { 
+$in[33m:[39m itemGuids } 
+     [90m 26 |[39m       
+}[33m,[39m
+     [90m 27 |[39m       
+{ guid[33m:[39m 
+[35m1[39m }[0m
+
+      at new ObjectId (node
+_modules/bson/src/objectid.
+ts:113:15)
+      at DeduplicationServi
+ce.filterNewEpisodes (src/s
+ync/services/deduplication.
+service.ts:24:20)
+      at 
+Object.<anonymous> (tests/u
+nit/deduplication.service.s
+pec.ts:32:36)
+
+  ΓùÅ DeduplicationService 
+ΓÇ║ filterNewEpisodes ΓÇ║ 
+should filter out existing 
+guids
+
+    BSONError: input must 
+be a 24 character hex 
+string, 12 byte 
+Uint8Array, or an integer
+
+    [0m [90m 22 |[39m   
+  [36mconst[39m 
+existingEpisodes 
+[33m=[39m 
+[36mawait[39m [36mthis[
+39m[33m.[39mepisodeModel
+[33m.[39mfind(
+     [90m 23 |[39m       
+{ 
+    
+[31m[1m>[22m[39m[90m 
+24 |[39m         
+podcastId[33m:[39m 
+[36mnew[39m [33mTypes[3
+9m[33m.[39m[33mObjectId
+[39m(podcastId)[33m,[39m
+     [90m    |[39m       
+             
+[31m[1m^[22m[39m
+     [90m 25 |[39m       
+  guid[33m:[39m { 
+$in[33m:[39m itemGuids } 
+     [90m 26 |[39m       
+}[33m,[39m
+     [90m 27 |[39m       
+{ guid[33m:[39m 
+[35m1[39m }[0m
+
+      at new ObjectId (node
+_modules/bson/src/objectid.
+ts:113:15)
+      at DeduplicationServi
+ce.filterNewEpisodes (src/s
+ync/services/deduplication.
+service.ts:24:20)
+      at 
+Object.<anonymous> (tests/u
+nit/deduplication.service.s
+pec.ts:42:36)
+
+FAIL tests/unit/episodes.se
+rvice.spec.ts
+  EpisodesService
+    ├ù should be defined 
+(389 ms)
+    findByPodcastId
+      ├ù should return 
+paginated episodes for a 
+specific podcast (6 ms)
+
+  ΓùÅ EpisodesService ΓÇ║ 
+should be defined
+
+    Nest can't resolve 
+dependencies of the 
+EpisodesService 
+(EpisodeModel, ?, 
+PodcastsService, 
+LikesService, 
+CommentsService, 
+ViewsService). Please make 
+sure that the argument 
+NotificationsService at 
+index [1] is available in 
+the RootTestModule context.
+
+    Potential solutions:
+    - Is RootTestModule a 
+valid NestJS module?
+    - If 
+NotificationsService is a 
+provider, is it part of 
+the current RootTestModule?
+    - If 
+NotificationsService is 
+exported from a separate 
+@Module, is that module 
+imported within 
+RootTestModule?
+      @Module({
+        imports: [ /* the 
+Module containing 
+NotificationsService */ ]
+      })
+
+    For more common 
+dependency resolution 
+issues, see: https://docs.n
+estjs.com/faq/common-errors
+
+    [0m [90m 21 |[39m   
+  }[33m;[39m
+     [90m 22 |[39m
+    
+[31m[1m>[22m[39m[90m 
+23 |[39m     
+[36mconst[39m 
+module[33m:[39m 
+[33mTestingModule[39m 
+[33m=[39m 
+[36mawait[39m [33mTest[
+39m[33m.[39mcreateTesting
+Module({
+     [90m    |[39m       
+                           
+ [31m[1m^[22m[39m
+     [90m 24 |[39m       
+providers[33m:[39m [
+     [90m 25 |[39m       
+  [33mEpisodesService[39m
+[33m,[39m
+     [90m 26 |[39m       
+  {[0m
+
+      at TestingInjector.lo
+okupComponentInParentModule
+s (node_modules/@nestjs/cor
+e/injector/injector.js:290:
+19)
+      at TestingInjector.re
+solveComponentWrapper (node
+_modules/@nestjs/testing/te
+sting-injector.js:19:45)
+      at resolveParam (node
+_modules/@nestjs/core/injec
+tor/injector.js:140:38)
+          at async 
+Promise.all (index 1)
+      at TestingInjector.re
+solveConstructorParams (nod
+e_modules/@nestjs/core/inje
+ctor/injector.js:169:27)
+      at TestingInjector.lo
+adInstance (node_modules/@n
+estjs/core/injector/injecto
+r.js:75:13)
+      at TestingInjector.lo
+adProvider (node_modules/@n
+estjs/core/injector/injecto
+r.js:103:9)
+      at node_modules/@nest
+js/core/injector/instance-l
+oader.js:56:13
+          at async 
+Promise.all (index 3)
+      at TestingInstanceLoa
+der.createInstancesOfProvid
+ers (node_modules/@nestjs/c
+ore/injector/instance-loade
+r.js:55:9)
+      at node_modules/@nest
+js/core/injector/instance-l
+oader.js:40:13
+          at async 
+Promise.all (index 1)
+      at TestingInstanceLoa
+der.createInstances (node_m
+odules/@nestjs/core/injecto
+r/instance-loader.js:39:9)
+      at TestingInstanceLoa
+der.createInstancesOfDepend
+encies (node_modules/@nestj
+s/core/injector/instance-lo
+ader.js:22:13)
+      at TestingInstanceLoa
+der.createInstancesOfDepend
+encies (node_modules/@nestj
+s/testing/testing-instance-
+loader.js:9:9)
+      at TestingModuleBuild
+er.createInstancesOfDepende
+ncies (node_modules/@nestjs
+/testing/testing-module.bui
+lder.js:118:9)
+      at TestingModuleBuild
+er.compile (node_modules/@n
+estjs/testing/testing-modul
+e.builder.js:74:9)
+      at 
+Object.<anonymous> (tests/u
+nit/episodes.service.spec.t
+s:23:35)
+
+  ΓùÅ EpisodesService ΓÇ║ 
+findByPodcastId ΓÇ║ should 
+return paginated episodes 
+for a specific podcast
+
+    Nest can't resolve 
+dependencies of the 
+EpisodesService 
+(EpisodeModel, ?, 
+PodcastsService, 
+LikesService, 
+CommentsService, 
+ViewsService). Please make 
+sure that the argument 
+NotificationsService at 
+index [1] is available in 
+the RootTestModule context.
+
+    Potential solutions:
+    - Is RootTestModule a 
+valid NestJS module?
+    - If 
+NotificationsService is a 
+provider, is it part of 
+the current RootTestModule?
+    - If 
+NotificationsService is 
+exported from a separate 
+@Module, is that module 
+imported within 
+RootTestModule?
+      @Module({
+        imports: [ /* the 
+Module containing 
+NotificationsService */ ]
+      })
+
+    For more common 
+dependency resolution 
+issues, see: https://docs.n
+estjs.com/faq/common-errors
+
+    [0m [90m 21 |[39m   
+  }[33m;[39m
+     [90m 22 |[39m
+    
+[31m[1m>[22m[39m[90m 
+23 |[39m     
+[36mconst[39m 
+module[33m:[39m 
+[33mTestingModule[39m 
+[33m=[39m 
+[36mawait[39m [33mTest[
+39m[33m.[39mcreateTesting
+Module({
+     [90m    |[39m       
+                           
+ [31m[1m^[22m[39m
+     [90m 24 |[39m       
+providers[33m:[39m [
+     [90m 25 |[39m       
+  [33mEpisodesService[39m
+[33m,[39m
+     [90m 26 |[39m       
+  {[0m
+
+      at TestingInjector.lo
+okupComponentInParentModule
+s (node_modules/@nestjs/cor
+e/injector/injector.js:290:
+19)
+      at TestingInjector.re
+solveComponentWrapper (node
+_modules/@nestjs/testing/te
+sting-injector.js:19:45)
+      at resolveParam (node
+_modules/@nestjs/core/injec
+tor/injector.js:140:38)
+          at async 
+Promise.all (index 1)
+      at TestingInjector.re
+solveConstructorParams (nod
+e_modules/@nestjs/core/inje
+ctor/injector.js:169:27)
+      at TestingInjector.lo
+adInstance (node_modules/@n
+estjs/core/injector/injecto
+r.js:75:13)
+      at TestingInjector.lo
+adProvider (node_modules/@n
+estjs/core/injector/injecto
+r.js:103:9)
+      at node_modules/@nest
+js/core/injector/instance-l
+oader.js:56:13
+          at async 
+Promise.all (index 3)
+      at TestingInstanceLoa
+der.createInstancesOfProvid
+ers (node_modules/@nestjs/c
+ore/injector/instance-loade
+r.js:55:9)
+      at node_modules/@nest
+js/core/injector/instance-l
+oader.js:40:13
+          at async 
+Promise.all (index 1)
+      at TestingInstanceLoa
+der.createInstances (node_m
+odules/@nestjs/core/injecto
+r/instance-loader.js:39:9)
+      at TestingInstanceLoa
+der.createInstancesOfDepend
+encies (node_modules/@nestj
+s/core/injector/instance-lo
+ader.js:22:13)
+      at TestingInstanceLoa
+der.createInstancesOfDepend
+encies (node_modules/@nestj
+s/testing/testing-instance-
+loader.js:9:9)
+      at TestingModuleBuild
+er.createInstancesOfDepende
+ncies (node_modules/@nestjs
+/testing/testing-module.bui
+lder.js:118:9)
+      at TestingModuleBuild
+er.compile (node_modules/@n
+estjs/testing/testing-modul
+e.builder.js:74:9)
+      at 
+Object.<anonymous> (tests/u
+nit/episodes.service.spec.t
+s:23:35)
+
+FAIL tests/unit/claim.servi
+ce.spec.ts
+  ClaimsService
+    createRequest
+      ├ù should create a 
+new claim request if none 
+exists (23 ms)
+      ├ù should update 
+existing request if one 
+exists (4 ms)
+    verify
+      ├ù should throw 
+NotFoundException if token 
+is invalid or expired (24 
+ms)
+      ├ù should verify and 
+upgrade role (2 ms)
+      ├ù should throw 
+BadRequestException if 
+token has expired (6 ms)
+
+  ΓùÅ ClaimsService ΓÇ║ 
+createRequest ΓÇ║ should 
+create a new claim request 
+if none exists
+
+    TypeError: this.claimRe
+questModel.findOne(...).exe
+c is not a function
+
+    [0m [90m 23 |[39m   
+    userId[33m:[39m 
+[36mnew[39m [33mTypes[3
+9m[33m.[39m[33mObjectId
+[39m(userId)[33m,[39m
+     [90m 24 |[39m       
+podcastId[33m:[39m 
+[36mnew[39m [33mTypes[3
+9m[33m.[39m[33mObjectId
+[39m(podcastId)[33m,[39m
+    
+[31m[1m>[22m[39m[90m 
+25 |[39m     })[33m.[39m
+exec()[33m;[39m
+     [90m    |[39m       
+ [31m[1m^[22m[39m
+     [90m 26 |[39m
+     [90m 27 |[39m     
+[36mlet[39m 
+request[33m;[39m
+     [90m 28 |[39m     
+[36mif[39m (existing) 
+{[0m
+
+      at ClaimsService.crea
+teRequest (src/claims/claim
+s.service.ts:25:8)
+      at 
+Object.<anonymous> (tests/u
+nit/claim.service.spec.ts:4
+6:36)
+
+  ΓùÅ ClaimsService ΓÇ║ 
+createRequest ΓÇ║ should 
+update existing request if 
+one exists
+
+    TypeError: this.claimRe
+questModel.findOne(...).exe
+c is not a function
+
+    [0m [90m 23 |[39m   
+    userId[33m:[39m 
+[36mnew[39m [33mTypes[3
+9m[33m.[39m[33mObjectId
+[39m(userId)[33m,[39m
+     [90m 24 |[39m       
+podcastId[33m:[39m 
+[36mnew[39m [33mTypes[3
+9m[33m.[39m[33mObjectId
+[39m(podcastId)[33m,[39m
+    
+[31m[1m>[22m[39m[90m 
+25 |[39m     })[33m.[39m
+exec()[33m;[39m
+     [90m    |[39m       
+ [31m[1m^[22m[39m
+     [90m 26 |[39m
+     [90m 27 |[39m     
+[36mlet[39m 
+request[33m;[39m
+     [90m 28 |[39m     
+[36mif[39m (existing) 
+{[0m
+
+      at ClaimsService.crea
+teRequest (src/claims/claim
+s.service.ts:25:8)
+      at 
+Object.<anonymous> (tests/u
+nit/claim.service.spec.ts:5
+4:36)
+
+  ΓùÅ ClaimsService ΓÇ║ 
+verify ΓÇ║ should throw 
+NotFoundException if token 
+is invalid or expired
+
+    expect(received).reject
+s.toThrow(expected)
+
+    Expected constructor: 
+NotFoundException
+    Received constructor: 
+TypeError
+
+    Received message: "this
+.claimRequestModel.findOne(
+...).exec is not a 
+function"
+
+        [0m [90m 52 
+|[39m       verificationTo
+ken[33m:[39m 
+token[33m,[39m
+         [90m 53 |[39m   
+    status[33m:[39m 
+[32m'pending'[39m
+        
+[31m[1m>[22m[39m[90m 
+54 |[39m     })[33m.[39m
+exec()[33m;[39m
+         [90m    |[39m   
+     [31m[1m^[22m[39m
+         [90m 55 |[39m
+         [90m 56 |[39m   
+  [36mif[39m 
+([33m![39mclaim) {
+         [90m 57 |[39m   
+    [36mthrow[39m 
+[36mnew[39m [33mNotFound
+Exception[39m([32m'Invali
+d or expired verification 
+token'[39m)[33m;[39m[0m
+
+      at 
+ClaimsService.verify (src/c
+laims/claims.service.ts:54:
+8)
+      at 
+Object.<anonymous> (tests/u
+nit/claim.service.spec.ts:6
+2:28)
+      at Object.toThrow (no
+de_modules/expect/build/ind
+ex.js:2155:20)
+      at 
+Object.<anonymous> (tests/u
+nit/claim.service.spec.ts:6
+2:61)
+
+  ΓùÅ ClaimsService ΓÇ║ 
+verify ΓÇ║ should verify 
+and upgrade role
+
+    TypeError: this.claimRe
+questModel.findOne(...).exe
+c is not a function
+
+    [0m [90m 52 |[39m   
+    verificationToken[33m:
+[39m token[33m,[39m
+     [90m 53 |[39m       
+status[33m:[39m 
+[32m'pending'[39m
+    
+[31m[1m>[22m[39m[90m 
+54 |[39m     })[33m.[39m
+exec()[33m;[39m
+     [90m    |[39m       
+ [31m[1m^[22m[39m
+     [90m 55 |[39m
+     [90m 56 |[39m     
+[36mif[39m 
+([33m![39mclaim) {
+     [90m 57 |[39m       
+[36mthrow[39m 
+[36mnew[39m [33mNotFound
+Exception[39m([32m'Invali
+d or expired verification 
+token'[39m)[33m;[39m[0m
+
+      at 
+ClaimsService.verify (src/c
+laims/claims.service.ts:54:
+8)
+      at 
+Object.<anonymous> (tests/u
+nit/claim.service.spec.ts:7
+7:36)
+
+  ΓùÅ ClaimsService ΓÇ║ 
+verify ΓÇ║ should throw 
+BadRequestException if 
+token has expired
+
+    expect(received).reject
+s.toThrow(expected)
+
+    Expected constructor: 
+BadRequestException
+    Received constructor: 
+TypeError
+
+    Received message: "this
+.claimRequestModel.findOne(
+...).exec is not a 
+function"
+
+        [0m [90m 52 
+|[39m       verificationTo
+ken[33m:[39m 
+token[33m,[39m
+         [90m 53 |[39m   
+    status[33m:[39m 
+[32m'pending'[39m
+        
+[31m[1m>[22m[39m[90m 
+54 |[39m     })[33m.[39m
+exec()[33m;[39m
+         [90m    |[39m   
+     [31m[1m^[22m[39m
+         [90m 55 |[39m
+         [90m 56 |[39m   
+  [36mif[39m 
+([33m![39mclaim) {
+         [90m 57 |[39m   
+    [36mthrow[39m 
+[36mnew[39m [33mNotFound
+Exception[39m([32m'Invali
+d or expired verification 
+token'[39m)[33m;[39m[0m
+
+      at 
+ClaimsService.verify (src/c
+laims/claims.service.ts:54:
+8)
+      at 
+Object.<anonymous> (tests/u
+nit/claim.service.spec.ts:9
+5:28)
+      at Object.toThrow (no
+de_modules/expect/build/ind
+ex.js:2155:20)
+      at 
+Object.<anonymous> (tests/u
+nit/claim.service.spec.ts:9
+5:61)
+
+FAIL tests/unit/episodes.co
+ntroller.spec.ts
+  ΓùÅ Test suite failed to 
+run
+
+    Jest encountered an 
+unexpected token
+
+    Jest failed to parse a 
+file. This happens e.g. 
+when your code or its 
+dependencies use 
+non-standard JavaScript 
+syntax, or when Jest is 
+not configured to support 
+such syntax.
+
+    Out of the box Jest 
+supports Babel, which will 
+be used to transform your 
+files into valid JS based 
+on your Babel 
+configuration.
+
+    By default 
+"node_modules" folder is 
+ignored by transformers.
+
+    Here's what you can do:
+     ΓÇó If you are trying 
+to use ECMAScript Modules, 
+see https://jestjs.io/docs/
+ecmascript-modules for how 
+to enable it.
+     ΓÇó If you are trying 
+to use TypeScript, see http
+s://jestjs.io/docs/getting-
+started#using-typescript
+     ΓÇó To have some of 
+your "node_modules" files 
+transformed, you can 
+specify a custom 
+"transformIgnorePatterns" 
+in your config.
+     ΓÇó If you need a 
+custom transformation, 
+specify a "transform" 
+option in your config.
+     ΓÇó If you simply 
+want to mock your non-JS 
+modules (e.g. binary 
+assets) you can stub them 
+out with the 
+"moduleNameMapper" config 
+option.
+
+    You'll find more 
+details and examples of 
+these config options in 
+the docs:
+    https://jestjs.io/docs/
+configuration
+    For information about 
+custom transformations, 
+see:
+    https://jestjs.io/docs/
+code-transformation
+
+    Details:
+
+    D:\projects\rawyapp\bac
+kend\node_modules\uuid\dist
+-node\index.js:1
+    export { default as 
+MAX } from './max.js';
+    ^^^^^^
+
+    SyntaxError: 
+Unexpected token 'export'
+
+    [0m [90m 1 |[39m 
+[36mimport[39m { 
+diskStorage } 
+[36mfrom[39m [32m'multer
+'[39m[33m;[39m
+    
+[31m[1m>[22m[39m[90m 
+2 |[39m [36mimport[39m 
+{ v4 [36mas[39m uuidv4 } 
+[36mfrom[39m 
+[32m'uuid'[39m[33m;[39m
+     [90m   |[39m 
+[31m[1m^[22m[39m
+     [90m 3 |[39m 
+[36mimport[39m { extname 
+} [36mfrom[39m 
+[32m'path'[39m[33m;[39m
+     [90m 4 |[39m
+     [90m 5 |[39m 
+[90m// Allowed audio file 
+types[39m[0m
+
+      at Runtime.createScri
+ptFromCode (node_modules/je
+st-runner/node_modules/jest
+-runtime/build/index.js:131
+8:40)
+      at 
+Object.<anonymous> (src/com
+mon/utils/file-upload.util.
+ts:2:1)
+      at 
+Object.<anonymous> (src/epi
+sodes/episodes.controller.t
+s:37:1)
+      at 
+Object.<anonymous> (tests/u
+nit/episodes.controller.spe
+c.ts:2:1)
+
+FAIL tests/unit/podcast.con
+troller.spec.ts
+  ΓùÅ Test suite failed to 
+run
+
+    Jest encountered an 
+unexpected token
+
+    Jest failed to parse a 
+file. This happens e.g. 
+when your code or its 
+dependencies use 
+non-standard JavaScript 
+syntax, or when Jest is 
+not configured to support 
+such syntax.
+
+    Out of the box Jest 
+supports Babel, which will 
+be used to transform your 
+files into valid JS based 
+on your Babel 
+configuration.
+
+    By default 
+"node_modules" folder is 
+ignored by transformers.
+
+    Here's what you can do:
+     ΓÇó If you are trying 
+to use ECMAScript Modules, 
+see https://jestjs.io/docs/
+ecmascript-modules for how 
+to enable it.
+     ΓÇó If you are trying 
+to use TypeScript, see http
+s://jestjs.io/docs/getting-
+started#using-typescript
+     ΓÇó To have some of 
+your "node_modules" files 
+transformed, you can 
+specify a custom 
+"transformIgnorePatterns" 
+in your config.
+     ΓÇó If you need a 
+custom transformation, 
+specify a "transform" 
+option in your config.
+     ΓÇó If you simply 
+want to mock your non-JS 
+modules (e.g. binary 
+assets) you can stub them 
+out with the 
+"moduleNameMapper" config 
+option.
+
+    You'll find more 
+details and examples of 
+these config options in 
+the docs:
+    https://jestjs.io/docs/
+configuration
+    For information about 
+custom transformations, 
+see:
+    https://jestjs.io/docs/
+code-transformation
+
+    Details:
+
+    D:\projects\rawyapp\bac
+kend\node_modules\uuid\dist
+-node\index.js:1
+    export { default as 
+MAX } from './max.js';
+    ^^^^^^
+
+    SyntaxError: 
+Unexpected token 'export'
+
+    [0m [90m 1 |[39m 
+[36mimport[39m { 
+diskStorage } 
+[36mfrom[39m [32m'multer
+'[39m[33m;[39m
+    
+[31m[1m>[22m[39m[90m 
+2 |[39m [36mimport[39m 
+{ v4 [36mas[39m uuidv4 } 
+[36mfrom[39m 
+[32m'uuid'[39m[33m;[39m
+     [90m   |[39m 
+[31m[1m^[22m[39m
+     [90m 3 |[39m 
+[36mimport[39m { extname 
+} [36mfrom[39m 
+[32m'path'[39m[33m;[39m
+     [90m 4 |[39m
+     [90m 5 |[39m 
+[90m// Allowed audio file 
+types[39m[0m
+
+      at Runtime.createScri
+ptFromCode (node_modules/je
+st-runner/node_modules/jest
+-runtime/build/index.js:131
+8:40)
+      at 
+Object.<anonymous> (src/com
+mon/utils/file-upload.util.
+ts:2:1)
+      at 
+Object.<anonymous> (src/pod
+casts/podcasts.controller.t
+s:38:1)
+      at 
+Object.<anonymous> (tests/u
+nit/podcast.controller.spec
+.ts:2:1)
+
+Test Suites: 7 failed, 2 
+passed, 9 total
+Tests:       11 failed, 7 
+passed, 18 total
+Snapshots:   0 total
+Time:        4.911 s, 
+estimated 5 s
+Ran all test suites 
+matching tests/unit.
+Force exiting Jest: Have 
+you considered using 
+`--detectOpenHandles` to 
+detect async operations 
+that kept running after 
+all tests finished?

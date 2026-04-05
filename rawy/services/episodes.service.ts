@@ -25,6 +25,14 @@ export interface Episode {
   likesCount: number;
   viewsCount: number;
   commentsCount: number;
+  /** 'external' = synced from RSS, 'internal' = uploaded on Rawy */
+  source?: 'external' | 'internal';
+  /** Per-episode artwork URL (mainly for external episodes from RSS) */
+  artworkUrl?: string;
+  /** Unique RSS GUID for deduplication */
+  guid?: string;
+  /** Original publish date from RSS feed */
+  pubDate?: string;
   createdAt: string;
   updatedAt: string;
 }

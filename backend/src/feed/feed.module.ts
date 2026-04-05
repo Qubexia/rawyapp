@@ -9,4 +9,4 @@ import { FollowsModule } from '../follows/follows.module';
   controllers: [FeedController],
   providers: [FeedService],
 })
-export class FeedModule { }
+export class FeedModule {}

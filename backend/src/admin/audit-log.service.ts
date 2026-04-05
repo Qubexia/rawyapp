@@ -31,11 +31,16 @@ export class AuditLogService {
     });
 
     const saved = await logEntry.save();
-    this.logger.log(`Audit log: ${action} on ${targetType} ${targetId} by admin ${adminId}`);
+    this.logger.log(
+      `Audit log: ${action} on ${targetType} ${targetId} by admin ${adminId}`,
+    );
     return saved;
   }
 
-  async getLogsByAdmin(adminId: string, limit: number = 50): Promise<AuditLogDocument[]> {
+  async getLogsByAdmin(
+    adminId: string,
+    limit: number = 50,
+  ): Promise<AuditLogDocument[]> {
     return this.auditLogModel
       .find({ adminId: new Types.ObjectId(adminId) })
       .sort({ createdAt: -1 })
@@ -43,7 +48,11 @@ export class AuditLogService {
       .exec();
   }
 
-  async getLogsByTarget(targetType: string, targetId: string, limit: number = 50): Promise<AuditLogDocument[]> {
+  async getLogsByTarget(
+    targetType: string,
+    targetId: string,
+    limit: number = 50,
+  ): Promise<AuditLogDocument[]> {
     return this.auditLogModel
       .find({
         targetType,

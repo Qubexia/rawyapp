@@ -105,8 +105,9 @@ export class AuthController {
     @Body() registerCreatorDto: RegisterCreatorDto,
     @UploadedFile() avatar?: Express.Multer.File,
   ): Promise<TokenResponseDto> {
-    const avatarPath = avatar ? getRelativeUrl(avatar.path) : undefined;
-    return this.authService.registerCreator(registerCreatorDto, avatarPath);
+    throw new BadRequestException(
+      'Creator direct registration is disabled. Please register as a user, then claim your podcast.',
+    );
   }
 
   @Public()

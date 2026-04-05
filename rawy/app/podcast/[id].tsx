@@ -28,30 +28,59 @@ import {
   UserCheck,
   Edit2,
   Trash2,
+  Rss,
+  RefreshCw,
+  Globe,
+  Bookmark,
+  BookmarkCheck,
 } from 'lucide-react-native';
 
 import { EpisodeRow, EmptyState, ConfirmDialog } from '@/components/ui';
-import { usePodcast } from '@/hooks/queries/use-podcasts';
+import { usePodcast, useResolvePodcast } from '@/hooks/queries/use-podcasts';
 import { resolveImageUrl } from '@/utils/url';
 import { useEpisodes, useDeleteEpisode } from '@/hooks/queries/use-episodes';
 import { useFollowStatus, useToggleFollow } from '@/hooks/queries/use-follows';
+import { useSubscribeToPodcast, useUnsubscribeToPodcast } from '@/hooks/queries/use-subscriptions';
+import { useSyncPodcast } from '@/hooks/queries/use-sync';
+import { useMe } from '@/hooks/queries/use-users';
 import { useAuthContext } from '@/context/auth-context';
 import { Palette, Spacing, Radius } from '@/constants/theme';
 
 import type { Episode } from '@/services/episodes.service';
 
 export default function PodcastDetailScreen() {
-  const { id } = useLocalSearchParams<{ id: string }>();
+  const { 
+    id, 
+    isAppleId,
+    title: paramTitle,
+    author: paramAuthor,
+    artworkUrl: paramArtworkUrl,
+  } = useLocalSearchParams<{ 
+    id: string; 
+    isAppleId?: string;
+    title?: string;
+    author?: string;
+    artworkUrl?: string;
+  }>();
   const theme = useTheme();
   const router = useRouter();
   const { user } = useAuthContext();
   const deleteEpisode = useDeleteEpisode();
 
   const {
+    data: resolvedPodcast,
+    isLoading: resolving,
+    isError: resolveError,
+  } = useResolvePodcast(id, { enabled: isAppleId === 'true' });
+
+  const internalId = (isAppleId === 'true' ? resolvedPodcast?._id : id) || '';
+
+  const {
     data: podcast,
     isLoading: podcastLoading,
+    isError: podcastError,
     refetch: refetchPodcast,
-  } = usePodcast(id);
+  } = usePodcast(internalId, { enabled: !!internalId });
   const {
     data: episodesData,
     isLoading: episodesLoading,
@@ -59,11 +88,19 @@ export default function PodcastDetailScreen() {
     fetchNextPage,
     hasNextPage,
     isFetchingNextPage,
-  } = useEpisodes(id);
+  } = useEpisodes(internalId, undefined, { enabled: !!internalId && !podcastError });
   const { data: followStatus, refetch: refetchFollowStatus } = useFollowStatus(
     podcast?.creator?._id || '',
   );
   const toggleFollow = useToggleFollow(podcast?.creator?._id || '');
+  const subscribeMutation = useSubscribeToPodcast();
+  const unsubscribeMutation = useUnsubscribeToPodcast();
+  const syncMutation = useSyncPodcast();
+  const { data: myProfile, refetch: refetchProfile } = useMe({ enabled: !!user });
+
+  const isSubscribed = React.useMemo(() => {
+    return myProfile?.subscriptions?.includes(podcast?._id || '') || false;
+  }, [myProfile, podcast?._id]);
 
   const isOwnPodcast = React.useMemo(() => {
     if (!user?._id || !podcast?.creator) return false;
@@ -93,7 +130,7 @@ export default function PodcastDetailScreen() {
     setDeleteDialog(null);
   };
 
-  if (podcastLoading) {
+  if (resolving || podcastLoading) {
     return (
       <SafeAreaView
         style={[
@@ -109,6 +146,41 @@ export default function PodcastDetailScreen() {
           >
             Loading podcast…
           </Text>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
+  if (resolveError || podcastError || !podcast) {
+    return (
+      <SafeAreaView
+        style={[
+          styles.container,
+          { backgroundColor: theme.colors.background },
+        ]}
+      >
+        <View style={styles.topBar}>
+          <IconButton
+            icon={() => <ArrowLeft size={22} color={theme.colors.onBackground} />}
+            onPress={() => router.back()}
+            style={styles.backButton}
+          />
+          <Text
+            variant="titleMedium"
+            numberOfLines={1}
+            style={[styles.navTitle, { color: theme.colors.onBackground }]}
+          >
+            Podcast
+          </Text>
+          <View style={{ width: 48 }} />
+        </View>
+        <View style={{ marginTop: Spacing.lg }}>
+          <EmptyState
+            icon={<Headphones size={32} color={theme.colors.onSurfaceVariant} strokeWidth={1} />}
+            title="Podcast unavailable"
+            message="This podcast could not be loaded. It may have been removed."
+            isCard
+          />
         </View>
       </SafeAreaView>
     );
@@ -176,9 +248,9 @@ export default function PodcastDetailScreen() {
                 },
               ]}
             >
-              {podcast?.coverImageUrl ? (
+              {(podcast?.coverImageUrl || paramArtworkUrl) ? (
                 <Image
-                  source={{ uri: resolveImageUrl(podcast.coverImageUrl) }}
+                  source={{ uri: resolveImageUrl(podcast?.coverImageUrl || paramArtworkUrl || '') }}
                   style={styles.coverImage}
                 />
               ) : (
@@ -203,7 +275,7 @@ export default function PodcastDetailScreen() {
               ]}
               numberOfLines={2}
             >
-              {podcast?.title}
+              {podcast?.title || paramTitle}
             </Text>
 
             <TouchableOpacity
@@ -211,13 +283,16 @@ export default function PodcastDetailScreen() {
                 podcast?.creator?._id &&
                 router.push(`/creator/${podcast.creator._id}` as any)
               }
+              disabled={!podcast?.creator?._id}
             >
               <Text
                 variant="titleSmall"
                 style={[styles.creatorName, { color: theme.colors.primary }]}
                 numberOfLines={1}
               >
-                {podcast?.creator?.name || 'Unknown Creator'}
+                {podcast?.source === 'external' 
+                  ? (podcast?.creator?.name || paramAuthor)
+                  : (podcast?.creator?.name || 'Unknown Creator')}
               </Text>
             </TouchableOpacity>
 
@@ -231,7 +306,9 @@ export default function PodcastDetailScreen() {
               </Text>
               <View style={styles.dot} />
               <Text variant="labelMedium" style={[styles.metaText, { color: theme.colors.onSurfaceVariant }]}>
-                {podcast?.episodeCount || episodes.length} episodes
+                {(podcast?.episodeCount || episodes.length) > 0 
+                  ? `${podcast?.episodeCount || episodes.length} episodes`
+                  : (podcast?.source === 'external' ? 'Syncing episodes...' : '0 episodes')}
               </Text>
             </View>
 
@@ -263,6 +340,40 @@ export default function PodcastDetailScreen() {
                 </Button>
               )}
 
+              {!isOwnPodcast && (
+                <Button
+                  mode={isSubscribed ? 'outlined' : 'contained'}
+                  onPress={() => {
+                    if (!user) {
+                      router.push('/(auth)/login' as any);
+                      return;
+                    }
+                    if (isSubscribed) {
+                      unsubscribeMutation.mutate(podcast?._id || '', {
+                        onSuccess: () => refetchProfile(),
+                      });
+                    } else {
+                      subscribeMutation.mutate(podcast?._id || '', {
+                        onSuccess: () => refetchProfile(),
+                      });
+                    }
+                  }}
+                  loading={subscribeMutation.isPending || unsubscribeMutation.isPending}
+                  icon={() =>
+                    isSubscribed ? (
+                      <BookmarkCheck size={18} color={theme.colors.primary} />
+                    ) : (
+                      <Bookmark size={18} color={Palette.white.pure} />
+                    )
+                  }
+                  style={[styles.followButton, isSubscribed ? undefined : { backgroundColor: Palette.primary[500] }]}
+                  contentStyle={styles.followContent}
+                  labelStyle={[styles.followLabel, { color: isSubscribed ? theme.colors.primary : Palette.white.pure }]}
+                >
+                  {isSubscribed ? 'Subscribed' : 'Subscribe'}
+                </Button>
+              )}
+
               {isOwnPodcast && (
                 <Text
                   variant="labelMedium"
@@ -275,39 +386,45 @@ export default function PodcastDetailScreen() {
                 </Text>
               )}
             </View>
+
+            {/* Source badge + Subscribe / Sync controls */}
+            <View style={styles.sourceRow}>
+              {podcast?.source === 'external' && (
+                <View style={[styles.sourceBadge, { backgroundColor: Palette.primary[50] }]}>
+                  <Globe size={12} color={Palette.primary[500]} />
+                  <Text style={[styles.sourceBadgeText, { color: Palette.primary[600] }]}>External</Text>
+                </View>
+              )}
+              {podcast?.source === 'internal' && (
+                <View style={[styles.sourceBadge, { backgroundColor: '#F0F9FF' }]}>
+                  <Headphones size={12} color={Palette.secondary[500]} />
+                  <Text style={[styles.sourceBadgeText, { color: Palette.secondary[600] }]}>Rawy Original</Text>
+                </View>
+              )}
+
+              {/* Sync button for owner of external podcasts */}
+              {isOwnPodcast && podcast?.source === 'external' && (
+                <TouchableOpacity
+                  style={[styles.syncButton, { borderColor: theme.colors.outline }]}
+                  onPress={() => syncMutation.mutate(podcast._id)}
+                  disabled={syncMutation.isPending}
+                >
+                  <RefreshCw
+                    size={14}
+                    color={theme.colors.primary}
+                    style={syncMutation.isPending ? { opacity: 0.5 } : undefined}
+                  />
+                  <Text style={{ color: theme.colors.primary, fontSize: 12, fontWeight: '600', marginLeft: 4 }}>
+                    {syncMutation.isPending ? 'Syncing...' : 'Sync Now'}
+                  </Text>
+                </TouchableOpacity>
+              )}
+            </View>
           </View>
         </View>
       </View>
 
-      {/* Description card */}
-      {podcast?.description ? (
-        <Surface
-          elevation={1}
-          style={[
-            styles.descriptionCard,
-            { backgroundColor: theme.colors.surface },
-          ]}
-        >
-          <Text
-            variant="titleSmall"
-            style={[
-              styles.sectionTitle,
-              { color: theme.colors.onSurface },
-            ]}
-          >
-            About
-          </Text>
-          <Text
-            variant="bodyMedium"
-            style={[
-              styles.descriptionText,
-              { color: theme.colors.onSurfaceVariant },
-            ]}
-          >
-            {podcast.description}
-          </Text>
-        </Surface>
-      ) : null}
+      <View style={{ height: Spacing.md }} />
 
       {/* Episodes header */}
       <View style={styles.episodesHeader}>
@@ -577,5 +694,34 @@ const styles = StyleSheet.create({
 
   listContent: {
     paddingBottom: Spacing.xxl,
+  },
+
+  // Source & Sync
+  sourceRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: Spacing.sm,
+    gap: Spacing.sm,
+  },
+  sourceBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: Radius.sm,
+    gap: 4,
+  },
+  sourceBadgeText: {
+    fontSize: 11,
+    fontWeight: '700',
+    textTransform: 'uppercase',
+  },
+  syncButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderWidth: 1,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: Radius.sm,
   },
 }) as any;

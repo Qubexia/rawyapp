@@ -38,7 +38,7 @@ export class User {
       city: { type: String },
       coordinates: { type: [Number] },
     },
-    _id: false
+    _id: false,
   })
   location?: { city?: string; coordinates?: number[] };
 
@@ -65,7 +65,10 @@ export class User {
   followerCount: number;
 
   @Prop({ required: true, default: 0, min: 0 })
-  @ApiProperty({ description: 'Number of users this user is following', default: 0 })
+  @ApiProperty({
+    description: 'Number of users this user is following',
+    default: 0,
+  })
   followingCount: number;
 
   @Prop({ select: false })
@@ -73,6 +76,9 @@ export class User {
 
   @Prop({ select: false })
   passwordResetOtpExpires?: Date;
+
+  @Prop({ type: [{ type: Types.ObjectId, ref: 'Podcast' }], default: [] })
+  subscriptions: Types.ObjectId[];
 }
 
 export const UserSchema = SchemaFactory.createForClass(User);

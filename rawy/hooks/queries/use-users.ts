@@ -3,7 +3,7 @@
  */
 
 import { useMutation, useQuery } from '@tanstack/react-query';
-import { updateMe, updateAvatar, getPublicProfile } from '../../services/users.service';
+import { updateMe, updateAvatar, getPublicProfile, getMe } from '../../services/users.service';
 import { useAuthContext } from '../../context/auth-context';
 
 export function useUpdateMe() {
@@ -33,6 +33,14 @@ export function usePublicProfile(id: string) {
     queryKey: ['users', id, 'public'],
     queryFn: () => getPublicProfile(id),
     enabled: !!id,
+  });
+}
+
+export function useMe(options?: { enabled?: boolean }) {
+  return useQuery({
+    queryKey: ['users', 'me'],
+    queryFn: () => getMe(),
+    enabled: options?.enabled,
   });
 }
 

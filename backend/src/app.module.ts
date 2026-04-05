@@ -23,6 +23,8 @@ import { ActiveUserGuard } from './common/guards/active-user.guard';
 import { CommentLikesModule } from './comment-likes/comment-likes.module';
 import { FeedModule } from './feed/feed.module';
 import { SuggestionsModule } from './suggestions/suggestions.module';
+import { SyncModule } from './sync/sync.module';
+import { ClaimsModule } from './claims/claims.module';
 
 @Module({
   imports: [
@@ -52,6 +54,8 @@ import { SuggestionsModule } from './suggestions/suggestions.module';
     CommentLikesModule,
     FeedModule,
     SuggestionsModule,
+    SyncModule,
+    ClaimsModule,
   ],
   controllers: [AppController],
   providers: [

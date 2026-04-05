@@ -35,11 +35,7 @@ export const generateFileName = (req: any, file: any, cb: any) => {
 /**
  * File filter for audio files
  */
-export const audioFileFilter = (
-  req: any,
-  file: any,
-  cb: any,
-) => {
+export const audioFileFilter = (req: any, file: any, cb: any) => {
   if (AUDIO_MIME_TYPES.includes(file.mimetype)) {
     cb(null, true);
   } else {
@@ -55,11 +51,7 @@ export const audioFileFilter = (
 /**
  * File filter for image files
  */
-export const imageFileFilter = (
-  req: any,
-  file: any,
-  cb: any,
-) => {
+export const imageFileFilter = (req: any, file: any, cb: any) => {
   if (IMAGE_MIME_TYPES.includes(file.mimetype)) {
     cb(null, true);
   } else {

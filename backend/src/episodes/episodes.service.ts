@@ -1,4 +1,11 @@
-import { Injectable, NotFoundException, ForbiddenException, BadRequestException, forwardRef, Inject } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  ForbiddenException,
+  BadRequestException,
+  forwardRef,
+  Inject,
+} from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { Episode, EpisodeDocument } from './schemas/episode.schema';
@@ -17,17 +24,27 @@ import type { PodcastsService } from '../podcasts/podcasts.service';
 export class EpisodesService {
   constructor(
     @InjectModel(Episode.name) private episodeModel: Model<EpisodeDocument>,
-    @Inject(forwardRef(() => require('../notifications/notifications.service').NotificationsService))
+    @Inject(
+      forwardRef(
+        () =>
+          require('../notifications/notifications.service')
+            .NotificationsService,
+      ),
+    )
     private notificationsService?: NotificationsService,
-    @Inject(forwardRef(() => require('../podcasts/podcasts.service').PodcastsService))
+    @Inject(
+      forwardRef(() => require('../podcasts/podcasts.service').PodcastsService),
+    )
     private podcastsService?: PodcastsService,
     @Inject(forwardRef(() => require('../likes/likes.service').LikesService))
     private likesService?: LikesService,
-    @Inject(forwardRef(() => require('../comments/comments.service').CommentsService))
+    @Inject(
+      forwardRef(() => require('../comments/comments.service').CommentsService),
+    )
     private commentsService?: CommentsService,
     @Inject(forwardRef(() => require('../views/views.service').ViewsService))
     private viewsService?: ViewsService,
-  ) { }
+  ) {}
 
   /**
    * Create a new episode
@@ -53,6 +70,10 @@ export class EpisodesService {
 
     const savedEpisode = await episode.save();
 
+    console.log(
+      `[EpisodesService] Created episode: ${savedEpisode._id} "${savedEpisode.title}" for podcast ${podcastId} by creator ${creatorId}`,
+    );
+
     // Increment Podcast.episodeCount via PodcastsService if available
     if (this.podcastsService) {
       await this.podcastsService.incrementEpisodeCount(podcastId);
@@ -61,7 +82,9 @@ export class EpisodesService {
     // Notify followers of new episode
     if (this.notificationsService && this.podcastsService) {
       try {
-        const podcast = await this.podcastsService.findById(createEpisodeDto.podcastId);
+        const podcast = await this.podcastsService.findById(
+          createEpisodeDto.podcastId,
+        );
         if (podcast) {
           await this.notificationsService.sendNewEpisodeNotification(
             creatorId,
@@ -163,7 +186,9 @@ export class EpisodesService {
 
     // Check ownership or admin access
     if (userRole !== 'ADMIN' && !episode.creator._id.equals(userId)) {
-      throw new ForbiddenException('You do not have permission to update this episode');
+      throw new ForbiddenException(
+        'You do not have permission to update this episode',
+      );
     }
 
     const updatedEpisode = await this.episodeModel
@@ -189,14 +214,18 @@ export class EpisodesService {
 
     // Check ownership or admin access
     if (userRole !== 'ADMIN' && !episode.creator._id.equals(userId)) {
-      throw new ForbiddenException('You do not have permission to delete this episode');
+      throw new ForbiddenException(
+        'You do not have permission to delete this episode',
+      );
     }
 
     if (this.likesService) {
       await this.likesService.deleteLikesForEpisode(new Types.ObjectId(id));
     }
     if (this.commentsService) {
-      await this.commentsService.deleteCommentsForEpisode(new Types.ObjectId(id));
+      await this.commentsService.deleteCommentsForEpisode(
+        new Types.ObjectId(id),
+      );
     }
     if (this.viewsService) {
       await this.viewsService.deleteViewsForEpisode(new Types.ObjectId(id));
@@ -206,7 +235,7 @@ export class EpisodesService {
     if (episode.audioFileUrl) {
       try {
         const audioPath = join(process.cwd(), episode.audioFileUrl);
-        await unlink(audioPath).catch(() => { });
+        await unlink(audioPath).catch(() => {});
       } catch (error) {
         // Ignore file deletion errors
       }
@@ -214,7 +243,12 @@ export class EpisodesService {
 
     // Decrement Podcast.episodeCount
     if (this.podcastsService) {
-      await this.podcastsService.decrementEpisodeCount(episode.podcastId);
+      const podcastId = episode.podcast?._id || episode.podcastId;
+      if (podcastId) {
+        await this.podcastsService.decrementEpisodeCount(
+          new Types.ObjectId(podcastId),
+        );
+      }
     }
 
     await this.episodeModel.findByIdAndDelete(id).exec();
@@ -250,7 +284,10 @@ export class EpisodesService {
   /**
    * Decrement likes count by N (for cascade cleanup)
    */
-  async decrementLikesCountBy(episodeId: Types.ObjectId, by: number): Promise<void> {
+  async decrementLikesCountBy(
+    episodeId: Types.ObjectId,
+    by: number,
+  ): Promise<void> {
     if (by <= 0) return;
     await this.episodeModel
       .updateOne({ _id: episodeId }, { $inc: { likesCount: -by } })
@@ -278,7 +315,10 @@ export class EpisodesService {
   /**
    * Decrement comments count by N (for cascade cleanup)
    */
-  async decrementCommentsCountBy(episodeId: Types.ObjectId, by: number): Promise<void> {
+  async decrementCommentsCountBy(
+    episodeId: Types.ObjectId,
+    by: number,
+  ): Promise<void> {
     if (by <= 0) return;
     await this.episodeModel
       .updateOne({ _id: episodeId }, { $inc: { commentsCount: -by } })
@@ -288,7 +328,10 @@ export class EpisodesService {
   /**
    * Decrement views count by N (for cascade cleanup)
    */
-  async decrementViewsCountBy(episodeId: Types.ObjectId, by: number): Promise<void> {
+  async decrementViewsCountBy(
+    episodeId: Types.ObjectId,
+    by: number,
+  ): Promise<void> {
     if (by <= 0) return;
     await this.episodeModel
       .updateOne({ _id: episodeId }, { $inc: { viewsCount: -by } })
@@ -309,7 +352,11 @@ export class EpisodesService {
   /**
    * Find episodes by podcast ID
    */
-  async findByPodcastId(podcastId: string, page: number = 1, limit: number = 20): Promise<PaginatedResponseDto<Episode>> {
+  async findByPodcastId(
+    podcastId: string,
+    page: number = 1,
+    limit: number = 20,
+  ): Promise<PaginatedResponseDto<Episode>> {
     return this.findAll(page, limit, podcastId);
   }
 
@@ -341,7 +388,11 @@ export class EpisodesService {
   /**
    * Find episodes by creator ID
    */
-  async findByCreatorId(creatorId: string, page: number = 1, limit: number = 20): Promise<PaginatedResponseDto<Episode>> {
+  async findByCreatorId(
+    creatorId: string,
+    page: number = 1,
+    limit: number = 20,
+  ): Promise<PaginatedResponseDto<Episode>> {
     return this.findAll(page, limit, undefined, creatorId);
   }
 
@@ -390,6 +441,7 @@ export class EpisodesService {
 
   /**
    * Find recommended episodes.
+   * Ensures a diverse mix by limiting episodes from the same podcast.
    */
   async findRecommended(
     page: number = 1,
@@ -402,24 +454,62 @@ export class EpisodesService {
       filter.creatorId = { $nin: excludeCreatorIds };
     }
 
-    const [rawData, total] = await Promise.all([
+    // Use aggregation to diversify results (e.g., max 2 episodes per podcast)
+    const pipeline: any[] = [
+      { $match: filter },
+      // Sort by popularity first to pick the best from each podcast
+      { $sort: { viewsCount: -1, createdAt: -1 } },
+      // Group by podcast and take top 2 from each
+      {
+        $group: {
+          _id: '$podcastId',
+          episodes: { $push: '$$ROOT' },
+        },
+      },
+      {
+        $project: {
+          episodes: { $slice: ['$episodes', 2] },
+        },
+      },
+      { $unwind: '$episodes' },
+      { $replaceRoot: { newRoot: '$episodes' } },
+      // Global sort for the resulting diversified pool
+      { $sort: { viewsCount: -1, createdAt: -1 } },
+    ];
+
+    const [rawData, totalResult] = await Promise.all([
       this.episodeModel
-        .find(filter)
-        .sort({ viewsCount: -1, createdAt: -1 })
-        .skip(skip)
-        .limit(limit)
-        .populate('podcastId', 'title coverImageUrl')
-        .populate('creatorId', 'name avatarUrl')
-        .lean()
+        .aggregate([
+          ...pipeline,
+          { $skip: skip },
+          { $limit: limit },
+          // Note: aggregate doesn't auto-populate, so we do it manually via $lookup or in memory
+        ])
         .exec(),
-      this.episodeModel.countDocuments(filter).exec(),
+      // Count is tricky with aggregation diversification, but we can approximate or use a separate pipeline
+      this.episodeModel.aggregate([...pipeline, { $count: 'total' }]).exec(),
     ]);
 
-    const data = rawData.map(({ podcastId, creatorId, ...rest }: any) => ({
-      ...rest,
-      podcast: podcastId,
-      creator: creatorId,
-    })) as any;
+    // Aggregate results need manual population for podcast and creator
+    const data = await Promise.all(
+      rawData.map(async (doc) => {
+        const fullDoc = await this.episodeModel
+          .findById(doc._id)
+          .populate('podcastId', 'title coverImageUrl')
+          .populate('creatorId', 'name avatarUrl')
+          .lean()
+          .exec();
+
+        const { podcastId, creatorId, ...rest } = fullDoc as any;
+        return {
+          ...rest,
+          podcast: podcastId,
+          creator: creatorId,
+        };
+      }),
+    );
+
+    const total = totalResult[0]?.total || 0;
 
     return {
       data,
@@ -436,23 +526,28 @@ export class EpisodesService {
   async deleteAllByPodcastId(podcastId: Types.ObjectId): Promise<void> {
     const episodes = await this.episodeModel.find({ podcastId }).exec();
     for (const ep of episodes) {
-      if (this.likesService) await this.likesService.deleteLikesForEpisode(ep._id as Types.ObjectId);
-      if (this.commentsService) await this.commentsService.deleteCommentsForEpisode(ep._id as Types.ObjectId);
-      if (this.viewsService) await this.viewsService.deleteViewsForEpisode(ep._id as Types.ObjectId);
+      if (this.likesService)
+        await this.likesService.deleteLikesForEpisode(ep._id);
+      if (this.commentsService)
+        await this.commentsService.deleteCommentsForEpisode(ep._id);
+      if (this.viewsService)
+        await this.viewsService.deleteViewsForEpisode(ep._id);
       if (ep.audioFileUrl) {
         try {
-          await unlink(join(process.cwd(), ep.audioFileUrl)).catch(() => { });
+          await unlink(join(process.cwd(), ep.audioFileUrl)).catch(() => {});
         } catch {
           // ignore
         }
       }
-      if (this.podcastsService) await this.podcastsService.decrementEpisodeCount(podcastId);
+      if (this.podcastsService)
+        await this.podcastsService.decrementEpisodeCount(podcastId);
       await this.episodeModel.findByIdAndDelete(ep._id).exec();
     }
   }
 
   async findTopEpisodes(limit: number = 10): Promise<EpisodeDocument[]> {
-    return this.episodeModel.find()
+    return this.episodeModel
+      .find()
       .sort({ viewsCount: -1, likesCount: -1 })
       .limit(limit)
       .populate('podcastId', 'title')

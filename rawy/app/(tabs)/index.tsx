@@ -3,6 +3,7 @@
  */
 
 import React, { useCallback, useState, useEffect } from "react";
+import { Dimensions } from "react-native";
 import {
   View,
   FlatList,
@@ -17,7 +18,7 @@ import {
   useSafeAreaInsets,
 } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
-import { Text, useTheme } from "react-native-paper";
+import { Text, useTheme, Surface } from "react-native-paper";
 import {
   Bell,
   TrendingUp,
@@ -53,10 +54,13 @@ import { resolveImageUrl } from "@/utils/url";
 import { usePodcasts } from "@/hooks/queries/use-podcasts";
 import { useHomeFeed } from "@/hooks/queries/use-feed";
 import { useTopCreators } from "@/hooks/queries/use-creators";
+import { useDiscoverPodcasts } from "@/hooks/queries/use-discover";
 import { useUnreadCount } from "@/hooks/queries/use-notifications";
 import { useSuggestions } from "@/hooks/queries/use-suggestions";
 import { WhoToFollow } from "@/components/home/WhoToFollow";
 import { Palette, Spacing, Radius } from "@/constants/theme";
+import type { DiscoverPodcast } from "@/services/discover.service";
+import type { Podcast } from "@/services/podcasts.service";
 
 export default function HomeScreen() {
   const theme = useTheme();
@@ -101,6 +105,8 @@ export default function HomeScreen() {
     refetch: refetchTopCreators,
   } = useTopCreators();
 
+  const { data: discoverData } = useDiscoverPodcasts();
+
   const { refetch: refetchSuggestions } = useSuggestions(10, {
     enabled: !!user,
   });
@@ -128,6 +134,7 @@ export default function HomeScreen() {
   ]);
 
   const podcasts = podcastsData?.pages.flatMap((p) => p.data || []) ?? [];
+  const discoverPodcasts = discoverData ?? [];
   const topCreators = (topCreatorsData ?? []).filter(
     (c) => c.userId !== user?._id,
   );
@@ -143,6 +150,151 @@ export default function HomeScreen() {
   };
 
   const isLoading = podcastsLoading || feedLoading || topCreatorsLoading;
+
+  type MixedTrendingItem =
+    | { kind: "internal"; key: string; podcast: Podcast }
+    | { kind: "external"; key: string; podcast: DiscoverPodcast };
+
+  const mixedTrendingPodcasts = React.useMemo<MixedTrendingItem[]>(() => {
+    const internal = podcasts ?? [];
+    const external = discoverPodcasts ?? [];
+
+    if (!internal.length && !external.length) {
+      return [];
+    }
+
+    // Avoid showing external podcasts already synced internally by appleId/title.
+    const internalAppleIds = new Set(
+      internal
+        .map((p) => p.appleId?.trim())
+        .filter((id): id is string => Boolean(id)),
+    );
+    const internalTitles = new Set(
+      internal
+        .map((p) => p.title?.trim().toLowerCase())
+        .filter((title): title is string => Boolean(title)),
+    );
+
+    const filteredExternal = external.filter((podcast) => {
+      const appleId = podcast.appleId?.trim();
+      if (appleId && internalAppleIds.has(appleId)) {
+        return false;
+      }
+      const title = podcast.title?.trim().toLowerCase();
+      if (title && internalTitles.has(title)) {
+        return false;
+      }
+      return true;
+    });
+
+    const mixed: MixedTrendingItem[] = [];
+    const maxLen = Math.max(internal.length, filteredExternal.length);
+
+    for (let i = 0; i < maxLen; i += 1) {
+      if (internal[i]) {
+        mixed.push({
+          kind: "internal",
+          key: `internal-${internal[i]._id}`,
+          podcast: internal[i],
+        });
+      }
+      if (filteredExternal[i]) {
+        const externalId =
+          filteredExternal[i].appleId || filteredExternal[i].id || String(i);
+        mixed.push({
+          kind: "external",
+          key: `external-${externalId}`,
+          podcast: filteredExternal[i],
+        });
+      }
+    }
+
+    return mixed;
+  }, [podcasts, discoverPodcasts]);
+
+  const renderDiscoverFallbackCard = (item: DiscoverPodcast) => {
+    const { width: windowWidth } = Dimensions.get("window");
+    const cardWidth = windowWidth * 0.8;
+
+    return (
+      <TouchableOpacity
+        key={item.appleId || item.id}
+        activeOpacity={0.85}
+        onPress={() => {
+          router.push({
+            pathname: `/podcast/${item.appleId || item.id}` as any,
+            params: {
+              isAppleId: 'true',
+              title: item.title,
+              author: item.author,
+              artworkUrl: item.artworkUrl,
+            },
+          });
+        }}
+        style={{ width: cardWidth, marginRight: Spacing.md }}
+      >
+        <Surface
+          style={{
+            borderRadius: Radius.lg,
+            padding: Spacing.md,
+            backgroundColor: Palette.light.surfaceVariant,
+          }}
+          elevation={1}
+        >
+          <View
+            style={{
+              width: "100%",
+              height: cardWidth * 0.9,
+              borderRadius: Radius.md,
+              alignItems: "center",
+              justifyContent: "center",
+              marginBottom: Spacing.sm,
+              overflow: "hidden",
+              backgroundColor: Palette.primary[100],
+            }}
+          >
+            {item.artworkUrl ? (
+              <Image
+                source={{ uri: item.artworkUrl }}
+                style={{ width: "100%", height: "100%" }}
+                resizeMode="cover"
+              />
+            ) : (
+              <Headphones size={32} color={Palette.primary[500]} strokeWidth={1.5} />
+            )}
+            
+            {/* Source label badge */}
+            <View style={{
+              position: 'absolute',
+              top: Spacing.sm,
+              right: Spacing.sm,
+              backgroundColor: Palette.primary[500],
+              paddingHorizontal: 8,
+              paddingVertical: 4,
+              borderRadius: Radius.full,
+            }}>
+              <Text style={{ color: Palette.white.pure, fontSize: 10, fontWeight: '700' }}>External</Text>
+            </View>
+          </View>
+          
+          <Text
+            variant="titleSmall"
+            numberOfLines={2}
+            style={{ color: theme.colors.onSurface, fontWeight: "600", marginBottom: 2 }}
+          >
+            {item.title}
+          </Text>
+          <Text
+            variant="bodySmall"
+            numberOfLines={1}
+            style={{ color: theme.colors.onSurfaceVariant }}
+          >
+            {item.author || "Unknown Author"}
+          </Text>
+        </Surface>
+      </TouchableOpacity>
+    );
+  };
 
   return (
     <SafeAreaView
@@ -192,7 +344,7 @@ export default function HomeScreen() {
                 variant="bodyMedium"
                 style={{ color: theme.colors.onSurfaceVariant }}
               >
-                {greeting()} 👋
+                {greeting()} 
               </Text>
               <Text
                 variant="headlineSmall"
@@ -357,14 +509,18 @@ export default function HomeScreen() {
                     <ChevronRight size={16} color={theme.colors.primary} />
                   </TouchableOpacity>
                 </View>
-                {podcasts.length > 0 ? (
+                {mixedTrendingPodcasts.length > 0 ? (
                   <FlatList
                     horizontal
-                    data={podcasts}
-                    keyExtractor={(item, index) =>
-                      item?._id ? String(item._id) : String(index)
-                    }
-                    renderItem={({ item }) => <PodcastCard podcast={item} />}
+                    data={mixedTrendingPodcasts}
+                    keyExtractor={(item) => item.key}
+                    renderItem={({ item }) => {
+                      if (item.kind === "internal") {
+                        return <PodcastCard podcast={item.podcast} />;
+                      }
+
+                      return renderDiscoverFallbackCard(item.podcast);
+                    }}
                     showsHorizontalScrollIndicator={false}
                     contentContainerStyle={styles.horizontalList}
                     removeClippedSubviews={true}
@@ -380,7 +536,7 @@ export default function HomeScreen() {
                         strokeWidth={1}
                       />
                     }
-                    message="No podcasts yet. Be the first!"
+                    message="No podcasts available right now."
                     isCard
                   />
                 )}

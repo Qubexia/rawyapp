@@ -27,7 +27,8 @@ export class EmailService {
   }
 
   async sendPasswordResetOtp(to: string, otp: string): Promise<void> {
-    const from = this.configService.get<string>('SMTP_FROM') ?? 'Rawy <no-reply@rawy.app>';
+    const from =
+      this.configService.get<string>('SMTP_FROM') ?? 'Rawy <no-reply@rawy.app>';
 
     const subject = 'Your Rawy password reset code';
     const html = `

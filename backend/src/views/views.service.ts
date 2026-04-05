@@ -21,9 +21,7 @@ export class ViewsService {
   ): Promise<{ viewsCount: number; isNewView: boolean }> {
     await this.episodesService.findById(episodeId.toString());
 
-    const existing = await this.viewModel
-      .findOne({ userId, episodeId })
-      .exec();
+    const existing = await this.viewModel.findOne({ userId, episodeId }).exec();
 
     if (existing) {
       const episode = await this.episodesService.findById(episodeId.toString());

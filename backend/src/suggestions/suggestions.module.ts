@@ -13,4 +13,4 @@ import { FollowsModule } from '../follows/follows.module';
   controllers: [SuggestionsController],
   providers: [SuggestionsService],
 })
-export class SuggestionsModule { }
+export class SuggestionsModule {}

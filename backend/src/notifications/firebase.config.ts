@@ -11,9 +11,13 @@ if (path) {
     } else {
       const serviceAccount = JSON.parse(readFileSync(resolved, 'utf8'));
       if (typeof serviceAccount?.project_id !== 'string') {
-        console.warn('Firebase: service account must contain string "project_id". Skipping init.');
+        console.warn(
+          'Firebase: service account must contain string "project_id". Skipping init.',
+        );
       } else {
-        admin.initializeApp({ credential: admin.credential.cert(serviceAccount) });
+        admin.initializeApp({
+          credential: admin.credential.cert(serviceAccount),
+        });
       }
     }
   } catch (err) {

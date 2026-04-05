@@ -265,9 +265,11 @@ export default function CreatorDashboard() {
                   </Text>
                   <Text
                     variant="bodySmall"
-                    style={{ color: theme.colors.onSurfaceVariant }}
+                    style={{ color: theme.colors.onSurfaceVariant, marginTop: 2 }}
                   >
                     {p.episodeCount || 0} episodes
+                    {' • '}
+                    {p.source === 'external' ? 'External (Synced)' : 'Rawy Original'}
                   </Text>
                 </View>
               </TouchableOpacity>

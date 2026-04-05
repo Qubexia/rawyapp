@@ -1,0 +1,361 @@
+﻿node.exe : PASS tests/unit/
+apple-api.service.spec.ts
+At line:1 char:1
++ & "C:\Program 
+Files\nodejs/node.exe" 
+"C:\Program 
+Files\nodejs/node_mo ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~
+    + CategoryInfo         
+     : NotSpecified: (PAS  
+  S tests/unit...service   
+ .spec.ts:String) [], R    
+emoteException
+    + FullyQualifiedErrorI 
+   d : NativeCommandError
+ 
+  AppleApiService
+    ΓêÜ should be defined 
+(39 ms)
+    fetchTopPodcasts
+      ΓêÜ should fetch and 
+map top podcasts from 
+Apple API (13 ms)
+      ΓêÜ should return 
+empty array if no entries 
+found (5 ms)
+
+PASS tests/unit/deduplicati
+on.service.spec.ts
+  DeduplicationService
+    filterNewEpisodes
+      ΓêÜ should return 
+all items if no episodes 
+exist (35 ms)
+      ΓêÜ should filter 
+out existing guids (5 ms)
+      ΓêÜ should return 
+empty array if items is 
+empty (4 ms)
+
+PASS tests/unit/ownership.g
+uard.spec.ts
+  OwnershipGuard
+    ΓêÜ should define the 
+guard (9 ms)
+    ΓêÜ should allow 
+access if user is Admin (2 
+ms)
+    ΓêÜ should pass 
+through if no resourceId 
+is present (1 ms)
+
+PASS tests/unit/sync.servic
+e.spec.ts
+  SyncService
+    syncPodcast
+      ΓêÜ should parse 
+feed, deduplicate, and 
+bulk write (38 ms)
+      ΓêÜ should not bulk 
+write if no new items 
+found (5 ms)
+
+PASS tests/unit/episodes.se
+rvice.spec.ts
+  EpisodesService
+    ΓêÜ should be defined 
+(34 ms)
+    findAll
+      ΓêÜ should return 
+paginated episodes for a 
+specific podcast (11 ms)
+
+PASS tests/unit/podcast.ser
+vice.spec.ts
+  PodcastsService
+    findAll 
+(getCreatorPodcasts 
+equivalent)
+      ΓêÜ should return 
+paginated podcasts 
+restricted to creator (27 
+ms)
+
+PASS tests/unit/claim.servi
+ce.spec.ts
+  ClaimsService
+    createRequest
+      ΓêÜ should create a 
+new claim request if none 
+exists (24 ms)
+      ΓêÜ should update 
+existing request if one 
+exists (12 ms)
+    verify
+      ΓêÜ should throw 
+NotFoundException if token 
+is invalid or expired (15 
+ms)
+      ΓêÜ should verify 
+and upgrade role (5 ms)
+      ΓêÜ should throw 
+BadRequestException if 
+token has expired (3 ms)
+
+FAIL tests/unit/episodes.co
+ntroller.spec.ts
+  ΓùÅ Test suite failed to 
+run
+
+    Jest encountered an 
+unexpected token
+
+    Jest failed to parse a 
+file. This happens e.g. 
+when your code or its 
+dependencies use 
+non-standard JavaScript 
+syntax, or when Jest is 
+not configured to support 
+such syntax.
+
+    Out of the box Jest 
+supports Babel, which will 
+be used to transform your 
+files into valid JS based 
+on your Babel 
+configuration.
+
+    By default 
+"node_modules" folder is 
+ignored by transformers.
+
+    Here's what you can do:
+     ΓÇó If you are trying 
+to use ECMAScript Modules, 
+see https://jestjs.io/docs/
+ecmascript-modules for how 
+to enable it.
+     ΓÇó If you are trying 
+to use TypeScript, see http
+s://jestjs.io/docs/getting-
+started#using-typescript
+     ΓÇó To have some of 
+your "node_modules" files 
+transformed, you can 
+specify a custom 
+"transformIgnorePatterns" 
+in your config.
+     ΓÇó If you need a 
+custom transformation, 
+specify a "transform" 
+option in your config.
+     ΓÇó If you simply 
+want to mock your non-JS 
+modules (e.g. binary 
+assets) you can stub them 
+out with the 
+"moduleNameMapper" config 
+option.
+
+    You'll find more 
+details and examples of 
+these config options in 
+the docs:
+    https://jestjs.io/docs/
+configuration
+    For information about 
+custom transformations, 
+see:
+    https://jestjs.io/docs/
+code-transformation
+
+    Details:
+
+    D:\projects\rawyapp\bac
+kend\node_modules\uuid\dist
+-node\index.js:1
+    export { default as 
+MAX } from './max.js';
+    ^^^^^^
+
+    SyntaxError: 
+Unexpected token 'export'
+
+    [0m [90m 1 |[39m 
+[36mimport[39m { 
+diskStorage } 
+[36mfrom[39m [32m'multer
+'[39m[33m;[39m
+    
+[31m[1m>[22m[39m[90m 
+2 |[39m [36mimport[39m 
+{ v4 [36mas[39m uuidv4 } 
+[36mfrom[39m 
+[32m'uuid'[39m[33m;[39m
+     [90m   |[39m 
+[31m[1m^[22m[39m
+     [90m 3 |[39m 
+[36mimport[39m { extname 
+} [36mfrom[39m 
+[32m'path'[39m[33m;[39m
+     [90m 4 |[39m
+     [90m 5 |[39m 
+[90m// Allowed audio file 
+types[39m[0m
+
+      at Runtime.createScri
+ptFromCode (node_modules/je
+st-runner/node_modules/jest
+-runtime/build/index.js:131
+8:40)
+      at 
+Object.<anonymous> (src/com
+mon/utils/file-upload.util.
+ts:2:1)
+      at 
+Object.<anonymous> (src/epi
+sodes/episodes.controller.t
+s:37:1)
+      at 
+Object.<anonymous> (tests/u
+nit/episodes.controller.spe
+c.ts:2:1)
+
+FAIL tests/unit/podcast.con
+troller.spec.ts
+  ΓùÅ Test suite failed to 
+run
+
+    Jest encountered an 
+unexpected token
+
+    Jest failed to parse a 
+file. This happens e.g. 
+when your code or its 
+dependencies use 
+non-standard JavaScript 
+syntax, or when Jest is 
+not configured to support 
+such syntax.
+
+    Out of the box Jest 
+supports Babel, which will 
+be used to transform your 
+files into valid JS based 
+on your Babel 
+configuration.
+
+    By default 
+"node_modules" folder is 
+ignored by transformers.
+
+    Here's what you can do:
+     ΓÇó If you are trying 
+to use ECMAScript Modules, 
+see https://jestjs.io/docs/
+ecmascript-modules for how 
+to enable it.
+     ΓÇó If you are trying 
+to use TypeScript, see http
+s://jestjs.io/docs/getting-
+started#using-typescript
+     ΓÇó To have some of 
+your "node_modules" files 
+transformed, you can 
+specify a custom 
+"transformIgnorePatterns" 
+in your config.
+     ΓÇó If you need a 
+custom transformation, 
+specify a "transform" 
+option in your config.
+     ΓÇó If you simply 
+want to mock your non-JS 
+modules (e.g. binary 
+assets) you can stub them 
+out with the 
+"moduleNameMapper" config 
+option.
+
+    You'll find more 
+details and examples of 
+these config options in 
+the docs:
+    https://jestjs.io/docs/
+configuration
+    For information about 
+custom transformations, 
+see:
+    https://jestjs.io/docs/
+code-transformation
+
+    Details:
+
+    D:\projects\rawyapp\bac
+kend\node_modules\uuid\dist
+-node\index.js:1
+    export { default as 
+MAX } from './max.js';
+    ^^^^^^
+
+    SyntaxError: 
+Unexpected token 'export'
+
+    [0m [90m 1 |[39m 
+[36mimport[39m { 
+diskStorage } 
+[36mfrom[39m [32m'multer
+'[39m[33m;[39m
+    
+[31m[1m>[22m[39m[90m 
+2 |[39m [36mimport[39m 
+{ v4 [36mas[39m uuidv4 } 
+[36mfrom[39m 
+[32m'uuid'[39m[33m;[39m
+     [90m   |[39m 
+[31m[1m^[22m[39m
+     [90m 3 |[39m 
+[36mimport[39m { extname 
+} [36mfrom[39m 
+[32m'path'[39m[33m;[39m
+     [90m 4 |[39m
+     [90m 5 |[39m 
+[90m// Allowed audio file 
+types[39m[0m
+
+      at Runtime.createScri
+ptFromCode (node_modules/je
+st-runner/node_modules/jest
+-runtime/build/index.js:131
+8:40)
+      at 
+Object.<anonymous> (src/com
+mon/utils/file-upload.util.
+ts:2:1)
+      at 
+Object.<anonymous> (src/pod
+casts/podcasts.controller.t
+s:38:1)
+      at 
+Object.<anonymous> (tests/u
+nit/podcast.controller.spec
+.ts:2:1)
+
+Test Suites: 2 failed, 7 
+passed, 9 total
+Tests:       19 passed, 19 
+total
+Snapshots:   0 total
+Time:        4.993 s
+Ran all test suites 
+matching tests/unit.
+Force exiting Jest: Have 
+you considered using 
+`--detectOpenHandles` to 
+detect async operations 
+that kept running after 
+all tests finished?

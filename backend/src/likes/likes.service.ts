@@ -28,7 +28,11 @@ export class LikesService {
     try {
       await this.likeModel.create({ userId, episodeId });
     } catch (err: unknown) {
-      if (err && typeof err === 'object' && (err as { code?: number }).code === 11000) {
+      if (
+        err &&
+        typeof err === 'object' &&
+        (err as { code?: number }).code === 11000
+      ) {
         throw new ConflictException('Already liked this episode');
       }
       throw err;
@@ -68,11 +72,9 @@ export class LikesService {
   ): Promise<{ isLiked: boolean; likesCount: number }> {
     const episode = await this.episodesService.findById(episodeId.toString());
     let isLiked = false;
-    
+
     if (userId) {
-      const like = await this.likeModel
-        .findOne({ userId, episodeId })
-        .exec();
+      const like = await this.likeModel.findOne({ userId, episodeId }).exec();
       isLiked = !!like;
     }
 
@@ -89,7 +91,13 @@ export class LikesService {
     userId: Types.ObjectId,
     page: number = 1,
     limit: number = 20,
-  ): Promise<{ data: any[]; total: number; page: number; limit: number; totalPages: number }> {
+  ): Promise<{
+    data: any[];
+    total: number;
+    page: number;
+    limit: number;
+    totalPages: number;
+  }> {
     const skip = (page - 1) * limit;
 
     const [likes, total] = await Promise.all([
@@ -106,8 +114,7 @@ export class LikesService {
     const episodeIds = likes.map((l) => l.episodeId);
 
     // Fetch full episode documents with populated podcast info
-    const episodes = await this.episodesService
-      .findByIds(episodeIds);
+    const episodes = await this.episodesService.findByIds(episodeIds);
 
     const totalPages = Math.ceil(total / limit);
 

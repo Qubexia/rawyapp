@@ -20,7 +20,6 @@ import {
   Text,
   Searchbar,
   Surface,
-  Chip,
   useTheme,
   ActivityIndicator,
 } from 'react-native-paper';
@@ -38,14 +37,17 @@ import {
   ChevronRight,
   Play,
   Sparkles,
+  Globe,
 } from 'lucide-react-native';
 
 import { usePodcasts } from '@/hooks/queries/use-podcasts';
 import { useCreators } from '@/hooks/queries/use-creators';
+import { useDiscoverPodcasts, useSearchExternalPodcasts } from '@/hooks/queries/use-discover';
 import { resolveImageUrl } from '@/utils/url';
 import { Palette, Spacing, Radius } from '@/constants/theme';
 import type { Podcast } from '@/services/podcasts.service';
 import type { CreatorProfile } from '@/services/creators.service';
+import type { DiscoverPodcast } from '@/services/discover.service';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -147,18 +149,42 @@ export default function ExploreScreen() {
     refetch: refetchCreators,
   } = useCreators();
 
+  const {
+    data: discoverPodcasts,
+    isLoading: discoverLoading,
+    refetch: refetchDiscover,
+  } = useDiscoverPodcasts();
+
+  const {
+    data: externalSearchData,
+    isLoading: externalSearchLoading,
+  } = useSearchExternalPodcasts(debouncedSearch);
+
   const [refreshing, setRefreshing] = useState(false);
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
-    await Promise.all([refetchPodcasts(), refetchCreators()]);
+    await Promise.all([refetchPodcasts(), refetchCreators(), refetchDiscover()]);
     setRefreshing(false);
-  }, [refetchPodcasts, refetchCreators]);
+  }, [refetchPodcasts, refetchCreators, refetchDiscover]);
 
   const podcasts = podcastsData?.pages.flatMap((p) => p.data) ?? [];
   const creators = creatorsData?.pages.flatMap((p) => p.data) ?? [];
+  const externalSearchResults = externalSearchData ?? [];
 
-  const isLoading = podcastsLoading || creatorsLoading;
+  const isLoading = podcastsLoading || creatorsLoading || discoverLoading;
+
+  const handleExternalPodcastPress = (item: DiscoverPodcast) => {
+    router.push({
+      pathname: `/podcast/${item.appleId || item.id}` as any,
+      params: {
+        isAppleId: 'true',
+        title: item.title,
+        author: item.author,
+        artworkUrl: item.artworkUrl,
+      },
+    });
+  };
 
   // ─── Podcast Card (Grid style) ─────────────────────────────────────────────
   const renderPodcastGridItem = ({ item, index }: { item: Podcast; index: number }) => {
@@ -226,6 +252,45 @@ export default function ExploreScreen() {
                 style={styles.podcastGridCreatorName}
               >
                 {item.creator?.name || 'Unknown'}
+              </Text>
+            </View>
+          </View>
+        </Surface>
+      </TouchableOpacity>
+    );
+  };
+
+  // ─── Discover Card (External Podcasts) ───────────────────────────────────
+  const renderDiscoverCard = ({ item }: { item: DiscoverPodcast }) => {
+    const coverUri = item.artworkUrl;
+    
+    return (
+      <TouchableOpacity
+        activeOpacity={0.85}
+        onPress={() => handleExternalPodcastPress(item)}
+        style={styles.discoverCardContainer}
+      >
+        <Surface style={styles.podcastGridCard} elevation={1}>
+          <View style={styles.podcastGridCover}>
+            {coverUri ? (
+              <Image source={{ uri: coverUri }} style={styles.podcastGridCoverImage} resizeMode="cover" />
+            ) : (
+              <LinearGradient colors={['#1F2937', '#374151']} style={styles.podcastGridPlaceholder}>
+                <Headphones size={28} color="rgba(255,255,255,0.4)" strokeWidth={1.5} />
+              </LinearGradient>
+            )}
+            <View style={[styles.episodeBadge, { backgroundColor: Palette.primary[500] }]}>
+              <Text style={styles.episodeBadgeText}>External</Text>
+            </View>
+          </View>
+          <View style={styles.podcastGridInfo}>
+            <Text variant="titleSmall" numberOfLines={2} style={styles.podcastGridTitle}>
+              {item.title}
+            </Text>
+            <View style={styles.podcastGridCreator}>
+              <View style={styles.podcastGridCreatorDot} />
+              <Text variant="labelSmall" numberOfLines={1} style={styles.podcastGridCreatorName}>
+                {item.author || 'Unknown'}
               </Text>
             </View>
           </View>
@@ -498,8 +563,33 @@ export default function ExploreScreen() {
                 {/* Featured Podcast */}
                 {!debouncedSearch && activeCategory === 'All' && renderFeaturedPodcast()}
 
+                {/* Top Apple Podcasts (Discover) */}
+                {!debouncedSearch && activeCategory === 'All' && discoverPodcasts && discoverPodcasts.length > 0 && (
+                  <View style={styles.section}>
+                    <View style={styles.sectionHeader}>
+                      <View style={styles.sectionHeaderLeft}>
+                        <View style={[styles.sectionIconBg, { backgroundColor: Palette.primary[500] }]}>
+                          <Sparkles size={14} color={Palette.white.pure} />
+                        </View>
+                        <Text variant="titleMedium" style={[styles.sectionTitle, { color: theme.colors.onBackground }]}>
+                          Discover Apple Podcasts
+                        </Text>
+                      </View>
+                      <ChevronRight size={18} color={Palette.text.lightTertiary} />
+                    </View>
+                    <FlatList
+                      horizontal
+                      data={discoverPodcasts}
+                      keyExtractor={(item) => item.appleId || item.id}
+                      renderItem={renderDiscoverCard}
+                      showsHorizontalScrollIndicator={false}
+                      contentContainerStyle={styles.horizontalList}
+                    />
+                  </View>
+                )}
+
                 {/* Creators */}
-                {creators.length > 0 && (
+                {creators.length > 0 && !debouncedSearch && (
                   <View style={styles.section}>
                     <View style={styles.sectionHeader}>
                       <View style={styles.sectionHeaderLeft}>
@@ -578,14 +668,41 @@ export default function ExploreScreen() {
                         />
                       </View>
                       <Text variant="titleSmall" style={styles.emptyStateTitle}>
-                        No podcasts found
-                      </Text>
-                      <Text variant="bodySmall" style={styles.emptyStateSubtitle}>
-                        Try a different search or category
+                        No internal podcasts found
                       </Text>
                     </Surface>
                   )}
                 </View>
+
+                {/* External Search Results */}
+                {debouncedSearch ? (
+                  <View style={styles.section}>
+                    <View style={styles.sectionHeader}>
+                      <View style={styles.sectionHeaderLeft}>
+                        <View style={[styles.sectionIconBg, { backgroundColor: Palette.primary[500] }]}>
+                          <Globe size={14} color={Palette.white.pure} />
+                        </View>
+                        <Text variant="titleMedium" style={[styles.sectionTitle, { color: theme.colors.onBackground }]}>
+                          Global Search
+                        </Text>
+                      </View>
+                      {externalSearchLoading && <ActivityIndicator size={14} color={theme.colors.primary} />}
+                    </View>
+
+                    {externalSearchResults.length > 0 ? (
+                      <FlatList
+                        horizontal
+                        data={externalSearchResults}
+                        keyExtractor={(item) => item.appleId || item.id}
+                        renderItem={renderDiscoverCard}
+                        showsHorizontalScrollIndicator={false}
+                        contentContainerStyle={styles.horizontalList}
+                      />
+                    ) : (
+                      <Text style={{ textAlign: 'center', marginVertical: 20 }}>No external podcasts found.</Text>
+                    )}
+                  </View>
+                ) : null}
               </>
             )}
           </>
@@ -816,6 +933,10 @@ const styles = StyleSheet.create({
   },
   podcastGridItem: {
     flex: 1,
+  },
+  discoverCardContainer: {
+    width: SCREEN_WIDTH * 0.44,
+    marginRight: Spacing.sm,
   },
   podcastGridCard: {
     borderRadius: Radius.lg,

@@ -10,7 +10,6 @@ import {
   Platform,
   ScrollView,
   Animated,
-  useWindowDimensions,
   StyleSheet,
   TouchableOpacity,
 } from "react-native";
@@ -23,9 +22,6 @@ import {
   Lock,
   ArrowRight,
   Headphones,
-  Mic,
-  Radio,
-  Info,
 } from "lucide-react-native";
 
 import { FormInput } from "@/components/ui/FormInput";
@@ -36,11 +32,8 @@ import { Palette, Spacing, Radius } from "@/constants/theme";
 export default function RegisterScreen() {
   const router = useRouter();
   const theme = useTheme();
-  const { width } = useWindowDimensions();
 
   const {
-    activeTab,
-    setActiveTab,
     control,
     errors,
     isLoading,
@@ -52,17 +45,9 @@ export default function RegisterScreen() {
     useGoogleAuth();
 
   // Animation values
-  const indicatorPosition = useRef(new Animated.Value(0)).current;
   const fadeAnim = useRef(new Animated.Value(1)).current;
 
   useEffect(() => {
-    Animated.spring(indicatorPosition, {
-      toValue: activeTab === "user" ? 0 : 1,
-      useNativeDriver: false,
-      friction: 8,
-      tension: 60,
-    }).start();
-
     Animated.sequence([
       Animated.timing(fadeAnim, {
         toValue: 0,
@@ -75,13 +60,7 @@ export default function RegisterScreen() {
         useNativeDriver: true,
       }),
     ]).start();
-  }, [activeTab]);
-
-  const tabWidth = width - 2 * Spacing.lg - 2 * Spacing.lg; // outer + card padding
-  const indicatorTranslateX = indicatorPosition.interpolate({
-    inputRange: [0, 1],
-    outputRange: [4, tabWidth / 2],
-  });
+  }, [fadeAnim]);
 
   return (
     <View style={[styles.root, { backgroundColor: Palette.light.surface }]}>
@@ -132,80 +111,6 @@ export default function RegisterScreen() {
                 Create your account
               </Text>
 
-              {/* Tab bar */}
-              <View style={styles.tabContainer}>
-                <Animated.View
-                  style={[
-                    styles.tabIndicator,
-                    {
-                      transform: [{ translateX: indicatorTranslateX }],
-                      width: tabWidth / 2 - 4,
-                    },
-                  ]}
-                />
-                <TouchableOpacity
-                  style={styles.tabButton}
-                  activeOpacity={0.8}
-                  onPress={() => setActiveTab("user")}
-                >
-                  <Headphones
-                    size={16}
-                    color={
-                      activeTab === "user"
-                        ? Palette.white.pure
-                        : Palette.text.lightTertiary
-                    }
-                    style={{ marginRight: 6 }}
-                  />
-                  <Text
-                    style={[
-                      styles.tabText,
-                      activeTab === "user" && styles.activeTabText,
-                    ]}
-                  >
-                    Listener
-                  </Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  style={styles.tabButton}
-                  activeOpacity={0.8}
-                  onPress={() => setActiveTab("creator")}
-                >
-                  <Mic
-                    size={16}
-                    color={
-                      activeTab === "creator"
-                        ? Palette.white.pure
-                        : Palette.text.lightTertiary
-                    }
-                    style={{ marginRight: 6 }}
-                  />
-                  <Text
-                    style={[
-                      styles.tabText,
-                      activeTab === "creator" && styles.activeTabText,
-                    ]}
-                  >
-                    Creator
-                  </Text>
-                </TouchableOpacity>
-              </View>
-
-              {/* Creator hint */}
-              {activeTab === "creator" && (
-                <View style={styles.creatorHint}>
-                  <Info
-                    size={15}
-                    color={Palette.primary[500]}
-                    style={{ marginRight: 6 }}
-                  />
-                  <Text style={styles.creatorHintText}>
-                    As a creator you can publish podcasts and grow your
-                    audience.
-                  </Text>
-                </View>
-              )}
-
               {/* Form */}
               <Animated.View style={[styles.form, { opacity: fadeAnim }]}>
                 <FormInput
@@ -247,27 +152,6 @@ export default function RegisterScreen() {
                     />
                   }
                 />
-
-                {activeTab === "creator" && (
-                  <FormInput
-                    name="showName"
-                    control={control}
-                    label="Podcast / Show Name"
-                    placeholder="My Awesome Show"
-                    autoCapitalize="words"
-                    editable={!isLoading}
-                    icon={
-                      <Radio
-                        size={20}
-                        color={
-                          errors.showName
-                            ? theme.colors.error
-                            : theme.colors.onSurfaceVariant
-                        }
-                      />
-                    }
-                  />
-                )}
 
                 <FormInput
                   name="password"

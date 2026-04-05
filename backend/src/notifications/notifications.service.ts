@@ -5,19 +5,23 @@ import { FollowsService } from '../follows/follows.service';
 import { UsersService } from '../users/users.service';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
-import { Notification, NotificationDocument } from './schemas/notification.schema';
+import {
+  Notification,
+  NotificationDocument,
+} from './schemas/notification.schema';
 import { PaginatedResponseDto } from '../common/dto/paginated-response.dto';
 @Injectable()
 export class NotificationsService {
   private readonly logger = new Logger(NotificationsService.name);
 
   constructor(
-    @InjectModel(Notification.name) private notificationModel: Model<NotificationDocument>,
+    @InjectModel(Notification.name)
+    private notificationModel: Model<NotificationDocument>,
     @Inject(forwardRef(() => FollowsService))
     private followsService: FollowsService,
     @Inject(forwardRef(() => UsersService))
     private usersService: UsersService,
-  ) { }
+  ) {}
 
   async createOrAggregateNotification(
     recipientId: Types.ObjectId,
@@ -31,12 +35,14 @@ export class NotificationsService {
     const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
 
     // Try to find a recent open notification to aggregate
-    const existing = await this.notificationModel.findOne({
-      recipientId,
-      type,
-      targetId,
-      updatedAt: { $gt: twentyFourHoursAgo }, // Only aggregate if within 24h
-    }).exec();
+    const existing = await this.notificationModel
+      .findOne({
+        recipientId,
+        type,
+        targetId,
+        updatedAt: { $gt: twentyFourHoursAgo }, // Only aggregate if within 24h
+      })
+      .exec();
 
     if (existing) {
       const currentCount = existing.actorCount + 1;
@@ -48,7 +54,15 @@ export class NotificationsService {
 
       // T041: Trigger push (except for new_episode which is bulk handled)
       if (type !== 'new_episode') {
-        this.sendPushByNotification(recipientId, type, lastActorId, currentCount, previewText, targetId, episodeId);
+        this.sendPushByNotification(
+          recipientId,
+          type,
+          lastActorId,
+          currentCount,
+          previewText,
+          targetId,
+          episodeId,
+        );
       }
 
       return saved;
@@ -70,7 +84,15 @@ export class NotificationsService {
 
     // T041: Trigger push
     if (type !== 'new_episode') {
-      this.sendPushByNotification(recipientId, type, lastActorId, 1, previewText, targetId, episodeId);
+      this.sendPushByNotification(
+        recipientId,
+        type,
+        lastActorId,
+        1,
+        previewText,
+        targetId,
+        episodeId,
+      );
     }
 
     return saved;
@@ -95,9 +117,10 @@ export class NotificationsService {
 
       if (type === 'comment_like') {
         title = 'Comment Liked';
-        body = actorCount > 1
-          ? `${actorName} and ${actorCount - 1} others liked your comment`
-          : `${actorName} liked your comment`;
+        body =
+          actorCount > 1
+            ? `${actorName} and ${actorCount - 1} others liked your comment`
+            : `${actorName} liked your comment`;
       } else if (type === 'comment_reply') {
         title = 'New Reply';
         const text = previewText || '';
@@ -133,7 +156,13 @@ export class NotificationsService {
     data?: Record<string, string>,
   ): Promise<void> {
     const user = await this.usersService.findById(recipientId.toString());
-    if (!user || !user.pushEnabled || !user.deviceTokens || user.deviceTokens.length === 0) return;
+    if (
+      !user ||
+      !user.pushEnabled ||
+      !user.deviceTokens ||
+      user.deviceTokens.length === 0
+    )
+      return;
 
     try {
       const messaging = getMessaging();
@@ -192,11 +221,13 @@ export class NotificationsService {
         id: obj._id?.toString() || doc._id.toString(),
         recipientId: obj.recipientId?.toString(),
         type: obj.type,
-        lastActor: obj.lastActorId ? {
-          id: obj.lastActorId._id?.toString(),
-          name: obj.lastActorId.name,
-          avatarUrl: obj.lastActorId.avatarUrl,
-        } : null,
+        lastActor: obj.lastActorId
+          ? {
+              id: obj.lastActorId._id?.toString(),
+              name: obj.lastActorId.name,
+              avatarUrl: obj.lastActorId.avatarUrl,
+            }
+          : null,
         actorCount: obj.actorCount,
         targetId: obj.targetId?.toString(),
         targetModel: obj.targetModel,
@@ -256,25 +287,34 @@ export class NotificationsService {
   }
 
   async getUnreadCount(userId: Types.ObjectId): Promise<number> {
-    return this.notificationModel.countDocuments({
-      recipientId: userId,
-      isRead: false,
-    }).exec();
+    return this.notificationModel
+      .countDocuments({
+        recipientId: userId,
+        isRead: false,
+      })
+      .exec();
   }
 
-  async markAsRead(notificationId: Types.ObjectId, userId: Types.ObjectId): Promise<boolean> {
-    const result = await this.notificationModel.updateOne(
-      { _id: notificationId, recipientId: userId },
-      { $set: { isRead: true } },
-    ).exec();
+  async markAsRead(
+    notificationId: Types.ObjectId,
+    userId: Types.ObjectId,
+  ): Promise<boolean> {
+    const result = await this.notificationModel
+      .updateOne(
+        { _id: notificationId, recipientId: userId },
+        { $set: { isRead: true } },
+      )
+      .exec();
     return result.modifiedCount > 0;
   }
 
   async markAllAsRead(userId: Types.ObjectId): Promise<boolean> {
-    const result = await this.notificationModel.updateMany(
-      { recipientId: userId, isRead: false },
-      { $set: { isRead: true } },
-    ).exec();
+    const result = await this.notificationModel
+      .updateMany(
+        { recipientId: userId, isRead: false },
+        { $set: { isRead: true } },
+      )
+      .exec();
     return result.modifiedCount > 0;
   }
 
@@ -297,13 +337,14 @@ export class NotificationsService {
         episodeId,
         'Episode',
         episodeId,
-        previewText
-      )
+        previewText,
+      ),
     );
     await Promise.allSettled(notifPromises);
 
     // 2. Send bulk push (more efficient than individual calls inside aggregate)
-    const userTokens = await this.usersService.getDeviceTokensForUserIds(followerIds);
+    const userTokens =
+      await this.usersService.getDeviceTokensForUserIds(followerIds);
     const tokens: string[] = [];
     const tokenToUserId = new Map<string, string>();
     for (const { userId, tokens: userToks } of userTokens) {
@@ -340,7 +381,10 @@ export class NotificationsService {
               code === 'messaging/invalid-registration-token' ||
               code === 'messaging/registration-token-not-registered'
             ) {
-              toRemove.push({ userId: tokenToUserId.get(tokens[idx])!, token: tokens[idx] });
+              toRemove.push({
+                userId: tokenToUserId.get(tokens[idx])!,
+                token: tokens[idx],
+              });
             }
           }
         });
@@ -348,7 +392,9 @@ export class NotificationsService {
           try {
             await this.usersService.removeDeviceToken(userId, token);
           } catch (err) {
-            this.logger.warn(`Failed to remove invalid token for user ${userId}: ${err}`);
+            this.logger.warn(
+              `Failed to remove invalid token for user ${userId}: ${err}`,
+            );
           }
         }
       }
