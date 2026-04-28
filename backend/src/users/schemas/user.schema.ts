@@ -77,6 +77,12 @@ export class User {
   @Prop({ select: false })
   passwordResetOtpExpires?: Date;
 
+  @Prop({ default: false })
+  isEmailVerified: boolean;
+
+  @Prop({ default: null })
+  emailVerifiedAt?: Date;
+
   @Prop({ type: [{ type: Types.ObjectId, ref: 'Podcast' }], default: [] })
   subscriptions: Types.ObjectId[];
 }

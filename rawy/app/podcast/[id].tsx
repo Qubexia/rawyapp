@@ -10,6 +10,7 @@ import {
   TouchableOpacity,
   Image,
   RefreshControl,
+  useWindowDimensions,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import {
@@ -20,7 +21,7 @@ import {
   ActivityIndicator,
   Surface,
 } from 'react-native-paper';
-import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
 import {
   ArrowLeft,
   Headphones,
@@ -28,7 +29,6 @@ import {
   UserCheck,
   Edit2,
   Trash2,
-  Rss,
   RefreshCw,
   Globe,
   Bookmark,
@@ -64,8 +64,10 @@ export default function PodcastDetailScreen() {
   }>();
   const theme = useTheme();
   const router = useRouter();
+  const { width } = useWindowDimensions();
   const { user } = useAuthContext();
   const deleteEpisode = useDeleteEpisode();
+  const isCompactLayout = width < 380;
 
   const {
     data: resolvedPodcast,
@@ -118,6 +120,56 @@ export default function PodcastDetailScreen() {
     await Promise.all([refetchPodcast(), refetchEpisodes(), refetchFollowStatus()]);
     setRefreshing(false);
   }, [refetchPodcast, refetchEpisodes, refetchFollowStatus]);
+
+  React.useEffect(() => {
+    if (!internalId) return;
+    refetchEpisodes();
+  }, [internalId, refetchEpisodes]);
+
+  useFocusEffect(
+    useCallback(() => {
+      if (!internalId) return;
+      refetchEpisodes();
+    }, [internalId, refetchEpisodes]),
+  );
+
+  const shouldPollForExternalEpisodes = React.useMemo(() => {
+    if (!internalId || !podcast || podcast.source !== 'external') return false;
+    if (episodes.length > 0) return false;
+    return true;
+  }, [internalId, podcast, episodes.length]);
+
+  React.useEffect(() => {
+    if (!shouldPollForExternalEpisodes) return;
+
+    let cancelled = false;
+    let attempts = 0;
+    const maxAttempts = 8;
+    const pollDelayMs = 1800;
+    let nextTimer: ReturnType<typeof setTimeout> | null = null;
+
+    const poll = async () => {
+      if (cancelled) return;
+      attempts += 1;
+      await Promise.all([refetchPodcast(), refetchEpisodes()]);
+
+      if (cancelled) return;
+
+      if (attempts >= maxAttempts) {
+        return;
+      }
+
+      nextTimer = setTimeout(poll, pollDelayMs);
+    };
+
+    nextTimer = setTimeout(poll, pollDelayMs);
+    return () => {
+      cancelled = true;
+      if (nextTimer) {
+        clearTimeout(nextTimer);
+      }
+    };
+  }, [shouldPollForExternalEpisodes, refetchPodcast, refetchEpisodes]);
 
   const confirmDeleteEpisode = (episodeId: string, title: string) => {
     setDeleteDialog({ id: episodeId, title });
@@ -230,13 +282,19 @@ export default function PodcastDetailScreen() {
           },
         ]}
       >
-        <View style={styles.heroContent}>
+        <View
+          style={[
+            styles.heroContent,
+            isCompactLayout && styles.heroContentCompact,
+          ]}
+        >
           <View
             style={[
               styles.coverWrapper,
               {
                 shadowColor: Palette.black.pure,
               },
+              isCompactLayout && styles.coverWrapperCompact,
             ]}
           >
             <Surface
@@ -332,7 +390,10 @@ export default function PodcastDetailScreen() {
                       <UserPlus size={18} color={Palette.white.pure} />
                     )
                   }
-                  style={styles.followButton}
+                  style={[
+                    styles.followButton,
+                    isCompactLayout && styles.actionButtonCompact,
+                  ]}
                   contentStyle={styles.followContent}
                   labelStyle={[styles.followLabel, { color: followStatus?.isFollowing ? theme.colors.primary : Palette.white.pure }]}
                 >
@@ -366,7 +427,11 @@ export default function PodcastDetailScreen() {
                       <Bookmark size={18} color={Palette.white.pure} />
                     )
                   }
-                  style={[styles.followButton, isSubscribed ? undefined : { backgroundColor: Palette.primary[500] }]}
+                  style={[
+                    styles.followButton,
+                    isCompactLayout && styles.actionButtonCompact,
+                    isSubscribed ? undefined : { backgroundColor: Palette.primary[500] },
+                  ]}
                   contentStyle={styles.followContent}
                   labelStyle={[styles.followLabel, { color: isSubscribed ? theme.colors.primary : Palette.white.pure }]}
                 >
@@ -600,10 +665,18 @@ const styles = StyleSheet.create({
   },
   heroContent: {
     flexDirection: 'row',
-    alignItems: 'center',
+    alignItems: 'flex-start',
+  },
+  heroContentCompact: {
+    flexDirection: 'column',
   },
   coverWrapper: {
     marginRight: Spacing.lg,
+  },
+  coverWrapperCompact: {
+    marginRight: 0,
+    marginBottom: Spacing.md,
+    alignSelf: 'center',
   },
   coverSurface: {
     width: 120,
@@ -623,6 +696,7 @@ const styles = StyleSheet.create({
 
   infoCard: {
     flex: 1,
+    minWidth: 0,
   },
   podcastTitle: {
     fontWeight: '800',
@@ -649,12 +723,19 @@ const styles = StyleSheet.create({
 
   actionsRow: {
     flexDirection: 'row',
-    alignItems: 'center',
+    alignItems: 'stretch',
+    flexWrap: 'wrap',
     marginTop: Spacing.md,
+    gap: Spacing.sm,
   },
   followButton: {
     borderRadius: Radius.lg,
-    minWidth: 120,
+    minWidth: 132,
+    flexGrow: 1,
+    flexShrink: 1,
+  },
+  actionButtonCompact: {
+    minWidth: '100%',
   },
   followContent: {
     height: 40,
@@ -700,6 +781,7 @@ const styles = StyleSheet.create({
   sourceRow: {
     flexDirection: 'row',
     alignItems: 'center',
+    flexWrap: 'wrap',
     marginTop: Spacing.sm,
     gap: Spacing.sm,
   },

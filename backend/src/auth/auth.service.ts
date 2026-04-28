@@ -12,6 +12,8 @@ import { UsersService } from '../users/users.service';
 import { UserDocument } from '../users/schemas/user.schema';
 import { CreatorsService } from '../creators/creators.service';
 import { EmailService } from '../common/services/email.service';
+import { OtpService } from './otp/otp.service';
+import { OtpPurpose } from './otp/entities/otp.entity';
 import { RegisterDto } from './dto/register.dto';
 import { RegisterCreatorDto } from './dto/register-creator.dto';
 import { LoginDto } from './dto/login.dto';
@@ -39,6 +41,7 @@ export class AuthService {
     private configService: ConfigService,
     private creatorsService: CreatorsService,
     private emailService: EmailService,
+    private otpService: OtpService,
   ) {}
 
   async register(registerDto: RegisterDto): Promise<TokenResponseDto> {
@@ -215,59 +218,70 @@ export class AuthService {
 
   async changePassword(
     userId: string,
-    currentPassword: string,
-    newPassword: string,
-  ): Promise<void> {
+    dto: ChangePasswordDto,
+  ): Promise<TokenResponseDto> {
+    const { currentPassword, newPassword, otp } = dto;
     const user = await this.usersService.findByIdWithPassword(userId);
-    if (!user || !user.passwordHash) {
-      throw new UnauthorizedException('User not found or password not set');
+
+    if (!user) {
+      throw new UnauthorizedException('User not found');
     }
-    const isPasswordValid = await bcrypt.compare(
-      currentPassword,
-      user.passwordHash,
-    );
-    if (!isPasswordValid) {
-      throw new UnauthorizedException('Current password is incorrect');
+
+    if (otp) {
+      // Verify OTP (T034)
+      await this.otpService.verifyOtp(
+        user.email,
+        otp,
+        OtpPurpose.PASSWORD_CHANGE,
+      );
+    } else if (currentPassword) {
+      // Verify current password
+      if (!user.passwordHash) {
+        throw new UnauthorizedException('Password not set for this account');
+      }
+      const isPasswordValid = await bcrypt.compare(
+        currentPassword,
+        user.passwordHash,
+      );
+      if (!isPasswordValid) {
+        throw new UnauthorizedException('Current password is incorrect');
+      }
+    } else {
+      throw new BadRequestException(
+        'Either current password or OTP is required',
+      );
     }
+
     const newPasswordHash = await bcrypt.hash(newPassword, 10);
     await this.usersService.update(userId, { passwordHash: newPasswordHash });
+
+    // Generate new tokens after password change (T036)
+    const tokens = await this.generateTokens(user);
+    return {
+      ...tokens,
+      user: user.toObject(),
+    };
   }
 
   async forgotPassword(dto: ForgotPasswordDto): Promise<void> {
     const { email } = dto;
-    const user = await this.usersService.findByEmailWithResetOtp(email);
+    const user = await this.usersService.findByEmail(email);
 
-    // Always return success to prevent email enumeration
+    // Email enumeration protection
     if (!user || !user.isActive) return;
 
-    const otp = String(randomInt(100000, 1000000)); // 6-digit OTP
-    const otpHash = await bcrypt.hash(otp, 10);
-    const expiresAt = new Date(Date.now() + 15 * 60 * 1000); // 15 minutes
-
-    await this.usersService.setPasswordResetOtp(
-      user._id.toString(),
-      otpHash,
-      expiresAt,
-    );
-    await this.emailService.sendPasswordResetOtp(email, otp);
+    await this.otpService.generateOtp(email, OtpPurpose.PASSWORD_RESET);
   }
 
-  async resetPassword(dto: ResetPasswordDto): Promise<void> {
+  async resetPassword(dto: ResetPasswordDto): Promise<TokenResponseDto> {
     const { email, otp, newPassword } = dto;
-    const user = await this.usersService.findByEmailWithResetOtp(email);
 
-    if (!user || !user.passwordResetOtp || !user.passwordResetOtpExpires) {
-      throw new BadRequestException('Invalid or expired reset code');
-    }
+    // Verify OTP
+    await this.otpService.verifyOtp(email, otp, OtpPurpose.PASSWORD_RESET);
 
-    if (new Date() > user.passwordResetOtpExpires) {
-      await this.usersService.clearPasswordResetOtp(user._id.toString());
-      throw new BadRequestException('Reset code has expired');
-    }
-
-    const isOtpValid = await bcrypt.compare(otp, user.passwordResetOtp);
-    if (!isOtpValid) {
-      throw new BadRequestException('Invalid reset code');
+    const user = await this.usersService.findByEmail(email);
+    if (!user) {
+      throw new BadRequestException('User not found');
     }
 
     const newPasswordHash = await bcrypt.hash(newPassword, 10);
@@ -275,7 +289,15 @@ export class AuthService {
       user._id.toString(),
       newPasswordHash,
     );
-    await this.usersService.clearPasswordResetOtp(user._id.toString());
+
+    // Generate tokens after successful reset (T029)
+    const { accessToken, refreshToken } = await this.generateTokens(user);
+
+    return {
+      accessToken,
+      refreshToken,
+      user: user.toObject(),
+    };
   }
 
   async upgradeToCreator(userId: string): Promise<UserDocument> {

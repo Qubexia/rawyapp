@@ -146,14 +146,15 @@ export class AuthController {
 
   @Patch('change-password')
   @ApiBearerAuth()
-  @ApiOperation({ summary: 'Change password (requires current password)' })
+  @ApiOperation({ summary: 'Change password using current password or OTP' })
   @ApiResponse({
     status: HttpStatus.OK,
     description: 'Password changed successfully',
+    type: TokenResponseDto,
   })
   @ApiResponse({
     status: HttpStatus.UNAUTHORIZED,
-    description: 'Current password is incorrect',
+    description: 'Current password or OTP is incorrect',
   })
   @ApiResponse({
     status: HttpStatus.BAD_REQUEST,
@@ -162,13 +163,8 @@ export class AuthController {
   async changePassword(
     @CurrentUser('id') userId: string,
     @Body() dto: ChangePasswordDto,
-  ): Promise<{ message: string }> {
-    await this.authService.changePassword(
-      userId,
-      dto.currentPassword,
-      dto.newPassword,
-    );
-    return { message: 'Password changed successfully' };
+  ): Promise<TokenResponseDto> {
+    return this.authService.changePassword(userId, dto);
   }
 
   @Public()
@@ -198,6 +194,7 @@ export class AuthController {
   @ApiResponse({
     status: HttpStatus.OK,
     description: 'Password reset successfully',
+    type: TokenResponseDto,
   })
   @ApiResponse({
     status: HttpStatus.BAD_REQUEST,
@@ -205,9 +202,8 @@ export class AuthController {
   })
   async resetPassword(
     @Body() dto: ResetPasswordDto,
-  ): Promise<{ message: string }> {
-    await this.authService.resetPassword(dto);
-    return { message: 'Password has been reset successfully' };
+  ): Promise<TokenResponseDto> {
+    return this.authService.resetPassword(dto);
   }
 
   @Post('logout')

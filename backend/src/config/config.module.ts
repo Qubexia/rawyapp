@@ -45,6 +45,19 @@ import * as Joi from 'joi';
         ADMIN_EMAIL: Joi.string().email().required(),
         ADMIN_PASSWORD: Joi.string().min(8).required(),
 
+        // SMTP
+        SMTP_HOST: Joi.string().default('smtp.gmail.com'),
+        SMTP_PORT: Joi.number().default(587),
+        SMTP_SECURE: Joi.boolean().default(false),
+        SMTP_USER: Joi.string().email().allow(''),
+        SMTP_PASS: Joi.string().allow(''),
+        SMTP_FROM: Joi.string().default('Rawy <no-reply@rawy.app>'),
+
+        // OTP
+        OTP_EXPIRY_SECONDS: Joi.number().default(600),
+        OTP_MAX_ATTEMPTS: Joi.number().default(5),
+        OTP_COOLDOWN_SECONDS: Joi.number().default(60),
+
         // Port
         PORT: Joi.number().default(3000),
 

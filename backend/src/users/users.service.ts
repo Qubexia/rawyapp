@@ -181,6 +181,16 @@ export class UsersService {
       .exec();
   }
 
+  async verifyEmail(email: string): Promise<UserDocument | null> {
+    return this.userModel
+      .findOneAndUpdate(
+        { email },
+        { isEmailVerified: true, emailVerifiedAt: new Date(), isActive: true },
+        { new: true },
+      )
+      .exec();
+  }
+
   async updateRole(userId: string, role: Role): Promise<UserDocument | null> {
     return this.userModel
       .findByIdAndUpdate(userId, { role }, { new: true })

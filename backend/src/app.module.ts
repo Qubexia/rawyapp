@@ -25,6 +25,7 @@ import { FeedModule } from './feed/feed.module';
 import { SuggestionsModule } from './suggestions/suggestions.module';
 import { SyncModule } from './sync/sync.module';
 import { ClaimsModule } from './claims/claims.module';
+import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
 
 @Module({
   imports: [
@@ -56,6 +57,16 @@ import { ClaimsModule } from './claims/claims.module';
     SuggestionsModule,
     SyncModule,
     ClaimsModule,
+    ThrottlerModule.forRootAsync({
+      imports: [ConfigModule],
+      inject: [ConfigService],
+      useFactory: (config: ConfigService) => [
+        {
+          ttl: 60000,
+          limit: 10,
+        },
+      ],
+    }),
   ],
   controllers: [AppController],
   providers: [
@@ -71,6 +82,10 @@ import { ClaimsModule } from './claims/claims.module';
     {
       provide: APP_GUARD,
       useClass: ActiveUserGuard,
+    },
+    {
+      provide: APP_GUARD,
+      useClass: ThrottlerGuard,
     },
   ],
 })
